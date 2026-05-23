@@ -226,27 +226,110 @@ const LiveMap = ({ members, selectedId, onSelect }) => {
         ctx.strokeStyle=`${members[selIdx].color}55`; ctx.lineWidth=2; ctx.stroke();
       }
 
-      // cars
+      // ── Draw cars ─────────────────────────────────────────────────────────────
       members.forEach((m,i)=>{
-        const p=positions[i], isDim=selIdx!==-1&&i!==selIdx, isSel=i===selIdx, ld=LIVE_DATA[m.id];
-        ctx.save(); ctx.globalAlpha=isDim?.38:1;
-        if(ld?.memberStatus==="moving"){
-          const g=.5+.5*Math.sin(f*.04+i);
-          ctx.beginPath(); ctx.arc(p.x,p.y,22+g*5,0,Math.PI*2);
-          ctx.fillStyle=`${m.color}${isSel?"30":"14"}`; ctx.fill();
+        const p       = positions[i];
+        const isMe    = i === 0;                          // "You" = first member always
+        const isDim   = selIdx !== -1 && i !== selIdx;
+        const isSel   = i === selIdx;
+        const ld      = LIVE_DATA[m.id];
+        const moving  = ld?.memberStatus === "moving";
+
+        ctx.save();
+        ctx.globalAlpha = isDim ? .35 : 1;
+
+        // ── YOU: large pulsing beacon ring ──────────────────────────────────
+        if (isMe) {
+          const ring1 = .45 + .45 * Math.sin(f * .055);
+          const ring2 = .4  + .4  * Math.sin(f * .055 + 1.1);
+          // outer slow ring
+          ctx.beginPath(); ctx.arc(p.x, p.y, 30 + ring1 * 10, 0, Math.PI*2);
+          ctx.fillStyle = `${m.color}20`; ctx.fill();
+          // inner ring
+          ctx.beginPath(); ctx.arc(p.x, p.y, 20 + ring2 * 6, 0, Math.PI*2);
+          ctx.fillStyle = `${m.color}35`; ctx.fill();
+          // solid glow dot
+          ctx.beginPath(); ctx.arc(p.x, p.y, 16, 0, Math.PI*2);
+          ctx.fillStyle = `${m.color}55`; ctx.fill();
+        } else if (moving) {
+          // other moving cars: small glow
+          const g = .5 + .5 * Math.sin(f * .04 + i);
+          ctx.beginPath(); ctx.arc(p.x, p.y, 18 + g * 4, 0, Math.PI*2);
+          ctx.fillStyle = `${m.color}18`; ctx.fill();
         }
-        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(-0.4+i*.28+(i===3?-.8:0));
-        ctx.fillStyle=m.color; ctx.beginPath(); ctx.roundRect(-13,-8,26,16,5); ctx.fill();
-        if(isSel){ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-13,-8,26,16,5);ctx.stroke();}
-        ctx.fillStyle="rgba(255,255,255,.32)"; ctx.beginPath(); ctx.roundRect(-5,-5,10,7,2); ctx.fill();
-        if(ld?.memberStatus==="stopped"){ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-3,-3);ctx.lineTo(3,3);ctx.stroke();ctx.beginPath();ctx.moveTo(3,-3);ctx.lineTo(-3,3);ctx.stroke();}
+
+        // ── car body ─────────────────────────────────────────────────────────
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(-0.4 + i * .28 + (i === 3 ? -.8 : 0));
+
+        if (isMe) {
+          // YOU car: bigger, bright white outline always visible
+          ctx.fillStyle = m.color;
+          ctx.beginPath(); ctx.roundRect(-15, -10, 30, 20, 6); ctx.fill();
+          // permanent thick white border
+          ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.roundRect(-15, -10, 30, 20, 6); ctx.stroke();
+          // windshield
+          ctx.fillStyle = "rgba(255,255,255,.5)";
+          ctx.beginPath(); ctx.roundRect(-6, -7, 12, 9, 2); ctx.fill();
+          // crown / star dot on roof
+          ctx.fillStyle = "#fff";
+          ctx.beginPath(); ctx.arc(0, -13, 4, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = m.color;
+          ctx.beginPath(); ctx.arc(0, -13, 2.5, 0, Math.PI*2); ctx.fill();
+        } else {
+          // other cars: normal size
+          ctx.fillStyle = m.color;
+          ctx.beginPath(); ctx.roundRect(-13, -8, 26, 16, 5); ctx.fill();
+          if (isSel) {
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(-13, -8, 26, 16, 5); ctx.stroke();
+          }
+          ctx.fillStyle = "rgba(255,255,255,.32)";
+          ctx.beginPath(); ctx.roundRect(-5, -5, 10, 7, 2); ctx.fill();
+        }
+
+        // stopped cross on non-moving cars
+        if (!moving) {
+          ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(-3,-3); ctx.lineTo(3,3); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(3,-3); ctx.lineTo(-3,3); ctx.stroke();
+        }
         ctx.restore();
-        // name tag
-        ctx.font="bold 9px 'DM Sans',sans-serif";
-        const nt=ctx.measureText(m.name).width+14;
-        ctx.fillStyle=T.nameBg; ctx.beginPath(); ctx.roundRect(p.x-nt/2,p.y+15,nt,17,5); ctx.fill();
-        if(isSel){ctx.strokeStyle=m.color;ctx.lineWidth=1.2;ctx.beginPath();ctx.roundRect(p.x-nt/2,p.y+15,nt,17,5);ctx.stroke();}
-        ctx.fillStyle=m.color; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(m.name,p.x,p.y+23.5);
+
+        // ── name tag ─────────────────────────────────────────────────────────
+        const tagY = isMe ? p.y + 19 : p.y + 15;
+        const tagH = isMe ? 20 : 17;
+
+        if (isMe) {
+          // YOU tag: accent background with "YOU" prefix
+          const label = "★ You";
+          ctx.font = "bold 10px 'DM Sans',sans-serif";
+          const tw = ctx.measureText(label).width + 18;
+          // bright filled pill
+          ctx.shadowColor = m.color; ctx.shadowBlur = 10;
+          ctx.fillStyle = m.color;
+          ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, tagH/2); ctx.fill();
+          ctx.shadowBlur = 0;
+          // text in dark/contrast
+          ctx.fillStyle = T.isDark ? "#080B12" : "#ffffff";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(label, p.x, tagY + tagH/2);
+        } else {
+          // others: normal semi-transparent pill
+          ctx.font = "bold 9px 'DM Sans',sans-serif";
+          const tw = ctx.measureText(m.name).width + 14;
+          ctx.fillStyle = T.nameBg;
+          ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, 5); ctx.fill();
+          if (isSel) {
+            ctx.strokeStyle = m.color; ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, 5); ctx.stroke();
+          }
+          ctx.fillStyle = m.color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(m.name, p.x, tagY + tagH/2);
+        }
+
         ctx.restore();
       });
       raf.current=requestAnimationFrame(draw);
@@ -449,6 +532,195 @@ const SosNotifFeed = ({ convoy, sender, onClose }) => {
   );
 };
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FULLSCREEN MAP OVERLAY
+// ══════════════════════════════════════════════════════════════════════════════
+const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
+  const T = useT();
+  const [selId,      setSelId]      = useState(initialSelId);
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [showGaps,   setShowGaps]   = useState(false); // "all gaps" mode
+
+  const selMember  = selId   != null ? convoy.members.find(m => m.id === selId)   : null;
+  const glassLight = "rgba(255,255,255,.94)";
+  const glassDark  = "rgba(8,11,18,.91)";
+  const glass      = T.isDark ? glassDark : glassLight;
+  const shadow     = "0 4px 24px rgba(0,0,0,.45)";
+
+
+  return (
+    <div style={{position:"absolute",inset:0,zIndex:70,display:"flex",flexDirection:"column",background:"#080B12",animation:"fsIn .3s cubic-bezier(.2,.8,.4,1)"}}>
+
+      {/* ════════════════════  MAP LAYER  ════════════════════ */}
+      <div style={{flex:1,position:"relative",overflow:"hidden"}}>
+        <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId}/>
+
+        {/* gradient overlays */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:100,background:"linear-gradient(to bottom,rgba(8,11,18,.72) 0%,transparent 100%)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:120,background:"linear-gradient(to top,rgba(8,11,18,.6) 0%,transparent 100%)",pointerEvents:"none"}}/>
+
+        {/* ── TOP BAR: back button row ── */}
+        <div style={{position:"absolute",top:12,left:12,right:12,display:"flex",alignItems:"center",gap:8}}>
+
+          {/* back / exit fullscreen */}
+          <button onClick={onClose}
+            style={{width:36,height:36,borderRadius:10,background:glass,border:`1px solid ${T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow,flexShrink:0}}>
+            <Ic d={ICONS.back} size={16} color={T.sub} sw={2}/>
+          </button>
+
+          {/* convoy name + subtitle */}
+          <div style={{flex:1,minWidth:0,background:glass,borderRadius:10,padding:"7px 11px",backdropFilter:"blur(10px)",border:`1px solid ${T.accent}50`,boxShadow:shadow,overflow:"hidden"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:T.accent,flexShrink:0,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
+              <span style={{fontSize:12,fontWeight:800,color:T.accent,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.name}</span>
+            </div>
+            <div style={{fontSize:10,color:T.muted,marginTop:1,paddingLeft:12}}>{convoy.members.length} cars · {convoy.destination}</div>
+          </div>
+
+          {/* speed */}
+          <div style={{flexShrink:0,background:glass,borderRadius:10,padding:"6px 10px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,boxShadow:shadow,textAlign:"center",minWidth:52}}>
+            <div style={{fontSize:19,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>62</div>
+            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.8,marginTop:1}}>KM/H</div>
+          </div>
+        </div>
+
+        {/* ── RIGHT CONTROLS (below top bar) ── */}
+        <div style={{position:"absolute",top:62,right:12,display:"flex",flexDirection:"column",gap:7}}>
+          {/* gap-lines toggle */}
+          <button onClick={()=>setShowGaps(g=>!g)}
+            style={{width:36,height:36,borderRadius:10,background:showGaps?T.accentLo:glass,border:`1.5px solid ${showGaps?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow}}>
+            <Ic d={ICONS.layers} size={15} color={showGaps?T.accent:T.sub} sw={1.8}/>
+          </button>
+          {/* members drawer toggle */}
+          <button onClick={()=>setDrawerOpen(d=>!d)}
+            style={{width:36,height:36,borderRadius:10,background:drawerOpen?T.accentLo:glass,border:`1.5px solid ${drawerOpen?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow}}>
+            <Ic d={ICONS.users} size={15} color={drawerOpen?T.accent:T.sub} sw={1.8}/>
+          </button>
+          {/* ETA */}
+          <div style={{background:glass,borderRadius:10,padding:"5px 8px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,boxShadow:shadow,textAlign:"center",minWidth:52}}>
+            <div style={{fontSize:12,fontWeight:800,color:T.violet,fontFamily:"'Space Mono',monospace",lineHeight:1}}>4:32</div>
+            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:1}}>ETA</div>
+          </div>
+          {/* km left */}
+          <div style={{background:glass,borderRadius:10,padding:"5px 8px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,boxShadow:shadow,textAlign:"center",minWidth:52}}>
+            <div style={{fontSize:12,fontWeight:800,color:convoy.color,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{convoy.distance}</div>
+            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:1}}>KM LEFT</div>
+          </div>
+        </div>
+
+        {/* ── Gap legend (top-left, below top bar) ── */}
+        {showGaps && !selId && (
+          <div style={{position:"absolute",top:62,left:12,background:glass,borderRadius:12,padding:"9px 11px",backdropFilter:"blur(10px)",border:`1px solid ${T.accent}44`,boxShadow:shadow,animation:"slideDown .2s ease",maxWidth:148}}>
+            <div style={{fontSize:9,fontWeight:800,color:T.accent,letterSpacing:.7,marginBottom:6,textTransform:"uppercase"}}>Gap Lines</div>
+            {convoy.members.map(m=>{
+              const ld=LIVE_DATA[m.id]; if(!ld||ld.dist===0) return null;
+              const warn=ld.dist>4;
+              return (
+                <div key={m.id} style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+                  <div style={{width:14,height:2,borderRadius:2,background:warn?T.amber:m.color,flexShrink:0}}/>
+                  <span style={{fontSize:10,color:T.sub,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.name}</span>
+                  <span style={{fontSize:10,fontWeight:800,color:warn?T.amber:m.color,fontFamily:"'Space Mono',monospace",flexShrink:0}}>{ld.dist}km</span>
+                  {warn&&<span style={{fontSize:9,flexShrink:0}}>⚠</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Hint: always fixed at bottom-centre of map ── */}
+        {!selId && !showGaps && (
+          <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",background:glass,borderRadius:22,padding:"7px 16px",border:`1px solid ${T.border}`,backdropFilter:"blur(8px)",boxShadow:shadow,whiteSpace:"nowrap",pointerEvents:"none"}}>
+            <span style={{fontSize:11,color:T.sub}}>Tap a car to see distance gaps</span>
+          </div>
+        )}
+
+      </div>
+
+      {/* ════════════════════  BOTTOM DRAWER  ════════════════════ */}
+      <div style={{background:T.isDark?"rgba(10,13,20,.97)":"rgba(255,255,255,.98)",borderTop:`1px solid ${T.border}`,flexShrink:0,transition:"max-height .35s cubic-bezier(.4,0,.2,1)",maxHeight: drawerOpen ? 300 : 0,overflow:"hidden"}}>
+
+        {/* ── drag handle + trip meta ── */}
+        <div style={{padding:"10px 16px 6px",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}} onClick={()=>setDrawerOpen(d=>!d)}>
+          <div style={{flex:1,display:"flex",alignItems:"center",gap:0,overflowX:"auto",scrollbarWidth:"none",gap:16}}>
+            {[
+              {label:"REMAINING",  val:`${convoy.distance}km`, c:convoy.color},
+              {label:"ETA",        val:"4h 32m",               c:T.violet    },
+              {label:"AVG SPEED",  val:"60 km/h",              c:T.blue      },
+              {label:"ALERT GAP",  val:`${convoy.alertKm}km`,  c:T.amber     },
+            ].map(s=>(
+              <div key={s.label} style={{flexShrink:0,textAlign:"center"}}>
+                <div style={{fontSize:13,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.6,marginTop:2}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          {/* progress mini */}
+          <div style={{width:60,flexShrink:0}}>
+            <div style={{height:4,background:T.raised,borderRadius:4,overflow:"hidden"}}>
+              <div style={{height:"100%",width:"38%",background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:4}}/>
+            </div>
+            <div style={{fontSize:8,color:T.muted,marginTop:3,textAlign:"right",fontWeight:700}}>38% DONE</div>
+          </div>
+          <Ic d={drawerOpen?ICONS.chevron:ICONS.back} size={14} color={T.muted} sw={2}/>
+        </div>
+
+        {/* ── horizontal divider ── */}
+        <div style={{height:1,background:T.border,margin:"0 14px"}}/>
+
+        {/* ── member cards scroll ── */}
+        <div style={{display:"flex",gap:10,padding:"10px 14px 14px",overflowX:"auto",scrollbarWidth:"none"}}>
+          {convoy.members.map((m, i) => {
+            const ld = LIVE_DATA[m.id] || {};
+            const moving = ld.memberStatus === "moving";
+            const warn   = ld.dist > 4;
+            const active = selId === m.id;
+            return (
+              <button key={m.id} onClick={() => setSelId(detailId => detailId === m.id ? null : m.id)}
+                style={{flexShrink:0,width:118,background:active?T.accentLo:T.card,border:`1.5px solid ${active?m.color:warn?T.amber+"55":T.border}`,borderRadius:16,padding:"12px 10px",cursor:"pointer",textAlign:"left",transition:"all .18s",boxShadow:active?`0 4px 16px ${m.color}33`:"none"}}>
+                {/* avatar + status */}
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
+                  <div style={{position:"relative"}}>
+                    <Avatar name={m.name} color={m.color} size={36}/>
+                    <div style={{position:"absolute",bottom:-1,right:-1,width:11,height:11,borderRadius:"50%",background:moving?T.accent:T.amber,border:`2px solid ${T.card}`,boxShadow:`0 0 5px ${moving?T.accent:T.amber}`}}/>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.name}</div>
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:2}}>
+                      {i===0&&<span style={{fontSize:8,color:T.blue,fontWeight:800,background:T.blueLo,padding:"1px 5px",borderRadius:6}}>YOU</span>}
+                      {m.role==="admin"&&<span style={{fontSize:8,color:T.accent,fontWeight:800,background:T.accentLo,padding:"1px 5px",borderRadius:6}}>ADMIN</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* speed bar */}
+                <div style={{marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                    <span style={{fontSize:9,color:T.muted,fontWeight:700}}>SPEED</span>
+                    <span style={{fontSize:10,fontWeight:900,color:T.text,fontFamily:"'Space Mono',monospace"}}>{ld.speed||0}</span>
+                  </div>
+                  <div style={{height:3,background:T.raised,borderRadius:3,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${Math.min(100,(ld.speed||0)/1.2)}%`,background:m.color,borderRadius:3,transition:"width .5s"}}/>
+                  </div>
+                </div>
+
+                {/* distance chip */}
+                <div style={{background:warn?`${T.amber}18`:T.raised,border:`1px solid ${warn?T.amber+"44":T.border}`,borderRadius:10,padding:"5px 8px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:9,color:warn?T.amber:T.muted,fontWeight:700,letterSpacing:.3}}>{warn?"⚠ FAR":"DIST"}</span>
+                  <span style={{fontSize:12,fontWeight:900,color:warn?T.amber:m.color,fontFamily:"'Space Mono',monospace"}}>{ld.dist||0} <span style={{fontSize:8,fontWeight:700}}>km</span></span>
+                </div>
+
+                {/* car plate */}
+                <div style={{marginTop:7,fontSize:9,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ══════════════════════════════════════════════════════════════════════════════
 // LIVE DETAIL SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
@@ -456,8 +728,10 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
   const T = useT();
   const [selId,    setSelId]    = useState(null);
   const [mapTab,   setMapTab]   = useState("map");
-  const [sosOpen,  setSosOpen]  = useState(false);
-  const [sosSent,  setSosSent]  = useState(false);
+  const [sosOpen,   setSosOpen]  = useState(false);
+  const [sosSent,   setSosSent]  = useState(false);
+  const [fullMap,   setFullMap]  = useState(false);
+  const [fSelId,    setFSelId]   = useState(null);
 
   const selMember = selId!=null?convoy.members.find(m=>m.id===selId):null;
   const selLive   = selId!=null?LIVE_DATA[selId]:null;
@@ -519,20 +793,38 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
       {/* ── MAP TAB ── */}
       {mapTab==="map"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          {/* ── Map canvas ── */}
           <div style={{height:230,position:"relative",overflow:"hidden",background:T.mapBg}}>
             <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId}/>
-            <div style={{position:"absolute",top:10,left:10,background:T.isDark?"rgba(8,11,18,.85)":"rgba(255,255,255,.9)",borderRadius:10,padding:"5px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.border}`,display:"flex",alignItems:"center",gap:6}}>
+
+            {/* LIVE TRACKING chip — display only, not clickable */}
+            <div style={{position:"absolute",top:10,left:10,background:T.isDark?"rgba(8,11,18,.88)":"rgba(255,255,255,.93)",borderRadius:10,padding:"5px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.accent}44`,display:"flex",alignItems:"center",gap:6,pointerEvents:"none"}}>
               <span style={{width:7,height:7,borderRadius:"50%",background:T.accent,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
               <span style={{fontSize:10,fontWeight:700,color:T.accent}}>LIVE TRACKING</span>
             </div>
+
+            {/* speed chip */}
             <div style={{position:"absolute",top:10,right:10,background:T.isDark?"rgba(8,11,18,.85)":"rgba(255,255,255,.9)",borderRadius:10,padding:"6px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.border}`,textAlign:"right"}}>
               <div style={{fontSize:18,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>62</div>
               <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:1}}>KM/H</div>
             </div>
-            {!selId&&<div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",background:T.isDark?"rgba(8,11,18,.8)":"rgba(255,255,255,.85)",borderRadius:20,padding:"5px 14px",border:`1px solid ${T.border}`,backdropFilter:"blur(4px)"}}>
-              <span style={{fontSize:10,color:T.sub}}>Tap a car to see gaps</span>
-            </div>}
+
+            {/* tap hint */}
+            {!selId&&(
+              <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",background:T.isDark?"rgba(8,11,18,.8)":"rgba(255,255,255,.85)",borderRadius:20,padding:"5px 14px",border:`1px solid ${T.border}`,backdropFilter:"blur(4px)",whiteSpace:"nowrap"}}>
+                <span style={{fontSize:10,color:T.sub}}>Tap a car to see distance gaps</span>
+              </div>
+            )}
           </div>
+
+          {/* ── Full Screen button ── */}
+          <button onClick={()=>{ setFSelId(selId); setFullMap(true); }}
+            style={{margin:"10px 14px 0",padding:"11px 0",borderRadius:14,background:T.isDark?"rgba(61,214,140,.08)":"rgba(29,184,112,.07)",border:`1.5px solid ${T.accent}44`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"calc(100% - 28px)",transition:"background .15s"}}
+            onMouseEnter={e=>e.currentTarget.style.background=T.accentLo}
+            onMouseLeave={e=>e.currentTarget.style.background=T.isDark?"rgba(61,214,140,.08)":"rgba(29,184,112,.07)"}>
+            <Ic d={ICONS.expand} size={15} color={T.accent} sw={2}/>
+            <span style={{fontSize:13,fontWeight:700,color:T.accent,letterSpacing:.3}}>View Full Screen Map</span>
+          </button>
 
           {/* gap panel */}
           {selMember&&selLive&&(
@@ -705,6 +997,9 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
           </div>
         </div>
       )}
+      {/* Fullscreen Map */}
+      {fullMap && <FullscreenMap convoy={convoy} initialSelId={fSelId} onClose={()=>setFullMap(false)}/>}
+
       {/* SOS Confirm Modal */}
       {sosOpen && <SosModal convoy={convoy} onConfirm={fireSos} onClose={()=>setSosOpen(false)}/>}
 
@@ -1138,6 +1433,8 @@ export default function App() {
           @keyframes sosPing  {0%{transform:scale(1);opacity:.5}100%{transform:scale(1.8);opacity:0}}
           @keyframes sosShake {0%,100%{transform:rotate(0deg)}20%{transform:rotate(-10deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(6deg)}}
           @keyframes sosPulse {0%,100%{opacity:.6}50%{opacity:1}}
+          @keyframes fsIn    {from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+          @keyframes slideUp2{from{transform:translateY(100%)}to{transform:translateY(0)}}
           *{box-sizing:border-box;}
           ::-webkit-scrollbar{display:none;}
           input::placeholder,textarea::placeholder{opacity:.5;}
