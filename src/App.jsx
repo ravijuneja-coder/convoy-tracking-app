@@ -53,7 +53,7 @@ const CAR_POS = [
 ];
 const SEED = [
   { id:1,name:"Delhi Road Trip",   destination:"New Delhi",  date:"2025-06-22",time:"08:00",status:"live",     distance:287,alertKm:5,  notes:"Depart Sector 18. Fuel before highway.",   color:"#3DD68C",
-    members:[{id:1,name:"Rohan",initials:"RO",color:"#3DD68C",car:"Swift · DL4C 1234",   role:"admin" },{id:2,name:"Rahul",initials:"RA",color:"#4A9EFF",car:"Innova · UP32 5567",  role:"member"},{id:3,name:"Priya",initials:"PR",color:"#F5A623",car:"Creta · HR26 8890",   role:"member"},{id:4,name:"Aman", initials:"AM",color:"#C36EFF",car:"Fortuner · PB10 4412",role:"member"}]},
+    members:[{id:1,name:"Rohan",initials:"RO",color:"#3DD68C",car:"Swift · DL4C 1234",   role:"admin", avatar:"https://randomuser.me/api/portraits/men/32.jpg"  },{id:2,name:"Rahul",initials:"RA",color:"#4A9EFF",car:"Innova · UP32 5567",  role:"member",avatar:"https://randomuser.me/api/portraits/men/45.jpg"  },{id:3,name:"Priya",initials:"PR",color:"#F5A623",car:"Creta · HR26 8890",   role:"member",avatar:"https://randomuser.me/api/portraits/women/44.jpg"},{id:4,name:"Aman", initials:"AM",color:"#C36EFF",car:"Fortuner · PB10 4412",role:"member",avatar:"https://randomuser.me/api/portraits/men/22.jpg"}]},
   { id:2,name:"Goa Beach Weekend", destination:"Goa",        date:"2025-07-04",time:"06:30",status:"upcoming", distance:593,alertKm:10, notes:"Book toll tags. Leave early.",              color:"#4A9EFF",
     members:[{id:5,name:"Sneha", initials:"SN",color:"#4A9EFF",car:"Nexon · MH02 3310",  role:"admin" },{id:6,name:"Vikram",initials:"VI",color:"#9B6EFF",car:"Scorpio · KA01 8821",role:"member"}]},
   { id:3,name:"Manali Expedition", destination:"Manali, HP", date:"2025-08-15",time:"04:00",status:"upcoming", distance:536,alertKm:5,  notes:"Spare tyre. Rohtang permit required.",      color:"#9B6EFF",
@@ -141,23 +141,58 @@ const FieldArea = ({ label, value, onChange, placeholder }) => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// LIVE MAP CANVAS  (theme-aware)
+// LIVE MAP CANVAS  (theme-aware, resolution-matched, avatar-aware)
 // ══════════════════════════════════════════════════════════════════════════════
 const LiveMap = ({ members, selectedId, onSelect }) => {
-  const T   = useT();
-  const cvR = useRef(null);
-  const raf = useRef(null);
-  const fr  = useRef(0);
-  const pos = useRef([]);
+  const T      = useT();
+  const cvR    = useRef(null);
+  const wrapR  = useRef(null);
+  const raf    = useRef(null);
+  const fr     = useRef(0);
+  const pos    = useRef([]);
+  const dimR   = useRef({ W: 480, H: 280 });
+  const imgs   = useRef({});  // cache of loaded Image objects keyed by member id
+
+  // Preload avatar images for members that have one
+  useEffect(() => {
+    members.forEach(m => {
+      if (!m.avatar || imgs.current[m.id]) return;
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = m.avatar;
+      img.onload = () => { imgs.current[m.id] = img; };
+    });
+  }, [members]);
+
+  // Resize canvas to exactly match its container, sharp at any DPR
+  useEffect(() => {
+    const wrap = wrapR.current;
+    if (!wrap) return;
+    const ro = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      const dpr = window.devicePixelRatio || 1;
+      const cv  = cvR.current;
+      if (!cv) return;
+      cv.width  = Math.round(width  * dpr);
+      cv.height = Math.round(height * dpr);
+      cv.style.width  = width  + "px";
+      cv.style.height = height + "px";
+      const ctx = cv.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      dimR.current = { W: width, H: height };
+    });
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const cv=cvR.current; if(!cv) return;
     const ctx=cv.getContext("2d");
-    const W=cv.width, H=cv.height;
 
     const draw=()=>{
       fr.current++;
       const f=fr.current;
+      const {W,H}=dimR.current;
       ctx.clearRect(0,0,W,H);
 
       // bg
@@ -258,66 +293,95 @@ const LiveMap = ({ members, selectedId, onSelect }) => {
           ctx.fillStyle = `${m.color}18`; ctx.fill();
         }
 
-        // ── car body ─────────────────────────────────────────────────────────
+        // ── car body / avatar ────────────────────────────────────────────────
+        const imgObj   = imgs.current[m.id];
+        const hasAvatar = !!imgObj;
+        const R = isMe ? 16 : 13; // avatar circle radius
+
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.rotate(-0.4 + i * .28 + (i === 3 ? -.8 : 0));
 
-        if (isMe) {
-          // YOU car: bigger, bright white outline always visible
-          ctx.fillStyle = m.color;
-          ctx.beginPath(); ctx.roundRect(-15, -10, 30, 20, 6); ctx.fill();
-          // permanent thick white border
-          ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2.5;
-          ctx.beginPath(); ctx.roundRect(-15, -10, 30, 20, 6); ctx.stroke();
-          // windshield
-          ctx.fillStyle = "rgba(255,255,255,.5)";
-          ctx.beginPath(); ctx.roundRect(-6, -7, 12, 9, 2); ctx.fill();
-          // crown / star dot on roof
-          ctx.fillStyle = "#fff";
-          ctx.beginPath(); ctx.arc(0, -13, 4, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = m.color;
-          ctx.beginPath(); ctx.arc(0, -13, 2.5, 0, Math.PI*2); ctx.fill();
-        } else {
-          // other cars: normal size
-          ctx.fillStyle = m.color;
-          ctx.beginPath(); ctx.roundRect(-13, -8, 26, 16, 5); ctx.fill();
-          if (isSel) {
+        if (hasAvatar) {
+          // ── PROFILE PHOTO CIRCLE ─────────────────────────────────────────
+          // coloured ring background
+          ctx.beginPath(); ctx.arc(0, 0, R + 3, 0, Math.PI*2);
+          ctx.fillStyle = m.color; ctx.fill();
+          // white border for YOU, selection ring for others
+          if (isMe) {
+            ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(0, 0, R + 3, 0, Math.PI*2); ctx.stroke();
+            // crown dot above circle
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(0, -(R + 10), 4, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.arc(0, -(R + 10), 2.5, 0, Math.PI*2); ctx.fill();
+          } else if (isSel) {
             ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.roundRect(-13, -8, 26, 16, 5); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, R + 3, 0, Math.PI*2); ctx.stroke();
           }
-          ctx.fillStyle = "rgba(255,255,255,.32)";
-          ctx.beginPath(); ctx.roundRect(-5, -5, 10, 7, 2); ctx.fill();
+          // clip to circle and draw photo
+          ctx.save();
+          ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI*2); ctx.clip();
+          ctx.drawImage(imgObj, -R, -R, R * 2, R * 2);
+          ctx.restore();
+          // stopped overlay
+          if (!moving) {
+            ctx.fillStyle = "rgba(0,0,0,.5)";
+            ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(-4,-4); ctx.lineTo(4,4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(4,-4); ctx.lineTo(-4,4); ctx.stroke();
+          }
+        } else {
+          // ── ORIGINAL CAR RECTANGLE ──────────────────────────────────────
+          ctx.rotate(-0.4 + i * .28 + (i === 3 ? -.8 : 0));
+          if (isMe) {
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.roundRect(-15,-10,30,20,6); ctx.fill();
+            ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.roundRect(-15,-10,30,20,6); ctx.stroke();
+            ctx.fillStyle = "rgba(255,255,255,.5)";
+            ctx.beginPath(); ctx.roundRect(-6,-7,12,9,2); ctx.fill();
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(0,-13,4,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.arc(0,-13,2.5,0,Math.PI*2); ctx.fill();
+          } else {
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.roundRect(-13,-8,26,16,5); ctx.fill();
+            if (isSel) {
+              ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+              ctx.beginPath(); ctx.roundRect(-13,-8,26,16,5); ctx.stroke();
+            }
+            ctx.fillStyle = "rgba(255,255,255,.32)";
+            ctx.beginPath(); ctx.roundRect(-5,-5,10,7,2); ctx.fill();
+          }
+          if (!moving) {
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(-3,-3); ctx.lineTo(3,3); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(3,-3); ctx.lineTo(-3,3); ctx.stroke();
+          }
         }
+        ctx.restore(); // translate
 
-        // stopped cross on non-moving cars
-        if (!moving) {
-          ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.moveTo(-3,-3); ctx.lineTo(3,3); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(3,-3); ctx.lineTo(-3,3); ctx.stroke();
-        }
-        ctx.restore();
-
-        // ── name tag ─────────────────────────────────────────────────────────
-        const tagY = isMe ? p.y + 19 : p.y + 15;
-        const tagH = isMe ? 20 : 17;
+        // ── NAME TAG (same style for both avatar + car) ──────────────────────
+        // vertical offset: avatar circles sit higher so tag is further down
+        const tagOffY = hasAvatar ? (isMe ? R + 10 : R + 8) : (isMe ? 19 : 15);
+        const tagY    = p.y + tagOffY;
+        const tagH    = isMe ? 20 : 17;
 
         if (isMe) {
-          // YOU tag: accent background with "YOU" prefix
           const label = "★ You";
           ctx.font = "bold 10px 'DM Sans',sans-serif";
           const tw = ctx.measureText(label).width + 18;
-          // bright filled pill
           ctx.shadowColor = m.color; ctx.shadowBlur = 10;
           ctx.fillStyle = m.color;
           ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, tagH/2); ctx.fill();
           ctx.shadowBlur = 0;
-          // text in dark/contrast
           ctx.fillStyle = T.isDark ? "#080B12" : "#ffffff";
           ctx.textAlign = "center"; ctx.textBaseline = "middle";
           ctx.fillText(label, p.x, tagY + tagH/2);
         } else {
-          // others: normal semi-transparent pill
           ctx.font = "bold 9px 'DM Sans',sans-serif";
           const tw = ctx.measureText(m.name).width + 14;
           ctx.fillStyle = T.nameBg;
@@ -340,14 +404,19 @@ const LiveMap = ({ members, selectedId, onSelect }) => {
 
   const onClick=e=>{
     const cv=cvR.current; if(!cv) return;
-    const r=cv.getBoundingClientRect(), sx=cv.width/r.width, sy=cv.height/r.height;
-    const cx=(e.clientX-r.left)*sx, cy=(e.clientY-r.top)*sy;
+    const r=cv.getBoundingClientRect();
+    // logical coords — no DPR scaling needed since ctx is already scaled
+    const cx=e.clientX-r.left, cy=e.clientY-r.top;
     let best=-1, bestD=44;
     pos.current.forEach((p,i)=>{const d=Math.hypot(p.x-cx,p.y-cy);if(d<bestD){bestD=d;best=i;}});
     onSelect(best===-1?null:(members[best].id===selectedId?null:members[best].id));
   };
 
-  return <canvas ref={cvR} width={480} height={280} onClick={onClick} style={{width:"100%",height:"100%",display:"block",cursor:"pointer"}}/>;
+  return (
+    <div ref={wrapR} style={{width:"100%",height:"100%",position:"relative"}}>
+      <canvas ref={cvR} onClick={onClick} style={{display:"block",cursor:"pointer"}}/>
+    </div>
+  );
 };
 
 
@@ -557,80 +626,83 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
         <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId}/>
 
         {/* gradient overlays */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:100,background:"linear-gradient(to bottom,rgba(8,11,18,.72) 0%,transparent 100%)",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,height:120,background:"linear-gradient(to top,rgba(8,11,18,.6) 0%,transparent 100%)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:110,background:"linear-gradient(to bottom,rgba(8,11,18,.78) 0%,transparent 100%)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:100,background:"linear-gradient(to top,rgba(8,11,18,.55) 0%,transparent 100%)",pointerEvents:"none"}}/>
 
-        {/* ── TOP BAR: back button row ── */}
+        {/* ══ ROW 1: back · name · speed ══ */}
         <div style={{position:"absolute",top:12,left:12,right:12,display:"flex",alignItems:"center",gap:8}}>
-
-          {/* back / exit fullscreen */}
+          {/* back */}
           <button onClick={onClose}
-            style={{width:36,height:36,borderRadius:10,background:glass,border:`1px solid ${T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow,flexShrink:0}}>
+            style={{width:36,height:36,borderRadius:10,background:glass,border:`1px solid ${T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:shadow}}>
             <Ic d={ICONS.back} size={16} color={T.sub} sw={2}/>
           </button>
 
-          {/* convoy name + subtitle */}
-          <div style={{flex:1,minWidth:0,background:glass,borderRadius:10,padding:"7px 11px",backdropFilter:"blur(10px)",border:`1px solid ${T.accent}50`,boxShadow:shadow,overflow:"hidden"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
+          {/* convoy name */}
+          <div style={{flex:1,minWidth:0,background:glass,borderRadius:10,padding:"6px 10px",backdropFilter:"blur(10px)",border:`1px solid ${T.accent}50`,overflow:"hidden",boxShadow:shadow}}>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:1}}>
               <span style={{width:6,height:6,borderRadius:"50%",background:T.accent,flexShrink:0,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
               <span style={{fontSize:12,fontWeight:800,color:T.accent,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.name}</span>
             </div>
-            <div style={{fontSize:10,color:T.muted,marginTop:1,paddingLeft:12}}>{convoy.members.length} cars · {convoy.destination}</div>
+            <div style={{fontSize:9,color:T.muted,paddingLeft:11}}>{convoy.members.length} cars · {convoy.destination}</div>
           </div>
 
           {/* speed */}
-          <div style={{flexShrink:0,background:glass,borderRadius:10,padding:"6px 10px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,boxShadow:shadow,textAlign:"center",minWidth:52}}>
-            <div style={{fontSize:19,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>62</div>
-            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.8,marginTop:1}}>KM/H</div>
+          <div style={{flexShrink:0,width:50,background:glass,borderRadius:10,padding:"5px 0",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,textAlign:"center",boxShadow:shadow}}>
+            <div style={{fontSize:18,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>62</div>
+            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.6}}>KM/H</div>
           </div>
         </div>
 
-        {/* ── RIGHT CONTROLS (below top bar) ── */}
-        <div style={{position:"absolute",top:62,right:12,display:"flex",flexDirection:"column",gap:7}}>
-          {/* gap-lines toggle */}
-          <button onClick={()=>setShowGaps(g=>!g)}
-            style={{width:36,height:36,borderRadius:10,background:showGaps?T.accentLo:glass,border:`1.5px solid ${showGaps?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow}}>
-            <Ic d={ICONS.layers} size={15} color={showGaps?T.accent:T.sub} sw={1.8}/>
-          </button>
-          {/* members drawer toggle */}
-          <button onClick={()=>setDrawerOpen(d=>!d)}
-            style={{width:36,height:36,borderRadius:10,background:drawerOpen?T.accentLo:glass,border:`1.5px solid ${drawerOpen?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow}}>
-            <Ic d={ICONS.users} size={15} color={drawerOpen?T.accent:T.sub} sw={1.8}/>
-          </button>
-          {/* ETA */}
-          <div style={{background:glass,borderRadius:10,padding:"5px 8px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,boxShadow:shadow,textAlign:"center",minWidth:52}}>
-            <div style={{fontSize:12,fontWeight:800,color:T.violet,fontFamily:"'Space Mono',monospace",lineHeight:1}}>4:32</div>
-            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:1}}>ETA</div>
+        {/* ══ ROW 2: stats · gap toggle · members toggle ══ */}
+        <div style={{position:"absolute",top:60,left:12,right:12,display:"flex",alignItems:"center",gap:6}}>
+          {/* ETA chip */}
+          <div style={{background:glass,borderRadius:9,padding:"4px 10px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,textAlign:"center",boxShadow:shadow}}>
+            <div style={{fontSize:11,fontWeight:800,color:T.violet,fontFamily:"'Space Mono',monospace",lineHeight:1}}>4:32</div>
+            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.4}}>ETA</div>
           </div>
           {/* km left */}
-          <div style={{background:glass,borderRadius:10,padding:"5px 8px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,boxShadow:shadow,textAlign:"center",minWidth:52}}>
-            <div style={{fontSize:12,fontWeight:800,color:convoy.color,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{convoy.distance}</div>
-            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:1}}>KM LEFT</div>
+          <div style={{background:glass,borderRadius:9,padding:"4px 10px",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,textAlign:"center",boxShadow:shadow}}>
+            <div style={{fontSize:11,fontWeight:800,color:convoy.color,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{convoy.distance}km</div>
+            <div style={{fontSize:7,color:T.muted,fontWeight:700,letterSpacing:.4}}>LEFT</div>
           </div>
+
+          <div style={{flex:1}}/>
+
+          {/* gap-lines toggle */}
+          <button onClick={()=>setShowGaps(g=>!g)}
+            style={{width:34,height:34,borderRadius:9,background:showGaps?T.accentLo:glass,border:`1.5px solid ${showGaps?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow,flexShrink:0}}>
+            <Ic d={ICONS.layers} size={14} color={showGaps?T.accent:T.sub} sw={1.8}/>
+          </button>
+
+          {/* members drawer toggle */}
+          <button onClick={()=>setDrawerOpen(d=>!d)}
+            style={{width:34,height:34,borderRadius:9,background:drawerOpen?T.accentLo:glass,border:`1.5px solid ${drawerOpen?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:shadow,flexShrink:0}}>
+            <Ic d={ICONS.users} size={14} color={drawerOpen?T.accent:T.sub} sw={1.8}/>
+          </button>
         </div>
 
-        {/* ── Gap legend (top-left, below top bar) ── */}
-        {showGaps && !selId && (
-          <div style={{position:"absolute",top:62,left:12,background:glass,borderRadius:12,padding:"9px 11px",backdropFilter:"blur(10px)",border:`1px solid ${T.accent}44`,boxShadow:shadow,animation:"slideDown .2s ease",maxWidth:148}}>
+        {/* ── Gap legend (left, below row 2) ── */}
+        {showGaps && (
+          <div style={{position:"absolute",top:104,left:12,background:glass,borderRadius:12,padding:"9px 11px",backdropFilter:"blur(10px)",border:`1px solid ${T.accent}44`,boxShadow:shadow,animation:"slideDown .2s ease",maxWidth:160}}>
             <div style={{fontSize:9,fontWeight:800,color:T.accent,letterSpacing:.7,marginBottom:6,textTransform:"uppercase"}}>Gap Lines</div>
             {convoy.members.map(m=>{
               const ld=LIVE_DATA[m.id]; if(!ld||ld.dist===0) return null;
               const warn=ld.dist>4;
               return (
-                <div key={m.id} style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
-                  <div style={{width:14,height:2,borderRadius:2,background:warn?T.amber:m.color,flexShrink:0}}/>
-                  <span style={{fontSize:10,color:T.sub,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.name}</span>
-                  <span style={{fontSize:10,fontWeight:800,color:warn?T.amber:m.color,fontFamily:"'Space Mono',monospace",flexShrink:0}}>{ld.dist}km</span>
-                  {warn&&<span style={{fontSize:9,flexShrink:0}}>⚠</span>}
+                <div key={m.id} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <div style={{width:12,height:2,borderRadius:2,background:warn?T.amber:m.color,flexShrink:0}}/>
+                  <span style={{fontSize:10,color:T.sub,flex:1}}>{m.name}</span>
+                  <span style={{fontSize:10,fontWeight:800,color:warn?T.amber:m.color,fontFamily:"'Space Mono',monospace"}}>{ld.dist}km</span>
+                  {warn&&<span style={{fontSize:9}}>⚠</span>}
                 </div>
               );
             })}
           </div>
         )}
 
-        {/* ── Hint: always fixed at bottom-centre of map ── */}
+        {/* ── Hint pill pinned at bottom centre ── */}
         {!selId && !showGaps && (
-          <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",background:glass,borderRadius:22,padding:"7px 16px",border:`1px solid ${T.border}`,backdropFilter:"blur(8px)",boxShadow:shadow,whiteSpace:"nowrap",pointerEvents:"none"}}>
+          <div style={{position:"absolute",bottom:14,left:"50%",transform:"translateX(-50%)",background:glass,borderRadius:22,padding:"7px 16px",border:`1px solid ${T.border}`,backdropFilter:"blur(8px)",boxShadow:shadow,whiteSpace:"nowrap",pointerEvents:"none"}}>
             <span style={{fontSize:11,color:T.sub}}>Tap a car to see distance gaps</span>
           </div>
         )}
