@@ -2360,7 +2360,7 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium }) => {
   const T = useT();
   const [profile,     setProfile]     = useState(PROFILE_DEFAULT);
   const [editing,     setEditing]     = useState(false);
@@ -2679,12 +2679,17 @@ const ProfileScreen = ({ onSignOut, onOpenSettings }) => {
             <Toggle field="lowBattery"    icon={ICONS.shield} label="Low Battery Warnings" sub="Alert others when battery below 20%"/>
 
             <div style={{padding:"20px 0 4px",fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Account</div>
-            {[{icon:ICONS.bell,label:"App Settings",action:onOpenSettings},{icon:ICONS.note,label:"Terms of Service",action:null},{icon:ICONS.shield,label:"Privacy Policy",action:null}].map(item=>(
+            {[
+              {icon:ICONS.bell,  label:"App Settings",  action:onOpenSettings, accent:false},
+              {icon:ICONS.flag,  label:isPremium?"👑 Premium — Active":"👑 Upgrade to Premium", action:onOpenPricing, accent:true},
+              {icon:ICONS.note,  label:"Terms of Service", action:null, accent:false},
+              {icon:ICONS.shield,label:"Privacy Policy",   action:null, accent:false},
+            ].map(item=>(
               <div key={item.label} onClick={item.action||undefined} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 0",borderBottom:`1px solid ${T.border}`,cursor:item.action?"pointer":"default"}}>
-                <div style={{width:36,height:36,borderRadius:11,background:item.action?T.accentLo:T.raised,border:`1px solid ${item.action?T.accent+"33":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <Ic d={item.icon} size={16} color={item.action?T.accent:T.muted}/>
+                <div style={{width:36,height:36,borderRadius:11,background:item.accent?"#4A9EFF18":item.action?T.accentLo:T.raised,border:`1px solid ${item.accent?"#4A9EFF44":item.action?T.accent+"33":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Ic d={item.icon} size={16} color={item.accent?"#4A9EFF":item.action?T.accent:T.muted}/>
                 </div>
-                <span style={{flex:1,fontSize:13,fontWeight:700,color:item.action?T.text:T.text}}>{item.label}</span>
+                <span style={{flex:1,fontSize:13,fontWeight:item.accent?800:700,color:item.accent?"#4A9EFF":T.text}}>{item.label}</span>
                 <Ic d={ICONS.chevron} size={14} color={T.muted}/>
               </div>
             ))}
@@ -2782,6 +2787,222 @@ const OnboardingScreen = ({ onDone }) => {
             <button onClick={()=>{setTab(tab==="signin"?"signup":"signin");setErr("");}} style={{background:"none",border:"none",color:T.accent,fontWeight:700,cursor:"pointer",fontSize:12,padding:0}}>{tab==="signin"?"Sign Up":"Sign In"}</button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PRICING SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const PLANS = [
+  {
+    id:"free",
+    name:"Free",
+    price:"₹0",
+    period:"forever",
+    color:"#3DD68C",
+    emoji:"🆓",
+    highlight:false,
+    features:[
+      {ok:true,  text:"1 convoy"},
+      {ok:true,  text:"Up to 4 members per convoy"},
+      {ok:true,  text:"Live GPS tracking"},
+      {ok:true,  text:"SOS alerts"},
+      {ok:true,  text:"WhatsApp invite"},
+      {ok:false, text:"Multiple convoys"},
+      {ok:false, text:"Unlimited members"},
+      {ok:false, text:"Trip history & summary"},
+      {ok:false, text:"Priority support"},
+    ],
+  },
+  {
+    id:"premium",
+    name:"Premium",
+    price:"₹299",
+    period:"per month",
+    yearlyPrice:"₹2,499",
+    yearlyPeriod:"per year  (save 30%)",
+    color:"#4A9EFF",
+    emoji:"👑",
+    highlight:true,
+    features:[
+      {ok:true, text:"Unlimited convoys"},
+      {ok:true, text:"Unlimited members per convoy"},
+      {ok:true, text:"Live GPS tracking"},
+      {ok:true, text:"SOS alerts"},
+      {ok:true, text:"WhatsApp invite"},
+      {ok:true, text:"Trip history & summary"},
+      {ok:true, text:"Route analytics"},
+      {ok:true, text:"Priority support"},
+      {ok:true, text:"Early access to new features"},
+    ],
+  },
+];
+
+const PricingScreen = ({ onBack, onUpgrade, isPremium }) => {
+  const T = useT();
+  const [billing, setBilling] = useState("monthly"); // monthly | yearly
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
+      {/* Header */}
+      <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12,background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        {onBack&&<button onClick={onBack} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={ICONS.back} size={16}/>
+        </button>}
+        <div style={{flex:1}}>
+          <div style={{fontSize:16,fontWeight:800,color:T.text}}>Choose Your Plan</div>
+          <div style={{fontSize:11,color:T.muted}}>First convoy is always free</div>
+        </div>
+        {isPremium&&<span style={{fontSize:11,fontWeight:800,color:"#4A9EFF",background:"#4A9EFF18",padding:"4px 10px",borderRadius:20,border:"1px solid #4A9EFF44"}}>👑 Premium</span>}
+      </div>
+
+      <div style={{flex:1,overflowY:"auto",padding:"16px"}}>
+
+        {/* Hero */}
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:36,marginBottom:8}}>🚗</div>
+          <div style={{fontSize:20,fontWeight:900,color:T.text,marginBottom:4}}>Convoy Plans</div>
+          <div style={{fontSize:13,color:T.muted,lineHeight:1.5}}>Start free. Upgrade when your convoy grows.</div>
+        </div>
+
+        {/* Billing toggle */}
+        <div style={{display:"flex",background:T.raised,borderRadius:14,padding:4,marginBottom:20,border:`1px solid ${T.border}`}}>
+          {[["monthly","Monthly"],["yearly","Yearly 🔥 Save 30%"]].map(([val,lbl])=>(
+            <button key={val} onClick={()=>setBilling(val)}
+              style={{flex:1,padding:"9px 0",borderRadius:11,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:billing===val?T.surface:T.raised,color:billing===val?T.text:T.muted,boxShadow:billing===val?"0 2px 8px rgba(0,0,0,.1)":"none",transition:"all .2s"}}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
+        {/* Plan cards */}
+        {PLANS.map(plan=>(
+          <div key={plan.id} style={{background:T.card,border:`2px solid ${plan.highlight?"#4A9EFF":"transparent"}`,borderRadius:20,marginBottom:14,overflow:"hidden",boxShadow:plan.highlight?`0 8px 32px #4A9EFF22`:"none",position:"relative"}}>
+            {plan.highlight&&<div style={{position:"absolute",top:14,right:14,background:"#4A9EFF",color:"#fff",fontSize:9,fontWeight:900,padding:"3px 10px",borderRadius:20,letterSpacing:.8}}>POPULAR</div>}
+            <div style={{height:4,background:plan.color}}/>
+            <div style={{padding:"18px 16px"}}>
+              {/* Plan name + price */}
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:14}}>
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                    <span style={{fontSize:22}}>{plan.emoji}</span>
+                    <span style={{fontSize:18,fontWeight:900,color:T.text}}>{plan.name}</span>
+                  </div>
+                  <div style={{fontSize:11,color:T.muted}}>
+                    {plan.id==="free"?"No credit card needed":"Cancel anytime"}
+                  </div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:26,fontWeight:900,color:plan.color,lineHeight:1}}>
+                    {plan.id==="premium"&&billing==="yearly"?plan.yearlyPrice:plan.price}
+                  </div>
+                  <div style={{fontSize:10,color:T.muted,marginTop:2}}>
+                    {plan.id==="premium"&&billing==="yearly"?plan.yearlyPeriod:plan.period}
+                  </div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                {plan.features.map((f,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:20,height:20,borderRadius:"50%",background:f.ok?`${plan.color}20`:T.raised,border:`1px solid ${f.ok?plan.color:T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11}}>
+                      {f.ok?"✓":"✕"}
+                    </div>
+                    <span style={{fontSize:13,color:f.ok?T.text:T.muted,fontWeight:f.ok?500:400}}>{f.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA button */}
+              {plan.id==="free"?(
+                <div style={{padding:"12px 0",borderRadius:13,background:T.raised,border:`1px solid ${T.border}`,textAlign:"center",fontSize:13,fontWeight:700,color:T.muted}}>
+                  {isPremium?"Downgrade":"Current Plan ✓"}
+                </div>
+              ):(
+                isPremium?(
+                  <div style={{padding:"12px 0",borderRadius:13,background:`${"#4A9EFF"}18`,border:`1.5px solid ${"#4A9EFF"}`,textAlign:"center",fontSize:13,fontWeight:800,color:"#4A9EFF"}}>
+                    👑 Active Plan
+                  </div>
+                ):(
+                  <button onClick={()=>onUpgrade&&onUpgrade(billing)}
+                    style={{width:"100%",padding:"14px 0",borderRadius:13,background:"#4A9EFF",border:"none",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 16px #4A9EFF44"}}>
+                    Upgrade to Premium 👑
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* FAQ */}
+        <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"14px 16px",marginBottom:8}}>
+          <div style={{fontSize:12,fontWeight:800,color:T.text,marginBottom:10}}>Frequently Asked</div>
+          {[
+            {q:"Can I cancel anytime?",a:"Yes — cancel from your account settings. You keep Premium until the billing period ends."},
+            {q:"What happens to my data if I downgrade?",a:"Your convoys stay. You just won't be able to create new ones beyond 1."},
+            {q:"Is my first convoy really free forever?",a:"Yes — one convoy, free forever. No credit card needed."},
+          ].map((item,i)=>(
+            <div key={i} style={{marginBottom:i<2?10:0,paddingBottom:i<2?10:0,borderBottom:i<2?`1px solid ${T.border}`:"none"}}>
+              <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:3}}>❓ {item.q}</div>
+              <div style={{fontSize:11,color:T.muted,lineHeight:1.5}}>{item.a}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Paywall Modal — shown when free user tries to create 2nd convoy ───────────
+const PaywallModal = ({ onUpgrade, onClose }) => {
+  const T = useT();
+  return (
+    <div style={{position:"absolute",inset:0,zIndex:80,display:"flex",flexDirection:"column",background:`rgba(4,6,10,${T.isDark?.75:.5})`,backdropFilter:"blur(8px)",alignItems:"center",justifyContent:"flex-end"}}>
+      <div style={{width:"100%",background:T.surface,borderRadius:"24px 24px 0 0",padding:"24px 20px 32px",boxShadow:`0 -24px 60px rgba(74,158,255,.2)`}}>
+        <div style={{width:36,height:4,background:T.border,borderRadius:4,margin:"0 auto 20px"}}/>
+
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:44,marginBottom:10}}>👑</div>
+          <div style={{fontSize:20,fontWeight:900,color:T.text,marginBottom:8}}>Upgrade to Premium</div>
+          <div style={{fontSize:13,color:T.muted,lineHeight:1.6}}>
+            You've used your <strong style={{color:T.text}}>1 free convoy</strong>.<br/>
+            Upgrade to create unlimited convoys & trips.
+          </div>
+        </div>
+
+        {/* Mini feature list */}
+        <div style={{background:T.raised,borderRadius:14,padding:"14px",marginBottom:20,border:`1px solid ${T.border}`}}>
+          {["Unlimited convoys","Unlimited members","Trip history & analytics","Priority support"].map((f,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<3?10:0}}>
+              <span style={{fontSize:14,color:"#4A9EFF"}}>✓</span>
+              <span style={{fontSize:13,color:T.text,fontWeight:500}}>{f}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Price */}
+        <div style={{background:"#4A9EFF14",border:"1.5px solid #4A9EFF44",borderRadius:14,padding:"10px 16px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontSize:12,color:T.muted}}>Premium Plan</div>
+            <div style={{fontSize:11,color:T.muted,marginTop:1}}>₹2,499/year saves 30%</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:22,fontWeight:900,color:"#4A9EFF"}}>₹299</div>
+            <div style={{fontSize:10,color:T.muted}}>/month</div>
+          </div>
+        </div>
+
+        <button onClick={onUpgrade}
+          style={{width:"100%",padding:"15px",borderRadius:14,background:"#4A9EFF",border:"none",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 20px #4A9EFF44"}}>
+          Upgrade Now 👑
+        </button>
+        <button onClick={onClose}
+          style={{width:"100%",padding:"13px",borderRadius:14,background:T.raised,border:`1px solid ${T.border}`,color:T.sub,fontSize:14,fontWeight:700,cursor:"pointer"}}>
+          Maybe Later
+        </button>
       </div>
     </div>
   );
@@ -3163,13 +3384,15 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("convoy_user")||"null"); } catch { return null; }
   });
 
-  const [convoys,   setConvoys]   = useState(SEED);
-  const [screen,    setScreen]    = useState("home");
-  const [activeC,   setActiveC]   = useState(null);
-  const [sheet,     setSheet]     = useState(null);
-  const [delTarget, setDelTarget] = useState(null);
-  const [toast,     setToast]     = useState(null);
-  const [navTab,    setNavTab]    = useState("home");
+  const [convoys,    setConvoys]   = useState(SEED);
+  const [screen,     setScreen]    = useState("home");
+  const [activeC,    setActiveC]   = useState(null);
+  const [sheet,      setSheet]     = useState(null);
+  const [delTarget,  setDelTarget] = useState(null);
+  const [toast,      setToast]     = useState(null);
+  const [navTab,     setNavTab]    = useState("home");
+  const [isPremium,  setIsPremium] = useState(()=>!!localStorage.getItem("convoy_premium"));
+  const [showPaywall,setShowPaywall]=useState(false);
 
   // ── Global alert unread count (lifted) ──
   const [alertUnread, setAlertUnread] = useState(() => ALERT_SEED.filter(a=>a.unread).length);
@@ -3237,7 +3460,12 @@ export default function App() {
             ) : (
               <>
                 {screen==="home"&&(
-                  <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} onNew={()=>setSheet("create")}/>
+                  <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}
+                    onNew={()=>{
+                      const activeConvoys = convoys.filter(c=>c.status!=="completed").length;
+                      if(!isPremium && activeConvoys>=1){ setShowPaywall(true); }
+                      else { setSheet("create"); }
+                    }}/>
                 )}
                 {screen==="detail"&&activeC&&(
                   (convoys.find(c=>c.id===activeC.id)||activeC).status==="live"
@@ -3254,8 +3482,9 @@ export default function App() {
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
-                {screen==="profile"&&<ProfileScreen onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
+                {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
                 {screen==="join"&&<JoinConvoyScreen onAccept={()=>{setScreen("alerts");setNavTab("bell");}} onDecline={()=>{setScreen("alerts");setNavTab("bell");}} onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
               </>
@@ -3281,6 +3510,7 @@ export default function App() {
 
           {sheet!==null&&<FormSheet convoy={sheet==="create"?null:sheet} onSave={handleSave} onClose={()=>setSheet(null)} allConvoys={convoys}/>}
           {delTarget&&<DeleteSheet convoy={delTarget} onConfirm={handleDelete} onClose={()=>setDelTarget(null)}/>}
+          {showPaywall&&<PaywallModal onUpgrade={()=>{setShowPaywall(false);setScreen("pricing");}} onClose={()=>setShowPaywall(false)}/>}
 
           {toast&&(
             <div style={{position:"absolute",bottom:90,left:"50%",transform:"translateX(-50%)",background:toast.type==="warn"?T.amberLo:T.accentLo,border:`1px solid ${toast.type==="warn"?T.amber:T.accent}`,borderRadius:12,padding:"11px 18px",display:"flex",alignItems:"center",gap:9,boxShadow:"0 8px 30px rgba(0,0,0,.3)",animation:"slideUp .3s ease",whiteSpace:"nowrap",zIndex:99}}>

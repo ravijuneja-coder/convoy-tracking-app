@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(npx vite build *)",
+      "Bash(npx vite build)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 30,
+            "statusMessage": "Auto-saving to GitHub...",
+            "command": "cd /Users/ravijuneja/RaviJunejaDrive/Work/GIt/convoy-tracking && if ! git diff --quiet || ! git diff --cached --quiet || [ -n \"$(git ls-files --others --exclude-standard)\" ]; then TS=$(date \"+%Y-%m-%d %H:%M:%S\") && git add -A && git commit -m \"Auto-save: $TS\" && git push origin main 2>/dev/null; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
