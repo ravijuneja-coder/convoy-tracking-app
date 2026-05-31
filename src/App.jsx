@@ -411,7 +411,7 @@ function loadLeaflet() {
   });
 }
 
-const LiveMap = ({ members, selectedId, onSelect }) => {
+const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
   const T       = useT();
   const wrapRef = useRef(null);
   const mapRef  = useRef(null);
@@ -504,6 +504,10 @@ const LiveMap = ({ members, selectedId, onSelect }) => {
         markersRef.current[m.id] = mk;
       });
 
+      // Share map ref with parent if requested
+      if (outerMapRef) outerMapRef.current = map;
+      // Force Leaflet to recalculate container size after flex layout settles
+      setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 120);
       setReady(true);
     });
     return () => {
@@ -729,7 +733,8 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
   const T = useT();
   const [selId,      setSelId]      = useState(initialSelId);
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const [showGaps,   setShowGaps]   = useState(false); // "all gaps" mode
+  const [showGaps,   setShowGaps]   = useState(false);
+  const innerMapRef = useRef(null); // shared from LiveMap
 
   const selMember  = selId   != null ? convoy.members.find(m => m.id === selId)   : null;
   const glassLight = "rgba(255,255,255,.94)";
@@ -737,13 +742,21 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
   const glass      = T.isDark ? glassDark : glassLight;
   const shadow     = "0 4px 24px rgba(0,0,0,.45)";
 
+  // After the open animation (300ms) the flex container has its final size —
+  // tell Leaflet to recalculate so tiles fill the full area correctly.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { innerMapRef.current?.invalidateSize(); } catch(_) {}
+    }, 350);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div style={{position:"absolute",inset:0,zIndex:70,display:"flex",flexDirection:"column",background:"#080B12",animation:"fsIn .3s cubic-bezier(.2,.8,.4,1)"}}>
 
       {/* ════════════════════  MAP LAYER  ════════════════════ */}
-      <div style={{flex:1,position:"relative",overflow:"hidden"}}>
-        <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId}/>
+      <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:0}}>
+        <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId} outerMapRef={innerMapRef}/>
 
         {/* gradient overlays */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:110,background:"linear-gradient(to bottom,rgba(8,11,18,.78) 0%,transparent 100%)",pointerEvents:"none"}}/>
