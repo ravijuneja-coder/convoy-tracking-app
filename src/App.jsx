@@ -53,7 +53,7 @@ const CAR_POS = [
 ];
 const SEED = [
   { id:1,name:"Delhi Road Trip",   destination:"New Delhi",  date:"2025-06-22",time:"08:00",status:"live",     distance:287,alertKm:5,  notes:"Depart Sector 18. Fuel before highway.",   color:"#3DD68C",
-    members:[{id:1,name:"Rohan",initials:"RO",color:"#3DD68C",car:"Swift · DL4C 1234",   role:"admin", avatar:"https://randomuser.me/api/portraits/men/32.jpg"  },{id:2,name:"Rahul",initials:"RA",color:"#4A9EFF",car:"Innova · UP32 5567",  role:"member",avatar:"https://randomuser.me/api/portraits/men/45.jpg"  },{id:3,name:"Priya",initials:"PR",color:"#F5A623",car:"Creta · HR26 8890",   role:"member",avatar:"https://randomuser.me/api/portraits/women/44.jpg"},{id:4,name:"Aman", initials:"AM",color:"#C36EFF",car:"Fortuner · PB10 4412",role:"member",avatar:"https://randomuser.me/api/portraits/men/22.jpg"}]},
+    members:[{id:1,name:"Rohan",initials:"RO",color:"#3DD68C",car:"Swift · DL4C 1234",   role:"admin", avatar:"https://i.pravatar.cc/150?img=11"  },{id:2,name:"Rahul",initials:"RA",color:"#4A9EFF",car:"Innova · UP32 5567",  role:"member",avatar:"https://i.pravatar.cc/150?img=52"  },{id:3,name:"Priya",initials:"PR",color:"#F5A623",car:"Creta · HR26 8890",   role:"member",avatar:"https://i.pravatar.cc/150?img=47"},{id:4,name:"Aman", initials:"AM",color:"#C36EFF",car:"Fortuner · PB10 4412",role:"member",avatar:"https://i.pravatar.cc/150?img=68"}]},
   { id:2,name:"Goa Beach Weekend", destination:"Goa",        date:"2025-07-04",time:"06:30",status:"upcoming", distance:593,alertKm:10, notes:"Book toll tags. Leave early.",              color:"#4A9EFF",
     members:[{id:5,name:"Sneha", initials:"SN",color:"#4A9EFF",car:"Nexon · MH02 3310",  role:"admin" },{id:6,name:"Vikram",initials:"VI",color:"#9B6EFF",car:"Scorpio · KA01 8821",role:"member"}]},
   { id:3,name:"Manali Expedition", destination:"Manali, HP", date:"2025-08-15",time:"04:00",status:"upcoming", distance:536,alertKm:5,  notes:"Spare tyre. Rohtang permit required.",      color:"#9B6EFF",
@@ -85,6 +85,12 @@ const ICONS = {
   sos:"M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z",
   locate:"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
   sun:"M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z",
+  person:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z",
+  camera:"M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a4 4 0 100-8 4 4 0 000 8z",
+  phone:"M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.64A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z",
+  shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  car2:"M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v9a2 2 0 01-2 2h-1m-1 0a2 2 0 11-4 0m4 0H9m-4 0a2 2 0 11-4 0",
+  logout:"M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9",
   moon:"M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z",
 };
 
@@ -117,12 +123,13 @@ const Badge = ({ status }) => {
     </span>
   );
 };
-const Field = ({ label, value, onChange, placeholder, type="text" }) => {
+const Field = ({ label, value, onChange, placeholder, type="text", min }) => {
   const T = useT();
   return (
     <div style={{display:"flex",flexDirection:"column",gap:5}}>
       {label&&<label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>{label}</label>}
       <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
+        {...(min!==undefined?{min}:{})}
         style={{background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}
         onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
     </div>
@@ -140,282 +147,395 @@ const FieldArea = ({ label, value, onChange, placeholder }) => {
   );
 };
 
+// ── OSRM road-following route fetcher ────────────────────────────────────────
+// waypoints: [[lat,lng], ...] — returns [[lat,lng], ...] road-snapped coords
+const fetchOSRMRoute = async (waypoints) => {
+  try {
+    const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(";");
+    const res  = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`
+    );
+    const data = await res.json();
+    if (data.code === "Ok" && data.routes?.[0]) {
+      // OSRM returns [lng, lat] — flip to [lat, lng] for Leaflet
+      return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    }
+  } catch (_) {}
+  return waypoints; // straight-line fallback
+};
+
+// ── Haversine distance (km) between two lat/lng points ───────────────────────
+const haversineKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+};
+
 // ══════════════════════════════════════════════════════════════════════════════
-// LIVE MAP CANVAS  (theme-aware, resolution-matched, avatar-aware)
+// LOCATION PICKER  (search + tap on map → reverse geocode via Nominatim)
 // ══════════════════════════════════════════════════════════════════════════════
-const LiveMap = ({ members, selectedId, onSelect }) => {
-  const T      = useT();
-  const cvR    = useRef(null);
-  const wrapR  = useRef(null);
-  const raf    = useRef(null);
-  const fr     = useRef(0);
-  const pos    = useRef([]);
-  const dimR   = useRef({ W: 480, H: 280 });
-  const imgs   = useRef({});  // cache of loaded Image objects keyed by member id
+const LocationPickerMap = ({ value, onChange, onClose, accentColor, pinColor, title="Pick Destination" }) => {
+  const T = useT();
+  const accent = accentColor || T.accent;
+  const pin    = pinColor    || "#3DD68C";
+  const wrapRef     = useRef(null);
+  const mapRef      = useRef(null);
+  const markerRef   = useRef(null);
+  const searchRef   = useRef(null);
+  const searchBarRef = useRef(null);
+  const debounceRef = useRef(null);
 
-  // Preload avatar images for members that have one
-  useEffect(() => {
-    members.forEach(m => {
-      if (!m.avatar || imgs.current[m.id]) return;
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = m.avatar;
-      img.onload = () => { imgs.current[m.id] = img; };
-    });
-  }, [members]);
+  const [label,    setLabel]    = useState(value || "");
+  const [loading,  setLoading]  = useState(false);
+  const [latlng,   setLatlng]   = useState(null);
+  const [query,    setQuery]    = useState("");
+  const [results,  setResults]  = useState([]);
+  const [searching,setSearching]= useState(false);
+  const [showRes,  setShowRes]  = useState(false);
 
-  // Resize canvas to exactly match its container, sharp at any DPR
-  useEffect(() => {
-    const wrap = wrapR.current;
-    if (!wrap) return;
-    const ro = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect;
-      const dpr = window.devicePixelRatio || 1;
-      const cv  = cvR.current;
-      if (!cv) return;
-      cv.width  = Math.round(width  * dpr);
-      cv.height = Math.round(height * dpr);
-      cv.style.width  = width  + "px";
-      cv.style.height = height + "px";
-      const ctx = cv.getContext("2d");
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      dimR.current = { W: width, H: height };
-    });
-    ro.observe(wrap);
-    return () => ro.disconnect();
-  }, []);
+  const pinHtml = (color=pin) => `<div style="width:28px;height:28px;background:${color};border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 3px 12px ${color}66;"></div>`;
 
-  useEffect(() => {
-    const cv=cvR.current; if(!cv) return;
-    const ctx=cv.getContext("2d");
-
-    const draw=()=>{
-      fr.current++;
-      const f=fr.current;
-      const {W,H}=dimR.current;
-      ctx.clearRect(0,0,W,H);
-
-      // bg
-      ctx.fillStyle=T.mapBg; ctx.fillRect(0,0,W,H);
-
-      // roads
-      const roads=[[0,H*.52,W,H*.52],[W*.28,0,W*.28,H],[W*.68,0,W*.68,H],[0,H*.22,W,H*.36],[0,H*.72,W,H*.66],[0,H*.85,W*.55,H*.80]];
-      roads.forEach(([x1,y1,x2,y2])=>{
-        ctx.strokeStyle=T.mapRoad; ctx.lineWidth=14; ctx.lineCap="round";
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-        ctx.strokeStyle=T.mapDash; ctx.lineWidth=1.5; ctx.setLineDash([10,9]);
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-        ctx.setLineDash([]);
-      });
-
-      // blocks
-      ctx.fillStyle=T.mapBlock;
-      [[42,42,130,90],[195,42,110,75],[345,42,85,88],[42,195,85,115],[195,200,115,95],[42,378,150,88],[345,200,88,128],[225,378,98,82],[368,378,78,98]]
-        .forEach(([x,y,w,h])=>{ctx.beginPath();ctx.roundRect(x,y,w,h,4);ctx.fill();});
-
-      // route
-      const route=[[55,H*.52],[W*.28,H*.36],[W*.58,H*.26],[W-38,H*.20]];
-      ctx.strokeStyle=T.isDark?"rgba(61,214,140,.45)":"rgba(29,184,112,.5)"; ctx.lineWidth=3; ctx.setLineDash([8,5]);
-      ctx.beginPath(); route.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke(); ctx.setLineDash([]);
-
-      // destination
-      const [dx,dy]=[W-38,H*.20], pulse=.5+.5*Math.sin(f*.05);
-      ctx.beginPath(); ctx.arc(dx,dy,18+pulse*8,0,Math.PI*2);
-      ctx.fillStyle=T.isDark?`rgba(61,214,140,${.07+pulse*.05})`:`rgba(29,184,112,${.1+pulse*.07})`; ctx.fill();
-      ctx.beginPath(); ctx.arc(dx,dy,10,0,Math.PI*2); ctx.fillStyle=T.accent; ctx.fill();
-      ctx.fillStyle="#fff"; ctx.font="bold 9px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText("D",dx,dy);
-
-      const selIdx=selectedId!=null?members.findIndex(m=>m.id===selectedId):-1;
-      const positions=members.map((_,i)=>{
-        const b=CAR_POS[i]||{x:.5,y:.5};
-        return {x:W*b.x+Math.sin(f*.018+i*1.3)*3, y:H*b.y+Math.cos(f*.014+i*0.9)*2};
-      });
-      pos.current=positions;
-
-      // gap lines
-      if(selIdx!==-1){
-        const src=positions[selIdx];
-        members.forEach((m,i)=>{
-          if(i===selIdx) return;
-          const dst=positions[i], ld=LIVE_DATA[m.id], warn=ld&&ld.dist>4;
-          ctx.save(); ctx.setLineDash([8,6]); ctx.lineDashOffset=-(f*.55)%14;
-          ctx.strokeStyle=warn?"rgba(224,136,0,.85)":`${m.color}BB`; ctx.lineWidth=2;
-          ctx.beginPath(); ctx.moveTo(src.x,src.y); ctx.lineTo(dst.x,dst.y); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-          // pill
-          const mx=(src.x+dst.x)/2, my=(src.y+dst.y)/2, label=ld?`${ld.dist} km`:"–";
-          ctx.font="bold 10px 'DM Sans',sans-serif";
-          const tw=ctx.measureText(label).width, pw=tw+16, ph=18;
-          ctx.shadowColor="rgba(0,0,0,.3)"; ctx.shadowBlur=6;
-          ctx.fillStyle=warn?(T.isDark?"#E08800":"#E08800"):T.pillBg;
-          ctx.beginPath(); ctx.roundRect(mx-pw/2,my-ph/2,pw,ph,9); ctx.fill();
-          ctx.shadowBlur=0;
-          ctx.strokeStyle=warn?`#E0880055`:`${m.color}44`; ctx.lineWidth=1.2;
-          ctx.beginPath(); ctx.roundRect(mx-pw/2,my-ph/2,pw,ph,9); ctx.stroke();
-          ctx.fillStyle=warn?"#fff":m.color; ctx.textAlign="center"; ctx.textBaseline="middle";
-          ctx.fillText(label,mx,my);
-        });
-        const hp=.5+.5*Math.sin(f*.1);
-        ctx.beginPath(); ctx.arc(positions[selIdx].x,positions[selIdx].y,30+hp*6,0,Math.PI*2);
-        ctx.strokeStyle=`${members[selIdx].color}55`; ctx.lineWidth=2; ctx.stroke();
-      }
-
-      // ── Draw cars ─────────────────────────────────────────────────────────────
-      members.forEach((m,i)=>{
-        const p       = positions[i];
-        const isMe    = i === 0;                          // "You" = first member always
-        const isDim   = selIdx !== -1 && i !== selIdx;
-        const isSel   = i === selIdx;
-        const ld      = LIVE_DATA[m.id];
-        const moving  = ld?.memberStatus === "moving";
-
-        ctx.save();
-        ctx.globalAlpha = isDim ? .35 : 1;
-
-        // ── YOU: large pulsing beacon ring ──────────────────────────────────
-        if (isMe) {
-          const ring1 = .45 + .45 * Math.sin(f * .055);
-          const ring2 = .4  + .4  * Math.sin(f * .055 + 1.1);
-          // outer slow ring
-          ctx.beginPath(); ctx.arc(p.x, p.y, 30 + ring1 * 10, 0, Math.PI*2);
-          ctx.fillStyle = `${m.color}20`; ctx.fill();
-          // inner ring
-          ctx.beginPath(); ctx.arc(p.x, p.y, 20 + ring2 * 6, 0, Math.PI*2);
-          ctx.fillStyle = `${m.color}35`; ctx.fill();
-          // solid glow dot
-          ctx.beginPath(); ctx.arc(p.x, p.y, 16, 0, Math.PI*2);
-          ctx.fillStyle = `${m.color}55`; ctx.fill();
-        } else if (moving) {
-          // other moving cars: small glow
-          const g = .5 + .5 * Math.sin(f * .04 + i);
-          ctx.beginPath(); ctx.arc(p.x, p.y, 18 + g * 4, 0, Math.PI*2);
-          ctx.fillStyle = `${m.color}18`; ctx.fill();
-        }
-
-        // ── car body / avatar ────────────────────────────────────────────────
-        const imgObj   = imgs.current[m.id];
-        const hasAvatar = !!imgObj;
-        const R = isMe ? 16 : 13; // avatar circle radius
-
-        ctx.save();
-        ctx.translate(p.x, p.y);
-
-        if (hasAvatar) {
-          // ── PROFILE PHOTO CIRCLE ─────────────────────────────────────────
-          // coloured ring background
-          ctx.beginPath(); ctx.arc(0, 0, R + 3, 0, Math.PI*2);
-          ctx.fillStyle = m.color; ctx.fill();
-          // white border for YOU, selection ring for others
-          if (isMe) {
-            ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2.5;
-            ctx.beginPath(); ctx.arc(0, 0, R + 3, 0, Math.PI*2); ctx.stroke();
-            // crown dot above circle
-            ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(0, -(R + 10), 4, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.arc(0, -(R + 10), 2.5, 0, Math.PI*2); ctx.fill();
-          } else if (isSel) {
-            ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(0, 0, R + 3, 0, Math.PI*2); ctx.stroke();
-          }
-          // clip to circle and draw photo
-          ctx.save();
-          ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI*2); ctx.clip();
-          ctx.drawImage(imgObj, -R, -R, R * 2, R * 2);
-          ctx.restore();
-          // stopped overlay
-          if (!moving) {
-            ctx.fillStyle = "rgba(0,0,0,.5)";
-            ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(-4,-4); ctx.lineTo(4,4); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(4,-4); ctx.lineTo(-4,4); ctx.stroke();
-          }
-        } else {
-          // ── ORIGINAL CAR RECTANGLE ──────────────────────────────────────
-          ctx.rotate(-0.4 + i * .28 + (i === 3 ? -.8 : 0));
-          if (isMe) {
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.roundRect(-15,-10,30,20,6); ctx.fill();
-            ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2.5;
-            ctx.beginPath(); ctx.roundRect(-15,-10,30,20,6); ctx.stroke();
-            ctx.fillStyle = "rgba(255,255,255,.5)";
-            ctx.beginPath(); ctx.roundRect(-6,-7,12,9,2); ctx.fill();
-            ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(0,-13,4,0,Math.PI*2); ctx.fill();
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.arc(0,-13,2.5,0,Math.PI*2); ctx.fill();
-          } else {
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.roundRect(-13,-8,26,16,5); ctx.fill();
-            if (isSel) {
-              ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
-              ctx.beginPath(); ctx.roundRect(-13,-8,26,16,5); ctx.stroke();
-            }
-            ctx.fillStyle = "rgba(255,255,255,.32)";
-            ctx.beginPath(); ctx.roundRect(-5,-5,10,7,2); ctx.fill();
-          }
-          if (!moving) {
-            ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(-3,-3); ctx.lineTo(3,3); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(3,-3); ctx.lineTo(-3,3); ctx.stroke();
-          }
-        }
-        ctx.restore(); // translate
-
-        // ── NAME TAG (same style for both avatar + car) ──────────────────────
-        // vertical offset: avatar circles sit higher so tag is further down
-        const tagOffY = hasAvatar ? (isMe ? R + 10 : R + 8) : (isMe ? 19 : 15);
-        const tagY    = p.y + tagOffY;
-        const tagH    = isMe ? 20 : 17;
-
-        if (isMe) {
-          const label = "★ You";
-          ctx.font = "bold 10px 'DM Sans',sans-serif";
-          const tw = ctx.measureText(label).width + 18;
-          ctx.shadowColor = m.color; ctx.shadowBlur = 10;
-          ctx.fillStyle = m.color;
-          ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, tagH/2); ctx.fill();
-          ctx.shadowBlur = 0;
-          ctx.fillStyle = T.isDark ? "#080B12" : "#ffffff";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(label, p.x, tagY + tagH/2);
-        } else {
-          ctx.font = "bold 9px 'DM Sans',sans-serif";
-          const tw = ctx.measureText(m.name).width + 14;
-          ctx.fillStyle = T.nameBg;
-          ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, 5); ctx.fill();
-          if (isSel) {
-            ctx.strokeStyle = m.color; ctx.lineWidth = 1.2;
-            ctx.beginPath(); ctx.roundRect(p.x - tw/2, tagY, tw, tagH, 5); ctx.stroke();
-          }
-          ctx.fillStyle = m.color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(m.name, p.x, tagY + tagH/2);
-        }
-
-        ctx.restore();
-      });
-      raf.current=requestAnimationFrame(draw);
-    };
-    draw();
-    return ()=>cancelAnimationFrame(raf.current);
-  }, [members, selectedId, T]);
-
-  const onClick=e=>{
-    const cv=cvR.current; if(!cv) return;
-    const r=cv.getBoundingClientRect();
-    // logical coords — no DPR scaling needed since ctx is already scaled
-    const cx=e.clientX-r.left, cy=e.clientY-r.top;
-    let best=-1, bestD=44;
-    pos.current.forEach((p,i)=>{const d=Math.hypot(p.x-cx,p.y-cy);if(d<bestD){bestD=d;best=i;}});
-    onSelect(best===-1?null:(members[best].id===selectedId?null:members[best].id));
+  const dropPin = (L, map, lat, lng) => {
+    if (markerRef.current) markerRef.current.remove();
+    markerRef.current = L.marker([lat, lng], {
+      icon: L.divIcon({ className:"", iconSize:[28,28], iconAnchor:[14,28], html:pinHtml("#3DD68C") }),
+    }).addTo(map);
   };
 
+  // Search Nominatim
+  const doSearch = async q => {
+    if (!q.trim()) { setResults([]); setShowRes(false); return; }
+    setSearching(true); setShowRes(true);
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6&countrycodes=in`);
+      const data = await res.json();
+      setResults(data);
+    } catch { setResults([]); }
+    setSearching(false);
+  };
+
+  const onQueryChange = v => {
+    setQuery(v);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => doSearch(v), 420);
+  };
+
+  const pickResult = r => {
+    const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+    setLatlng({ lat, lng });
+    setLabel(r.display_name);
+    setQuery(r.display_name);
+    setResults([]); setShowRes(false);
+    if (mapRef.current && window.L) {
+      dropPin(window.L, mapRef.current, lat, lng);
+      mapRef.current.setView([lat, lng], 13);
+    }
+    // Pre-confirm selection so coords are available immediately
+    onChange({ label: r.display_name, lat, lng });
+  };
+
+  // Map click → reverse geocode
+  const handleMapClick = async (L, lat, lng) => {
+    setLatlng({ lat, lng });
+    setLoading(true); setShowRes(false);
+    dropPin(L, mapRef.current, lat, lng);
+    mapRef.current.panTo([lat, lng]);
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+      const data = await res.json();
+      const addr = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      setLabel(addr); setQuery(addr);
+    } catch { setLabel(`${lat.toFixed(5)}, ${lng.toFixed(5)}`); }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadLeaflet().then(L => {
+      if (mapRef.current || !wrapRef.current) return;
+      const map = L.map(wrapRef.current, {
+        zoomControl: false, attributionControl: false,
+        center: [20.5937, 78.9629], zoom: 5,
+      });
+      mapRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      map.on("click", e => handleMapClick(L, e.latlng.lat, e.latlng.lng));
+    });
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+  }, []);
+
+  const confirm = () => { if (label) { onChange({ label, lat: latlng?.lat, lng: latlng?.lng }); onClose(); } };
+
   return (
-    <div ref={wrapR} style={{width:"100%",height:"100%",position:"relative"}}>
-      <canvas ref={cvR} onClick={onClick} style={{display:"block",cursor:"pointer"}}/>
+    <div style={{position:"absolute",inset:0,zIndex:60,display:"flex",flexDirection:"column",background:T.bg,animation:"fsIn .25s ease"}}>
+
+      {/* ── Header ── */}
+      <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0,padding:"12px 14px 10px",position:"relative",zIndex:30,overflow:"visible"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <button onClick={onClose} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Ic d={ICONS.back} size={16}/>
+          </button>
+          <div style={{flex:1}}>
+            <div style={{fontSize:15,fontWeight:800,color:T.text}}>{title}</div>
+            <div style={{fontSize:11,color:T.muted}}>Search or tap anywhere on the map</div>
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div ref={searchBarRef} style={{position:"relative"}}>
+          <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",zIndex:1}}>
+            {searching
+              ? <span style={{fontSize:13}}>⏳</span>
+              : <Ic d={ICONS.search} size={15} color={T.muted}/>}
+          </div>
+          <input
+            ref={searchRef}
+            value={query}
+            onChange={e=>onQueryChange(e.target.value)}
+            onFocus={()=>query.trim()&&setShowRes(true)}
+            placeholder="Search city, landmark, area…"
+            style={{width:"100%",background:T.raised,border:`1.5px solid ${showRes&&results.length?accent:T.border}`,borderRadius:12,padding:"11px 36px 11px 38px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}
+          />
+          {query.length>0&&(
+            <button onClick={()=>{setQuery("");setResults([]);setShowRes(false);searchRef.current?.focus();}}
+              style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",padding:4}}>
+              <Ic d={ICONS.close} size={13} color={T.muted}/>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Dropdown — fixed so it always paints above Leaflet canvas ── */}
+      {showRes&&(()=>{
+        const rect = searchBarRef.current?.getBoundingClientRect();
+        const top  = rect ? rect.bottom + 6 : 120;
+        const left = rect ? rect.left        : 14;
+        const width= rect ? rect.width       : 340;
+        return (
+          <div style={{position:"fixed",top,left,width,background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,boxShadow:"0 12px 40px rgba(0,0,0,.32)",zIndex:99999,overflow:"hidden",maxHeight:260,overflowY:"auto"}}>
+            {results.length===0&&!searching&&(
+              <div style={{padding:"14px 16px",fontSize:12,color:T.muted,textAlign:"center"}}>No results found</div>
+            )}
+            {results.map((r,i)=>(
+              <button key={i} onClick={()=>pickResult(r)}
+                style={{width:"100%",padding:"11px 14px",background:"none",border:"none",borderBottom:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"flex-start",gap:10,textAlign:"left"}}>
+                <span style={{fontSize:16,flexShrink:0,marginTop:1}}>📍</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {r.address?.city||r.address?.town||r.address?.village||r.address?.county||r.name||r.display_name.split(",")[0]}
+                  </div>
+                  <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:2}}>{r.display_name}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── Map ── */}
+      <div style={{flex:1,position:"relative"}} onClick={()=>setShowRes(false)}>
+        <div ref={wrapRef} style={{width:"100%",height:"100%"}}/>
+        {/* Zoom controls */}
+        <div style={{position:"absolute",right:12,bottom:80,display:"flex",flexDirection:"column",gap:6,zIndex:10}}>
+          {["+","−"].map((lbl,i)=>(
+            <button key={i} onClick={()=>mapRef.current?.[i===0?"zoomIn":"zoomOut"]()}
+              style={{width:36,height:36,borderRadius:10,background:T.isDark?"rgba(10,13,20,.92)":"rgba(255,255,255,.94)",border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:T.text,boxShadow:"0 2px 8px rgba(0,0,0,.2)"}}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+        {/* Tap hint */}
+        {!latlng&&(
+          <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",background:T.isDark?"rgba(10,13,20,.88)":"rgba(255,255,255,.93)",borderRadius:20,padding:"7px 16px",border:`1px solid ${T.border}`,pointerEvents:"none",whiteSpace:"nowrap",boxShadow:"0 2px 12px rgba(0,0,0,.15)"}}>
+            <span style={{fontSize:11,color:T.sub}}>📍 Tap the map to drop a pin</span>
+          </div>
+        )}
+        {/* Selected pill over map */}
+        {(latlng||loading)&&(
+          <div style={{position:"absolute",top:10,left:10,right:10,background:T.isDark?"rgba(10,13,20,.92)":"rgba(255,255,255,.95)",borderRadius:12,padding:"9px 12px",border:`1px solid ${T.accent}55`,display:"flex",alignItems:"center",gap:8,zIndex:10,backdropFilter:"blur(6px)"}}>
+            <span style={{fontSize:14,flexShrink:0}}>{loading?"⏳":"✅"}</span>
+            <span style={{fontSize:11,color:T.text,flex:1,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+              {loading?"Getting address…":label}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Confirm ── */}
+      <div style={{padding:"12px 14px 20px",background:T.surface,borderTop:`1px solid ${T.border}`,flexShrink:0}}>
+        <button onClick={confirm} disabled={!label||loading}
+          style={{width:"100%",padding:"14px",borderRadius:14,background:label&&!loading?accent:T.muted,border:"none",color:label&&!loading?(T.isDark?"#080B12":"#fff"):T.surface,fontSize:14,fontWeight:800,cursor:label&&!loading?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .2s"}}>
+          <Ic d={ICONS.check} size={16} color={label&&!loading?(T.isDark?"#080B12":"#fff"):T.surface} sw={2.5}/>
+          Use This Location
+        </button>
+      </div>
     </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REAL MAP  (Leaflet + OpenStreetMap, no API key)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Delhi Road Trip live positions (real Noida → Delhi coordinates)
+const LIVE_COORDS = {
+  1: { lat: 28.5672, lng: 77.3211 }, // Rohan  — Noida Sector 18
+  2: { lat: 28.5728, lng: 77.3089 }, // Rahul  — ahead on NH-48
+  3: { lat: 28.5601, lng: 77.3310 }, // Priya  — slightly behind
+  4: { lat: 28.5490, lng: 77.3420 }, // Aman   — furthest behind
+};
+
+const LEAFLET_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+const LEAFLET_JS  = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+
+function loadLeaflet() {
+  return new Promise((resolve) => {
+    if (window.L) return resolve(window.L);
+    // CSS
+    if (!document.getElementById("lf-css")) {
+      const lnk = document.createElement("link");
+      lnk.id = "lf-css"; lnk.rel = "stylesheet"; lnk.href = LEAFLET_CSS;
+      document.head.appendChild(lnk);
+    }
+    // JS
+    if (!document.getElementById("lf-js")) {
+      const s = document.createElement("script");
+      s.id = "lf-js"; s.src = LEAFLET_JS;
+      s.onload = () => resolve(window.L);
+      document.head.appendChild(s);
+    } else {
+      const wait = setInterval(() => { if (window.L) { clearInterval(wait); resolve(window.L); } }, 50);
+    }
+  });
+}
+
+const LiveMap = ({ members, selectedId, onSelect }) => {
+  const T       = useT();
+  const wrapRef = useRef(null);
+  const mapRef  = useRef(null);
+  const markersRef = useRef({});
+  const pulseRef   = useRef({});
+  const [ready, setReady] = useState(false);
+
+  // Build marker HTML for a member
+  const markerHtml = (m, isMe, isSel) => {
+    const R   = isMe ? 38 : 32;
+    const bdr = isMe ? `border:3px solid #fff;box-shadow:0 0 0 3px ${m.color},0 4px 16px ${m.color}88`
+                     : isSel ? `border:2.5px solid #fff;box-shadow:0 0 0 2px ${m.color}`
+                     : `border:2.5px solid ${m.color};box-shadow:0 3px 10px rgba(0,0,0,.25)`;
+    const img = m.avatar
+      ? `<img src="${m.avatar}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;"/>`
+      : `<div style="width:100%;height:100%;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:${isMe?13:11}px;font-weight:800;color:#fff;font-family:DM Sans,sans-serif;">${m.initials}</div>`;
+    const pulse = isMe
+      ? `<div style="position:absolute;inset:-8px;border-radius:50%;background:${m.color}30;animation:lf-pulse 2s ease-in-out infinite;pointer-events:none;"></div>
+         <div style="position:absolute;inset:-4px;border-radius:50%;background:${m.color}20;animation:lf-pulse 2s ease-in-out infinite .6s;pointer-events:none;"></div>`
+      : "";
+    const crown = isMe
+      ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:12px;line-height:1;">★</div>` : "";
+    const label = isMe ? "★ You"  : m.name;
+    const lbgc  = isMe ? m.color  : (T.isDark ? "rgba(10,13,22,.9)" : "rgba(255,255,255,.95)");
+    const ltxtc = isMe ? (T.isDark ? "#080B12" : "#fff") : m.color;
+    return `<div style="position:relative;width:${R}px;height:${R}px;${bdr};border-radius:50%;cursor:pointer;">
+      ${pulse}${img}
+      <div style="position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:${lbgc};color:${ltxtc};font-size:${isMe?10:9}px;font-weight:800;white-space:nowrap;padding:2px 8px;border-radius:20px;font-family:DM Sans,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2);">${label}</div>
+    </div>`;
+  };
+
+  // Init map once
+  useEffect(() => {
+    loadLeaflet().then(L => {
+      if (mapRef.current || !wrapRef.current) return;
+
+      // Inject pulse keyframes once
+      if (!document.getElementById("lf-kf")) {
+        const s = document.createElement("style");
+        s.id = "lf-kf";
+        s.textContent = `@keyframes lf-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.3);opacity:.2}}`;
+        document.head.appendChild(s);
+      }
+
+      const map = L.map(wrapRef.current, {
+        zoomControl: false, attributionControl: false,
+        dragging: true, scrollWheelZoom: false, doubleClickZoom: false,
+      });
+      mapRef.current = map;
+
+      // OpenStreetMap tiles
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Fit map to all member positions
+      const latlngs = members.map(m => [LIVE_COORDS[m.id]?.lat ?? 28.57, LIVE_COORDS[m.id]?.lng ?? 77.32]);
+      map.fitBounds(L.latLngBounds(latlngs).pad(0.25));
+
+      // Road-following route via OSRM (Noida Sector 18 → New Delhi)
+      const routeWaypoints = [
+        [28.5672, 77.3211], // Noida start
+        [28.6448, 77.2167], // New Delhi destination
+      ];
+      fetchOSRMRoute(routeWaypoints).then(coords => {
+        if (!mapRef.current) return;
+        L.polyline(coords, { color: "#1DB870", weight: 5, opacity: .8 }).addTo(map);
+      });
+
+      // Destination marker
+      const destIcon = L.divIcon({
+        className: "", iconSize: [32, 32], iconAnchor: [16, 16],
+        html: `<div style="width:32px;height:32px;background:#1DB870;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 0 3px #1DB87044,0 4px 12px rgba(0,0,0,.25);">🏁</div>`,
+      });
+      L.marker([28.6448, 77.2167], { icon: destIcon }).addTo(map)
+       .bindPopup("<b>New Delhi</b><br>Destination");
+
+      // Member markers
+      members.forEach((m, idx) => {
+        const coord = LIVE_COORDS[m.id];
+        if (!coord) return;
+        const isMe = idx === 0;
+        const isSel = m.id === selectedId;
+        const icon = L.divIcon({
+          className: "", iconSize: [isMe ? 44 : 38], iconAnchor: [isMe ? 22 : 19, isMe ? 22 : 19],
+          html: markerHtml(m, isMe, isSel),
+        });
+        const mk = L.marker([coord.lat, coord.lng], { icon, zIndexOffset: isMe ? 1000 : idx * 10 }).addTo(map);
+        mk.on("click", () => onSelect(m.id === selectedId ? null : m.id));
+        markersRef.current[m.id] = mk;
+      });
+
+      setReady(true);
+    });
+    return () => {
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+    };
+  }, []);
+
+  // Update marker icons when selection changes
+  useEffect(() => {
+    if (!mapRef.current || !window.L) return;
+    const L = window.L;
+    members.forEach((m, idx) => {
+      const mk = markersRef.current[m.id];
+      if (!mk) return;
+      const isMe = idx === 0, isSel = m.id === selectedId;
+      mk.setIcon(L.divIcon({
+        className: "", iconSize: [isMe ? 44 : 38], iconAnchor: [isMe ? 22 : 19, isMe ? 22 : 19],
+        html: markerHtml(m, isMe, isSel),
+      }));
+    });
+  }, [selectedId, T]);
+
+  // Handle click on map (deselect)
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const handler = () => onSelect(null);
+    mapRef.current.on("click", handler);
+    return () => mapRef.current?.off("click", handler);
+  }, [onSelect]);
+
+  return (
+    <div ref={wrapRef} style={{ width:"100%", height:"100%", background: T.mapBg }}/>
   );
 };
 
@@ -796,7 +916,7 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // LIVE DETAIL SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
-const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
+const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy }) => {
   const T = useT();
   const [selId,    setSelId]    = useState(null);
   const [mapTab,   setMapTab]   = useState("map");
@@ -804,9 +924,52 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
   const [sosSent,   setSosSent]  = useState(false);
   const [fullMap,   setFullMap]  = useState(false);
   const [fSelId,    setFSelId]   = useState(null);
+  const [members,   setMembers]  = useState(convoy.members);
+  const [endConfirm,setEndConfirm]=useState(false);
+
+  const isAdmin = members[0]?.role === "admin"; // first member = "You"
+
+  const removeMember = id => setMembers(ms => ms.filter(m => m.id !== id));
+  const makeAdmin    = id => setMembers(ms => ms.map(m => ({
+    ...m,
+    role: m.id === id ? "admin" : m.role === "admin" ? "member" : m.role,
+  })));
+
+  // ── Simulate live GPS movement ──
+  const [livePositions, setLivePositions] = useState({...LIVE_COORDS});
+  const [liveStats, setLiveStats] = useState({...LIVE_DATA});
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLivePositions(prev => {
+        const next = {};
+        Object.keys(prev).forEach(id => {
+          next[id] = {
+            lat: prev[id].lat + (Math.random() - 0.48) * 0.0003,
+            lng: prev[id].lng + (Math.random() - 0.45) * 0.0003,
+          };
+        });
+        return next;
+      });
+      setLiveStats(prev => {
+        const next = {...prev};
+        Object.keys(next).forEach(id => {
+          if (next[id].memberStatus === "moving") {
+            next[id] = {
+              ...next[id],
+              speed: Math.max(30, Math.min(100, next[id].speed + Math.round((Math.random()-0.5)*6))),
+              dist: Math.max(0, parseFloat((next[id].dist + (Math.random()-0.4)*0.05).toFixed(1))),
+            };
+          }
+        });
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const selMember = selId!=null?convoy.members.find(m=>m.id===selId):null;
-  const selLive   = selId!=null?LIVE_DATA[selId]:null;
+  const selLive   = selId!=null?liveStats[selId]:null;
   const sender    = convoy.members[0]; // "You"
 
   const fireSos = () => { setSosOpen(false); setSosSent(true); };
@@ -877,7 +1040,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
 
             {/* speed chip */}
             <div style={{position:"absolute",top:10,right:10,background:T.isDark?"rgba(8,11,18,.85)":"rgba(255,255,255,.9)",borderRadius:10,padding:"6px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.border}`,textAlign:"right"}}>
-              <div style={{fontSize:18,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>62</div>
+              <div style={{fontSize:18,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{liveStats[1]?.speed||62}</div>
               <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:1}}>KM/H</div>
             </div>
 
@@ -913,7 +1076,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
               </div>
               <div style={{display:"flex",gap:8}}>
                 {convoy.members.filter(m=>m.id!==selId).map(m=>{
-                  const ld=LIVE_DATA[m.id], warn=ld&&ld.dist>4;
+                  const ld=liveStats[m.id], warn=ld&&ld.dist>4;
                   return (
                     <div key={m.id} style={{flex:1,background:warn?`${T.amber}14`:T.card,border:`1px solid ${warn?T.amber+"44":m.color+"30"}`,borderRadius:12,padding:"8px 6px",textAlign:"center"}}>
                       <div style={{display:"flex",justifyContent:"center",marginBottom:4}}><Avatar name={m.name} color={m.color} size={22}/></div>
@@ -931,14 +1094,18 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
           {/* member strip */}
           <div style={{padding:"10px 14px",display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",borderBottom:`1px solid ${T.border}`}}>
             {convoy.members.map(m=>{
-              const ld=LIVE_DATA[m.id], active=selId===m.id;
+              const ld=liveStats[m.id], active=selId===m.id, stopped=ld?.memberStatus==="stopped";
               return (
                 <button key={m.id} onClick={()=>setSelId(active?null:m.id)}
-                  style={{flexShrink:0,background:active?T.accentLo:T.card,border:`1.5px solid ${active?m.color:T.border}`,borderRadius:12,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:7,transition:"all .15s"}}>
-                  <Avatar name={m.name} color={m.color} size={24}/>
-                  <div style={{textAlign:"left"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:T.text}}>{m.name}</div>
-                    <div style={{fontSize:10,color:ld?.memberStatus==="stopped"?T.amber:T.accent}}>{ld?.memberStatus==="stopped"?"Stopped":`${ld?.speed} km/h`}</div>
+                  style={{flexShrink:0,background:active?T.accentLo:T.card,border:`1.5px solid ${active?m.color:T.border}`,borderRadius:14,padding:"8px 14px 8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:9,transition:"all .15s",minWidth:0}}>
+                  {/* avatar */}
+                  <div style={{width:32,height:32,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#fff",flexShrink:0,letterSpacing:-.5}}>
+                    {m.initials}
+                  </div>
+                  {/* text */}
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2,minWidth:0}}>
+                    <span style={{fontSize:12,fontWeight:700,color:T.text,whiteSpace:"nowrap"}}>{m.name}</span>
+                    <span style={{fontSize:10,fontWeight:600,color:stopped?T.amber:T.accent,whiteSpace:"nowrap"}}>{stopped?"⏸ Stopped":`${ld?.speed} km/h`}</span>
                   </div>
                 </button>
               );
@@ -947,7 +1114,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
 
           {/* stats */}
           <div style={{display:"flex",padding:"10px 14px",gap:8}}>
-            {[{label:"DISTANCE",val:`${convoy.distance}km`,c:convoy.color},{label:"AVG SPEED",val:"60 km/h",c:T.blue},{label:"ALERT GAP",val:`${convoy.alertKm}km`,c:T.amber},{label:"ETA",val:"4h 32m",c:T.violet}].map(s=>(
+            {[{label:"DISTANCE",val:`${convoy.distance}km`,c:convoy.color},{label:"AVG SPEED",val:`${Math.round(Object.values(liveStats).filter(d=>d.memberStatus==="moving").reduce((s,d)=>s+d.speed,0)/Math.max(1,Object.values(liveStats).filter(d=>d.memberStatus==="moving").length))} km/h`,c:T.blue},{label:"ALERT GAP",val:`${convoy.alertKm}km`,c:T.amber},{label:"ETA",val:"4h 32m",c:T.violet}].map(s=>(
               <div key={s.label} style={{flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"9px 6px",textAlign:"center"}}>
                 <div style={{fontSize:12,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
                 <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:3}}>{s.label}</div>
@@ -960,10 +1127,13 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
       {/* ── MEMBERS TAB ── */}
       {mapTab==="members"&&(
         <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
-          <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:10}}>Live Member Status</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>Live Member Status</div>
+            {isAdmin&&<span style={{fontSize:9,fontWeight:800,color:T.accent,background:T.accentLo,padding:"2px 8px",borderRadius:10}}>ADMIN</span>}
+          </div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {convoy.members.map((m,i)=>{
-              const ld=LIVE_DATA[m.id]||{}, moving=ld.memberStatus==="moving", warn=ld.dist>4;
+            {members.map((m,i)=>{
+              const ld=liveStats[m.id]||{}, moving=ld.memberStatus==="moving", warn=ld.dist>4;
               return (
                 <div key={m.id} style={{background:T.card,border:`1.5px solid ${warn?T.amber+"44":T.border}`,borderRadius:16,padding:"14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:m.color,borderRadius:"16px 0 0 16px"}}/>
@@ -1005,6 +1175,19 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
                         <span style={{fontSize:11,color:T.amber,fontWeight:700}}>{m.name} is {ld.dist}km behind — beyond {convoy.alertKm}km threshold</span>
                       </div>
                     )}
+                    {/* Admin controls — shown for all members except yourself (i===0) */}
+                    {isAdmin&&i!==0&&(
+                      <div style={{display:"flex",gap:8,marginTop:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
+                        <button onClick={()=>makeAdmin(m.id)}
+                          style={{flex:1,padding:"7px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:11,fontWeight:800,color:T.accent}}>
+                          {m.role==="admin"?"↩ Revoke Admin":"👑 Make Admin"}
+                        </button>
+                        <button onClick={()=>removeMember(m.id)}
+                          style={{flex:1,padding:"7px 0",borderRadius:10,background:T.redLo,border:`1px solid ${T.red}44`,cursor:"pointer",fontSize:11,fontWeight:800,color:T.red}}>
+                          🚫 Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -1042,7 +1225,8 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
       {mapTab==="info"&&(
         <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
           <div style={{background:`linear-gradient(135deg,${convoy.color}18,${convoy.color}06)`,border:`1px solid ${convoy.color}30`,borderRadius:18,padding:"16px",marginBottom:14}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            {/* Stats */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
               {[{label:"DISTANCE",val:`${convoy.distance}km`,c:convoy.color},{label:"MEMBERS",val:convoy.members.length,c:T.blue},{label:"ALERT AT",val:`${convoy.alertKm}km`,c:T.amber}].map(s=>(
                 <div key={s.label} style={{textAlign:"center"}}>
                   <div style={{fontSize:22,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
@@ -1050,10 +1234,38 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
                 </div>
               ))}
             </div>
-            <div style={{height:1,background:`${convoy.color}20`,margin:"14px 0"}}/>
-            <div style={{display:"flex",gap:16}}>
-              <div style={{fontSize:12,color:T.sub}}>📅 {convoy.date}</div>
-              <div style={{fontSize:12,color:T.sub}}>🕐 Departs {convoy.time}</div>
+
+            {/* Route card */}
+            <div style={{background:T.isDark?"rgba(0,0,0,.18)":"rgba(255,255,255,.55)",borderRadius:12,padding:"11px 12px",marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:3,flexShrink:0}}>
+                  <div style={{width:10,height:10,borderRadius:"50%",background:T.blue,boxShadow:`0 0 0 3px ${T.blue}33`}}/>
+                  <div style={{width:2,height:22,background:`linear-gradient(to bottom,${T.blue},${convoy.color})`,margin:"3px 0"}}/>
+                  <div style={{width:10,height:10,borderRadius:"50%",background:convoy.color,boxShadow:`0 0 0 3px ${convoy.color}33`}}/>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:2}}>Starting Point</div>
+                    <div style={{fontSize:12,color:T.text,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.startingPoint||"Noida Sector 18"}</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:2}}>Destination</div>
+                    <div style={{fontSize:12,color:T.text,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.destination}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Date / time */}
+            <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+              <div style={{display:"flex",alignItems:"center",gap:5}}>
+                <span style={{fontSize:13}}>📅</span>
+                <span style={{fontSize:12,color:T.sub}}>{convoy.date}{convoy.endDate&&convoy.endDate!==convoy.date?` → ${convoy.endDate}`:""}</span>
+              </div>
+              {convoy.time&&<div style={{display:"flex",alignItems:"center",gap:5}}>
+                <span style={{fontSize:13}}>🕐</span>
+                <span style={{fontSize:12,color:T.sub}}>Departs {convoy.time}</span>
+              </div>}
             </div>
           </div>
           {convoy.notes&&<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",gap:10}}>
@@ -1063,12 +1275,36 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
             <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
             </button>
+            {isAdmin&&(
+              <button onClick={()=>setEndConfirm(true)} style={{padding:"14px",borderRadius:14,background:`${T.amber}14`,border:`1.5px solid ${T.amber}`,color:T.amber,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                🏁 End Convoy Early
+              </button>
+            )}
             <button onClick={()=>onDelete(convoy)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               <Ic d={ICONS.trash} size={16} color={T.red} sw={2}/> Delete Convoy
             </button>
           </div>
         </div>
       )}
+
+      {/* ── End Convoy confirmation sheet ── */}
+      {endConfirm&&(
+        <div style={{position:"absolute",inset:0,zIndex:80,display:"flex",flexDirection:"column",background:`rgba(4,6,10,${T.isDark?.7:.4})`,backdropFilter:"blur(6px)",alignItems:"center",justifyContent:"flex-end"}}>
+          <div style={{width:"100%",background:T.surface,borderRadius:"22px 22px 0 0",padding:"24px 22px 32px",boxShadow:`0 -20px 60px rgba(0,0,0,${T.isDark?.5:.2})`}}>
+            <div style={{width:36,height:4,background:T.border,borderRadius:4,margin:"0 auto 20px"}}/>
+            <div style={{fontSize:36,textAlign:"center",marginBottom:12}}>🏁</div>
+            <div style={{fontSize:18,fontWeight:800,color:T.text,textAlign:"center",marginBottom:8}}>End Convoy Early?</div>
+            <div style={{fontSize:13,color:T.sub,textAlign:"center",lineHeight:1.6,marginBottom:22}}>
+              This will mark <strong style={{color:T.text}}>{convoy.name}</strong> as completed and notify all {members.length} members.
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setEndConfirm(false)} style={{flex:1,padding:"14px",borderRadius:14,background:T.card,border:`1px solid ${T.border}`,color:T.sub,fontSize:14,fontWeight:700,cursor:"pointer"}}>Cancel</button>
+              <button onClick={()=>{setEndConfirm(false);onEndConvoy&&onEndConvoy(convoy);}} style={{flex:1,padding:"14px",borderRadius:14,background:T.amber,border:"none",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>End Trip</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Fullscreen Map */}
       {fullMap && <FullscreenMap convoy={convoy} initialSelId={fSelId} onClose={()=>setFullMap(false)}/>}
 
@@ -1100,7 +1336,8 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"16px"}}>
         <div style={{background:`linear-gradient(135deg,${convoy.color}18,${convoy.color}06)`,border:`1px solid ${convoy.color}30`,borderRadius:18,padding:"16px",marginBottom:14}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          {/* Stats row */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
             {[{label:"DISTANCE",val:`${convoy.distance}km`,c:convoy.color},{label:"MEMBERS",val:convoy.members.length,c:T.blue},{label:"ALERT AT",val:`${convoy.alertKm}km`,c:T.amber}].map(s=>(
               <div key={s.label} style={{textAlign:"center"}}>
                 <div style={{fontSize:22,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
@@ -1108,10 +1345,40 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
               </div>
             ))}
           </div>
-          <div style={{height:1,background:`${convoy.color}20`,margin:"14px 0"}}/>
-          <div style={{display:"flex",gap:16}}>
-            <div style={{fontSize:12,color:T.sub}}>📅 {convoy.date}</div>
-            <div style={{fontSize:12,color:T.sub}}>🕐 {convoy.time}</div>
+
+          {/* Route: start → destination */}
+          <div style={{background:T.isDark?"rgba(0,0,0,.18)":"rgba(255,255,255,.55)",borderRadius:12,padding:"11px 12px",marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+              {/* Timeline dots */}
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:3,flexShrink:0}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:T.blue,boxShadow:`0 0 0 3px ${T.blue}33`}}/>
+                <div style={{width:2,height:22,background:`linear-gradient(to bottom,${T.blue},${convoy.color})`,margin:"3px 0"}}/>
+                <div style={{width:10,height:10,borderRadius:"50%",background:convoy.color,boxShadow:`0 0 0 3px ${convoy.color}33`}}/>
+              </div>
+              {/* Labels */}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:2}}>Starting Point</div>
+                  <div style={{fontSize:12,color:T.text,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.startingPoint||"Not set"}</div>
+                </div>
+                <div>
+                  <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:2}}>Destination</div>
+                  <div style={{fontSize:12,color:T.text,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.destination||"Not set"}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Date / time row */}
+          <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              <span style={{fontSize:13}}>📅</span>
+              <span style={{fontSize:12,color:T.sub}}>{convoy.date}{convoy.endDate&&convoy.endDate!==convoy.date?` → ${convoy.endDate}`:""}</span>
+            </div>
+            {convoy.time&&<div style={{display:"flex",alignItems:"center",gap:5}}>
+              <span style={{fontSize:13}}>🕐</span>
+              <span style={{fontSize:12,color:T.sub}}>{convoy.time}</span>
+            </div>}
           </div>
         </div>
         {convoy.notes&&<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",gap:10}}>
@@ -1148,20 +1415,60 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // FORM SHEET
 // ══════════════════════════════════════════════════════════════════════════════
-const FormSheet = ({ convoy, onSave, onClose }) => {
+const FormSheet = ({ convoy, onSave, onClose, allConvoys=[] }) => {
   const T=useT();
   const editing=!!convoy?.id;
-  const blank={name:"",destination:"",date:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
+  const blank={name:"",startingPoint:"",startCoords:null,destination:"",destCoords:null,distance:0,date:"",endDate:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
   const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:blank);
   const [tab,setTab]=useState("details");
-  const [mName,setMName]=useState(""); const [mCar,setMCar]=useState("");
+  const [mName,setMName]=useState(""); const [mCar,setMCar]=useState(""); const [mPhone,setMPhone]=useState("");
+  const [phoneErr,setPhoneErr]=useState(false);
+  const [showExisting,setShowExisting]=useState(false);
+  const [exSearch,setExSearch]=useState("");
+  const [showMapPicker,setShowMapPicker]=useState(false);
+  const [showStartPicker,setShowStartPicker]=useState(false);
+
+  // Deduplicated members from all other convoys, not already in current form
+  const existingPool = (() => {
+    const seen = new Set();
+    const pool = [];
+    allConvoys.forEach(c => {
+      if(c.id===convoy?.id) return;
+      c.members.forEach(m => {
+        const key = m.name.toLowerCase();
+        if(!seen.has(key) && !form.members.find(fm=>fm.name.toLowerCase()===key)){
+          seen.add(key); pool.push({...m});
+        }
+      });
+    });
+    return pool;
+  })();
+
+  const filteredPool = exSearch.trim()
+    ? existingPool.filter(m=>m.name.toLowerCase().includes(exSearch.toLowerCase())||m.car?.toLowerCase().includes(exSearch.toLowerCase()))
+    : existingPool;
+
+  const addExisting = m => {
+    if(form.members.find(fm=>fm.name.toLowerCase()===m.name.toLowerCase())) return;
+    const newM={...m,id:Date.now()+Math.random(),color:MC[form.members.length%MC.length],role:form.members.length===0?"admin":"member"};
+    set("members",[...form.members,newM]);
+  };
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const valid=form.name.trim()&&form.destination.trim()&&form.date;
+  const today=new Date().toISOString().split("T")[0];
+  const valid=form.name.trim()&&form.destination.trim()&&form.date&&form.endDate;
+  const canAdd=mName.trim()&&mPhone.trim().length>=10;
   const addMember=()=>{
     if(!mName.trim()) return;
+    if(mPhone.trim().length<10){ setPhoneErr(true); return; }
+    setPhoneErr(false);
     const initials=mName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    set("members",[...form.members,{id:Date.now(),name:mName.trim(),initials,car:mCar.trim()||"Vehicle TBD",color:MC[form.members.length%MC.length],role:form.members.length===0?"admin":"member"}]);
-    setMName(""); setMCar("");
+    const newMember={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:mCar.trim()||"Vehicle TBD",color:MC[form.members.length%MC.length],role:form.members.length===0?"admin":"member"};
+    set("members",[...form.members,newMember]);
+    // Open WhatsApp with invite link
+    const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join the "${form.name||"Convoy"}" trip on Convoy App.\n\n📍 Destination: ${form.destination||"TBD"}\n📅 Start: ${form.date||"TBD"}${form.endDate?`  →  End: ${form.endDate}`:""}\n🕐 Departure: ${form.time||"TBD"}\n\nDownload the app & join: https://convoy.app/join/link\n\nSee you on the road! 🚗`);
+    const phone=mPhone.trim().replace(/\D/g,"");
+    window.open(`https://wa.me/${phone}?text=${msg}`,"_blank");
+    setMName(""); setMCar(""); setMPhone(""); setPhoneErr(false);
   };
   return (
     <div style={{position:"absolute",inset:0,zIndex:50,display:"flex",flexDirection:"column"}}>
@@ -1188,11 +1495,51 @@ const FormSheet = ({ convoy, onSave, onClose }) => {
           {tab==="details"&&(
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
               <Field label="Convoy Name" value={form.name} onChange={v=>set("name",v)} placeholder="e.g. Delhi Road Trip"/>
-              <Field label="Destination" value={form.destination} onChange={v=>set("destination",v)} placeholder="e.g. New Delhi, India"/>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <Field label="Date" type="date" value={form.date} onChange={v=>set("date",v)}/>
-                <Field label="Time" type="time" value={form.time} onChange={v=>set("time",v)}/>
+
+              {/* Route row: Starting Point → Destination */}
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {/* Starting Point */}
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  <label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>Starting Point</label>
+                  <button onClick={()=>setShowStartPicker(true)}
+                    style={{background:T.raised,border:`1.5px solid ${form.startingPoint?T.blue:T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:form.startingPoint?T.text:T.muted,width:"100%",boxSizing:"border-box",fontFamily:"inherit",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:16,flexShrink:0}}>🟢</span>
+                    <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{form.startingPoint||"Tap to select on map"}</span>
+                    {form.startingPoint&&<Ic d={ICONS.edit} size={13} color={T.blue}/>}
+                  </button>
+                </div>
+
+                {/* Arrow connector + live distance */}
+                <div style={{display:"flex",alignItems:"center",gap:8,paddingLeft:13}}>
+                  <div style={{width:2,height:18,background:`linear-gradient(to bottom,${T.blue},${T.accent})`,borderRadius:2,flexShrink:0}}/>
+                  <span style={{fontSize:10,color:T.muted,fontWeight:600}}>to</span>
+                  {form.distance>0&&(
+                    <span style={{marginLeft:"auto",fontSize:11,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",background:T.accentLo,borderRadius:20,padding:"2px 10px",border:`1px solid ${T.accent}33`}}>
+                      {form.distance} km
+                    </span>
+                  )}
+                </div>
+
+                {/* Destination */}
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  <label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>Destination</label>
+                  <button onClick={()=>setShowMapPicker(true)}
+                    style={{background:T.raised,border:`1.5px solid ${form.destination?T.accent:T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:form.destination?T.text:T.muted,width:"100%",boxSizing:"border-box",fontFamily:"inherit",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:16,flexShrink:0}}>🏁</span>
+                    <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{form.destination||"Tap to select on map"}</span>
+                    {form.destination&&<Ic d={ICONS.edit} size={13} color={T.accent}/>}
+                  </button>
+                </div>
               </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <Field label="Start Date" type="date" value={form.date}
+                  onChange={v=>{set("date",v); if(form.endDate&&form.endDate<v) set("endDate",v);}}
+                  min={today}/>
+                <Field label="End Date" type="date" value={form.endDate}
+                  onChange={v=>set("endDate",v)}
+                  min={form.date||today}/>
+              </div>
+              <Field label="Departure Time" type="time" value={form.time} onChange={v=>set("time",v)}/>
               <div>
                 <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:8}}>Alert Distance</div>
                 <div style={{display:"flex",gap:8}}>
@@ -1226,27 +1573,110 @@ const FormSheet = ({ convoy, onSave, onClose }) => {
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {form.members.length===0&&<div style={{textAlign:"center",padding:"20px 0",fontSize:12,color:T.muted}}>No members yet.</div>}
               {form.members.map(m=>(
-                <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
-                  <Avatar name={m.name} color={m.color} size={36}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
-                      {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
+                <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 12px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:m.phone?8:0}}>
+                    <Avatar name={m.name} color={m.color} size={36}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
+                        {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
+                      </div>
+                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car}</div>
                     </div>
-                    <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car}</div>
+                    <button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <Ic d={ICONS.close} size={12} color={T.red}/>
+                    </button>
                   </div>
-                  <button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <Ic d={ICONS.close} size={12} color={T.red}/>
-                  </button>
+                  {m.phone&&(
+                    <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
+                      <Ic d={ICONS.phone} size={12} color={T.muted}/>
+                      <span style={{fontSize:11,color:T.muted,flex:1}}>{m.phone}</span>
+                      <button onClick={()=>{
+                        const msg=encodeURIComponent(`Hi ${m.name}! 👋 Reminder: join the "${form.name}" convoy trip on Convoy App.\n\nDownload & join: https://convoy.app/join/link 🚗`);
+                        window.open(`https://wa.me/${m.phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
+                      }} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#25D36614",border:"1px solid #25D36633",cursor:"pointer"}}>
+                        <span style={{fontSize:13}}>📲</span>
+                        <span style={{fontSize:10,fontWeight:800,color:"#25D366"}}>Resend</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
+              {/* ── Existing members picker ── */}
+              {existingPool.length>0&&(
+                <div style={{borderRadius:14,border:`1.5px solid ${showExisting?T.accent:T.border}`,overflow:"hidden",transition:"border-color .2s"}}>
+                  <button onClick={()=>{setShowExisting(s=>!s);setExSearch("");}}
+                    style={{width:"100%",padding:"12px 14px",background:showExisting?T.accentLo:T.card,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{width:28,height:28,borderRadius:8,background:T.accentLo,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <Ic d={ICONS.users} size={14} color={T.accent} sw={2}/>
+                      </div>
+                      <div style={{textAlign:"left"}}>
+                        <div style={{fontSize:12,fontWeight:800,color:T.accent}}>Add from existing members</div>
+                        <div style={{fontSize:10,color:T.muted,marginTop:1}}>{existingPool.length} people from your other convoys</div>
+                      </div>
+                    </div>
+                    <Ic d={showExisting?ICONS.chevron:ICONS.plus} size={14} color={T.accent} sw={2}/>
+                  </button>
+                  {showExisting&&(
+                    <div style={{borderTop:`1px solid ${T.border}`,background:T.card}}>
+                      {/* Search */}
+                      <div style={{padding:"10px 12px 6px",position:"relative"}}>
+                        <div style={{position:"absolute",left:22,top:"50%",transform:"translateY(-50%)"}}><Ic d={ICONS.search} size={13}/></div>
+                        <input value={exSearch} onChange={e=>setExSearch(e.target.value)} placeholder="Search members…"
+                          style={{width:"100%",background:T.raised,border:`1px solid ${T.border}`,borderRadius:10,padding:"8px 10px 8px 32px",fontSize:12,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                      </div>
+                      {/* Member rows */}
+                      <div style={{maxHeight:220,overflowY:"auto",padding:"0 12px 10px"}}>
+                        {filteredPool.length===0
+                          ?<div style={{textAlign:"center",padding:"16px 0",fontSize:12,color:T.muted}}>No matches</div>
+                          :filteredPool.map(m=>{
+                            const already=!!form.members.find(fm=>fm.name.toLowerCase()===m.name.toLowerCase());
+                            return(
+                              <div key={m.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:`1px solid ${T.border}`}}>
+                                {m.avatar
+                                  ?<img src={m.avatar} alt="" style={{width:36,height:36,borderRadius:"50%",objectFit:"cover",border:`2px solid ${m.color}66`,flexShrink:0}}/>
+                                  :<Avatar name={m.name} color={m.color} size={36}/>}
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</div>
+                                  <div style={{fontSize:10,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car||"Vehicle TBD"}</div>
+                                </div>
+                                <button onClick={()=>addExisting(m)} disabled={already}
+                                  style={{flexShrink:0,padding:"5px 12px",borderRadius:20,background:already?T.raised:T.accentLo,border:`1.5px solid ${already?T.border:T.accent}`,color:already?T.muted:T.accent,fontSize:11,fontWeight:800,cursor:already?"not-allowed":"pointer"}}>
+                                  {already?"Added":"+ Add"}
+                                </button>
+                              </div>
+                            );
+                          })
+                        }
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={{background:T.raised,border:`1.5px dashed ${T.borderHi}`,borderRadius:14,padding:"14px"}}>
-                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:10}}>Add Member</div>
+                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:10}}>Add New Member</div>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  <Field value={mName} onChange={setMName} placeholder="Member name"/>
-                  <Field value={mCar}  onChange={setMCar}  placeholder="Car · Number (optional)"/>
-                  <button onClick={addMember} disabled={!mName.trim()} style={{padding:"11px",borderRadius:10,background:mName.trim()?T.accentLo:T.raised,border:`1.5px solid ${mName.trim()?T.accent:T.border}`,color:mName.trim()?T.accent:T.muted,fontSize:13,fontWeight:700,cursor:mName.trim()?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                    <Ic d={ICONS.plus} size={14} color={mName.trim()?T.accent:T.muted} sw={2.2}/> Add Member
+                  <Field value={mName} onChange={v=>{setMName(v);}} placeholder="Member name"/>
+                  {/* Phone — mandatory */}
+                  <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                    <div style={{position:"relative"}}>
+                      <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none",display:"flex",alignItems:"center",gap:4}}>
+                        <span>📲</span>
+                        <span style={{fontSize:12,color:T.muted,fontWeight:600}}>+91</span>
+                      </div>
+                      <input type="tel" value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number"
+                        style={{background:T.card,border:`1.5px solid ${phoneErr?T.red:mPhone.trim().length>=10?T.accent:T.border}`,borderRadius:10,padding:"11px 13px 11px 56px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}
+                        onFocus={e=>e.target.style.borderColor=phoneErr?T.red:T.accent} onBlur={e=>e.target.style.borderColor=phoneErr?T.red:mPhone.trim().length>=10?T.accent:T.border}/>
+                    </div>
+                    {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700,paddingLeft:4}}>⚠ Valid mobile number is required</span>}
+                    <span style={{fontSize:10,color:T.muted,paddingLeft:4}}>Member will receive a WhatsApp invite with the app download link</span>
+                  </div>
+                  <Field value={mCar} onChange={setMCar} placeholder="Car · Number plate (optional)"/>
+                  <button onClick={addMember} disabled={!canAdd}
+                    style={{padding:"12px",borderRadius:10,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .15s"}}>
+                    <span style={{fontSize:16}}>📲</span> Add & Send WhatsApp Invite
                   </button>
                 </div>
               </div>
@@ -1260,6 +1690,37 @@ const FormSheet = ({ convoy, onSave, onClose }) => {
           </button>
         </div>
       </div>
+      {/* Starting point picker overlay */}
+      {showStartPicker&&(
+        <LocationPickerMap
+          value={form.startingPoint}
+          onChange={({label,lat,lng})=>{
+            const newCoords={lat,lng};
+            setForm(f=>{
+              const dist=(newCoords&&f.destCoords)?haversineKm(lat,lng,f.destCoords.lat,f.destCoords.lng):f.distance;
+              return {...f,startingPoint:label,startCoords:newCoords,distance:dist};
+            });
+          }}
+          onClose={()=>setShowStartPicker(false)}
+          accentColor={T.blue}
+          pinColor="#4A9EFF"
+          title="Pick Starting Point"
+        />
+      )}
+      {/* Destination picker overlay */}
+      {showMapPicker&&(
+        <LocationPickerMap
+          value={form.destination}
+          onChange={({label,lat,lng})=>{
+            const newCoords={lat,lng};
+            setForm(f=>{
+              const dist=(newCoords&&f.startCoords)?haversineKm(f.startCoords.lat,f.startCoords.lng,lat,lng):f.distance;
+              return {...f,destination:label,destCoords:newCoords,distance:dist};
+            });
+          }}
+          onClose={()=>setShowMapPicker(false)}
+        />
+      )}
     </div>
   );
 };
@@ -1292,34 +1753,47 @@ const DeleteSheet = ({ convoy, onConfirm, onClose }) => {
 const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
   const T=useT();
   return (
-    <div onClick={()=>onTap(convoy)} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden",cursor:"pointer",transition:"box-shadow .15s"}}
+    <div onClick={()=>onTap(convoy)} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,cursor:"pointer",transition:"box-shadow .15s",overflow:"hidden"}}
       onMouseEnter={e=>e.currentTarget.style.boxShadow=`0 4px 20px ${convoy.color}22`}
       onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
-      <div style={{height:3,background:`linear-gradient(90deg,${convoy.color},${convoy.color}44)`}}/>
+      {/* Top accent bar — clipped to card's rounded corners by overflow:hidden */}
+      <div style={{height:4,background:convoy.color}}/>
       <div style={{padding:"14px 15px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+        {/* Row 1: name + badge + actions — all vertically centered */}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:15,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:4}}>{convoy.name}</div>
-            <div style={{display:"flex",alignItems:"center",gap:5}}>
-              <Ic d={ICONS.map} size={11} color={T.muted}/>
-              <span style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.destination}</span>
-            </div>
+            <div style={{fontSize:15,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"left"}}>{convoy.name}</div>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:10,flexShrink:0}}>
-            <Badge status={convoy.status}/>
-            <button onClick={e=>{e.stopPropagation();onEdit(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Ic d={ICONS.edit} size={12} color={T.accent}/>
-            </button>
-            <button onClick={e=>{e.stopPropagation();onDelete(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Ic d={ICONS.trash} size={12} color={T.red}/>
-            </button>
-          </div>
+          <Badge status={convoy.status}/>
+          <button onClick={e=>{e.stopPropagation();onEdit(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Ic d={ICONS.edit} size={12} color={T.accent}/>
+          </button>
+          <button onClick={e=>{e.stopPropagation();onDelete(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Ic d={ICONS.trash} size={12} color={T.red}/>
+          </button>
         </div>
-        <div style={{display:"flex",gap:14,marginBottom:12}}>
-          <span style={{fontSize:11,color:T.sub}}>📅 {convoy.date}</span>
+        {/* Row 2: route (startingPoint → destination) */}
+        {convoy.startingPoint ? (
+          <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:8,overflow:"hidden"}}>
+            <span style={{fontSize:10,flexShrink:0}}>🟢</span>
+            <span style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:"0 1 auto",maxWidth:"40%"}}>{convoy.startingPoint.split(",")[0]}</span>
+            <span style={{fontSize:10,color:T.muted,flexShrink:0,margin:"0 2px"}}>→</span>
+            <span style={{fontSize:10,flexShrink:0}}>🏁</span>
+            <span style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{convoy.destination}</span>
+          </div>
+        ) : (
+          <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:8}}>
+            <Ic d={ICONS.map} size={11} color={T.muted}/>
+            <span style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.destination}</span>
+          </div>
+        )}
+        {/* Row 3: date · time · distance */}
+        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:10}}>
+          <span style={{fontSize:11,color:T.sub}}>📅 {convoy.date}{convoy.endDate&&convoy.endDate!==convoy.date?` → ${convoy.endDate}`:""}</span>
           <span style={{fontSize:11,color:T.sub}}>🕐 {convoy.time}</span>
           <span style={{fontSize:11,color:convoy.color,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{convoy.distance}km</span>
         </div>
+        {/* Row 4: avatars + member count */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <AvatarStack members={convoy.members} max={4}/>
           <div style={{display:"flex",alignItems:"center",gap:5}}>
@@ -1342,27 +1816,29 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew }) => {
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{padding:"16px 18px 12px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
             <div style={{fontSize:22,fontWeight:800,color:T.text,lineHeight:1.1}}>My Convoys</div>
             <div style={{fontSize:12,color:T.muted,marginTop:3}}>{convoys.length} trips · {live.length} live</div>
           </div>
-          <button onClick={onNew} style={{width:40,height:40,borderRadius:13,background:T.accent,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 20px ${T.accent}44`}}>
+          <button onClick={onNew} style={{width:40,height:40,borderRadius:13,background:T.accent,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 20px ${T.accent}44`,flexShrink:0}}>
             <Ic d={ICONS.plus} size={18} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
           </button>
         </div>
         {live.length>0&&(
-          <div onClick={()=>onTap(live[0])} style={{background:`linear-gradient(135deg,${live[0].color}18,${live[0].color}06)`,border:`1px solid ${live[0].color}40`,borderRadius:16,padding:"12px 14px",marginBottom:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:36,height:36,borderRadius:12,background:`${live[0].color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚗</div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                <span style={{width:6,height:6,borderRadius:"50%",background:live[0].color,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
-                <span style={{fontSize:12,fontWeight:800,color:live[0].color}}>LIVE NOW</span>
-              </div>
-              <div style={{fontSize:14,fontWeight:700,color:T.text}}>{live[0].name}</div>
-              <div style={{fontSize:11,color:T.sub}}>{live[0].members.length} members · {live[0].distance}km remaining</div>
+          <div onClick={()=>onTap(live[0])} style={{background:`linear-gradient(135deg,${live[0].color}18,${live[0].color}06)`,border:`1px solid ${live[0].color}40`,borderRadius:16,padding:"12px 14px",marginBottom:14,cursor:"pointer"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:live[0].color,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
+              <span style={{fontSize:12,fontWeight:800,color:live[0].color}}>LIVE NOW</span>
             </div>
-            <Ic d={ICONS.chevron} size={16} color={live[0].color}/>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:36,height:36,borderRadius:12,background:`${live[0].color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🚗</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color:T.text}}>{live[0].name}</div>
+                <div style={{fontSize:11,color:T.sub,marginTop:2}}>{live[0].members.length} members · {live[0].distance}km remaining</div>
+              </div>
+              <Ic d={ICONS.chevron} size={16} color={live[0].color}/>
+            </div>
           </div>
         )}
         <div style={{position:"relative",marginBottom:12}}>
@@ -1390,14 +1866,1272 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew }) => {
           </div>
         ))}
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"0 18px 10px",display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{flex:1,overflowY:"auto",padding:"0 18px 10px"}}>
         {filtered.length===0?(
           <div style={{textAlign:"center",padding:"40px 0",color:T.muted}}>
             <div style={{fontSize:36,marginBottom:12}}>🚘</div>
             <div style={{fontSize:14,fontWeight:700,color:T.sub,marginBottom:6}}>No convoys found</div>
             <div style={{fontSize:12}}>Tap + to create your first convoy</div>
           </div>
-        ):filtered.map(c=><ConvoyCard key={c.id} convoy={c} onTap={onTap} onEdit={onEdit} onDelete={onDelete}/>)}
+        ):filtered.map(c=>(
+          <div key={c.id} style={{marginBottom:12}}>
+            <ConvoyCard convoy={c} onTap={onTap} onEdit={onEdit} onDelete={onDelete}/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAP SCREEN — all convoys on one live map
+// ══════════════════════════════════════════════════════════════════════════════
+const DEST_COORDS = {
+  1: [28.6448, 77.2167], // New Delhi (live convoy destination)
+  2: [15.2993, 74.1240], // Goa
+  3: [32.2396, 77.1887], // Manali
+  4: [26.9124, 75.7873], // Jaipur
+};
+
+const MapScreen = ({ convoys, onTapConvoy }) => {
+  const T = useT();
+  const wrapRef      = useRef(null);
+  const mapRef       = useRef(null);
+  const layerGrpRef  = useRef(null); // holds all markers/polylines, cleared on filter change
+  const [selId,   setSelId]   = useState(null);
+  const [filter,  setFilter]  = useState("all");
+
+  const liveConvoy = convoys.find(c => c.status === "live");
+  const filtered   = filter === "all" ? convoys : convoys.filter(c => c.status === filter);
+
+  // ── Init map once ──
+  useEffect(() => {
+    loadLeaflet().then(L => {
+      if (mapRef.current || !wrapRef.current) return;
+      const map = L.map(wrapRef.current, {
+        zoomControl: false, attributionControl: false,
+        dragging: true, scrollWheelZoom: true,
+      });
+      mapRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      layerGrpRef.current = L.layerGroup().addTo(map);
+      map.setView([22.5, 78.9], 5);
+    });
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+  }, []);
+
+  // ── Re-render markers whenever filter changes ──
+  useEffect(() => {
+    if (!window.L) { setTimeout(() => {}, 200); return; }
+    const L = window.L;
+    if (!mapRef.current || !layerGrpRef.current) return;
+
+    layerGrpRef.current.clearLayers();
+    const bounds = [];
+
+    filtered.forEach(c => {
+      const isLive = c.status === "live";
+
+      if (isLive) {
+        // Road-following route via OSRM
+        const startCoord = LIVE_COORDS[c.members[0]?.id];
+        const destCoord  = DEST_COORDS[c.id];
+        if (startCoord && destCoord) {
+          fetchOSRMRoute([
+            [startCoord.lat, startCoord.lng],
+            destCoord,
+          ]).then(coords => {
+            if (!layerGrpRef.current) return;
+            // Add animated dashed underlay + solid overlay for a "road" look
+            L.polyline(coords, { color: c.color, weight: 5, opacity: .15 }).addTo(layerGrpRef.current);
+            L.polyline(coords, { color: c.color, weight: 3, opacity: .85 }).addTo(layerGrpRef.current);
+          });
+        }
+
+        // Member markers
+        c.members.forEach((m, i) => {
+          const coord = LIVE_COORDS[m.id];
+          if (!coord) return;
+          bounds.push([coord.lat, coord.lng]);
+          const isMe = i === 0;
+          const sz = isMe ? 40 : 34;
+          const inner = m.avatar
+            ? `<img src="${m.avatar}" crossorigin="anonymous"
+                style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;"/>`
+            : `<span style="font-size:${isMe?12:10}px;font-weight:800;color:#fff;">${m.initials}</span>`;
+          const html = `<div style="position:relative;width:${sz}px;height:${sz}px;
+            border-radius:50%;background:${m.color};border:3px solid #fff;
+            box-shadow:0 0 0 2px ${m.color},0 3px 10px rgba(0,0,0,.3);
+            display:flex;align-items:center;justify-content:center;
+            overflow:hidden;cursor:pointer;">
+            ${inner}
+            ${isMe?`<div style="position:absolute;inset:-7px;border-radius:50%;
+              background:${m.color}28;animation:lf-pulse 2s ease-in-out infinite;pointer-events:none;"></div>`:""}
+            <div style="position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);
+              background:rgba(8,11,18,.88);color:${m.color};font-size:9px;font-weight:800;
+              white-space:nowrap;padding:2px 7px;border-radius:20px;">${isMe?"★ You":m.name}</div>
+          </div>`;
+          const icon = L.divIcon({ className:"", iconSize:[isMe?40:34,isMe?40:34], iconAnchor:[isMe?20:17,isMe?20:17], html });
+          L.marker([coord.lat,coord.lng],{icon,zIndexOffset:isMe?1000:i*10}).addTo(layerGrpRef.current);
+        });
+
+        // Destination pin
+        const dc = DEST_COORDS[c.id];
+        if (dc) {
+          bounds.push(dc);
+          const dHtml = `<div style="width:32px;height:32px;background:${c.color};border-radius:50%;
+            border:3px solid #fff;display:flex;align-items:center;justify-content:center;
+            font-size:18px;box-shadow:0 0 0 3px ${c.color}44,0 4px 12px rgba(0,0,0,.25);">🏁</div>`;
+          L.marker(dc, { icon: L.divIcon({ className:"", iconSize:[32,32], iconAnchor:[16,16], html:dHtml }) })
+            .addTo(layerGrpRef.current)
+            .bindPopup(`<b>${c.destination}</b><br>Destination`);
+        }
+
+      } else {
+        // Non-live convoy: destination pin only
+        const coord = DEST_COORDS[c.id];
+        if (!coord) return;
+        bounds.push(coord);
+        const done = c.status === "completed";
+        const pinHtml = `<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+          <div style="width:38px;height:38px;border-radius:50%;background:${c.color}${done?"66":"bb"};
+            border:3px solid ${c.color};display:flex;align-items:center;justify-content:center;
+            font-size:15px;box-shadow:0 3px 12px ${c.color}44;">${done?"✓":"📍"}</div>
+          <div style="margin-top:4px;background:rgba(8,11,18,.88);color:${c.color};
+            font-size:9px;font-weight:800;white-space:nowrap;padding:2px 8px;
+            border-radius:20px;max-width:96px;overflow:hidden;text-overflow:ellipsis;">${c.name}</div>
+        </div>`;
+        const icon = L.divIcon({ className:"", iconSize:[38,38], iconAnchor:[19,19], html:pinHtml });
+        L.marker(coord, { icon }).addTo(layerGrpRef.current)
+          .on("click", () => setSelId(id => id === c.id ? null : c.id));
+      }
+    });
+
+    if (bounds.length > 0) {
+      mapRef.current.fitBounds(L.latLngBounds(bounds).pad(0.28));
+    } else {
+      mapRef.current.setView([22.5, 78.9], 5);
+    }
+    setSelId(null);
+  }, [filter, convoys]);
+
+  const selConvoy = selId ? convoys.find(c => c.id === selId) : null;
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+
+      {/* ── Header ── */}
+      <div style={{padding:"14px 16px 10px",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:17,fontWeight:800,color:T.text}}>Live Map</div>
+            <div style={{fontSize:11,color:T.muted,marginTop:1}}>{convoys.length} convoys · {convoys.filter(c=>c.status==="live").length} live</div>
+          </div>
+          {liveConvoy && (
+            <div style={{display:"flex",alignItems:"center",gap:6,background:T.accentLo,borderRadius:20,padding:"5px 12px",border:`1px solid ${T.accent}33`}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:T.accent,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
+              <span style={{fontSize:11,fontWeight:700,color:T.accent}}>LIVE</span>
+            </div>
+          )}
+        </div>
+
+        {/* Filter chips */}
+        <div style={{display:"flex",gap:7,overflowX:"auto",scrollbarWidth:"none"}}>
+          {[["all","All"],["live","Live"],["upcoming","Upcoming"],["completed","Done"]].map(([val,lbl])=>(
+            <button key={val} onClick={()=>setFilter(val)}
+              style={{flexShrink:0,padding:"5px 14px",borderRadius:20,border:`1.5px solid ${filter===val?T.accent:T.border}`,background:filter===val?T.accentLo:T.card,color:filter===val?T.accent:T.muted,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Map ── */}
+      <div style={{flex:1,position:"relative",overflow:"hidden"}}>
+        <div ref={wrapRef} style={{width:"100%",height:"100%"}}/>
+
+        {/* Zoom controls */}
+        <div style={{position:"absolute",right:12,top:12,display:"flex",flexDirection:"column",gap:6,zIndex:10}}>
+          {["+","−"].map((lbl,i)=>(
+            <button key={i} onClick={()=>mapRef.current?.[i===0?"zoomIn":"zoomOut"]()}
+              style={{width:36,height:36,borderRadius:10,background:T.isDark?"rgba(10,13,20,.92)":"rgba(255,255,255,.94)",border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:T.text,boxShadow:"0 2px 8px rgba(0,0,0,.2)"}}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
+        {/* My Location button */}
+        <button
+          onClick={()=>{
+            if (!mapRef.current || !window.L) return;
+            const L = window.L;
+            mapRef.current.locate({ setView: true, maxZoom: 15 });
+            mapRef.current.once("locationfound", e => {
+              const youHtml = `<div style="width:32px;height:32px;border-radius:50%;background:#4A9EFF;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 0 4px #4A9EFF44;">📍</div>`;
+              const youIcon = L.divIcon({ className:"", iconSize:[32,32], iconAnchor:[16,16], html:youHtml });
+              L.marker(e.latlng, { icon: youIcon }).addTo(layerGrpRef.current).bindPopup("You are here").openPopup();
+            });
+          }}
+          style={{position:"absolute",left:12,bottom:14,width:42,height:42,borderRadius:12,background:T.isDark?"rgba(10,13,20,.92)":"rgba(255,255,255,.94)",border:`1.5px solid ${T.blue}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:"0 2px 12px rgba(0,0,0,.25)",zIndex:10}}>
+          📍
+        </button>
+
+        {/* Live convoy speed chip */}
+        {liveConvoy && (
+          <div style={{position:"absolute",top:12,left:12,background:T.isDark?"rgba(10,13,20,.92)":"rgba(255,255,255,.94)",borderRadius:12,padding:"8px 12px",border:`1px solid ${T.accent}44`,backdropFilter:"blur(8px)",zIndex:10}}>
+            <div style={{fontSize:18,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>62</div>
+            <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.8}}>KM/H</div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Convoy list drawer ── */}
+      <div style={{background:T.surface,borderTop:`1px solid ${T.border}`,flexShrink:0,maxHeight:220,overflowY:"auto"}}>
+        {/* Empty state */}
+        {!selConvoy && filtered.length === 0 && (
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",gap:8}}>
+            <div style={{fontSize:32}}>🗺</div>
+            <div style={{fontSize:14,fontWeight:800,color:T.sub}}>No convoys to show</div>
+            <div style={{fontSize:11,color:T.muted,textAlign:"center"}}>Try a different filter or create a new convoy.</div>
+          </div>
+        )}
+        {/* Selected convoy detail */}
+        {selConvoy ? (
+          <div style={{padding:"12px 16px",animation:"slideDown .2s ease"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:selConvoy.color,flexShrink:0}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:800,color:T.text}}>{selConvoy.name}</div>
+                <div style={{fontSize:11,color:T.muted}}>{selConvoy.destination}</div>
+              </div>
+              <button onClick={()=>setSelId(null)} style={{background:"none",border:"none",cursor:"pointer",padding:4}}>
+                <Ic d={ICONS.close} size={14} color={T.muted}/>
+              </button>
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
+              {[{label:"DISTANCE",val:`${selConvoy.distance}km`,c:selConvoy.color},{label:"MEMBERS",val:selConvoy.members.length,c:T.blue},{label:"DATE",val:selConvoy.date,c:T.muted}].map(s=>(
+                <div key={s.label} style={{flex:1,background:T.raised,borderRadius:10,padding:"8px 6px",textAlign:"center"}}>
+                  <div style={{fontSize:13,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
+                  <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:3}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <button onClick={()=>onTapConvoy(selConvoy)}
+              style={{width:"100%",padding:"11px",borderRadius:12,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic d={ICONS.map} size={14} color={T.accent} sw={2}/> Open Convoy
+            </button>
+          </div>
+        ) : (
+          /* Horizontal scrollable convoy cards */
+          <div style={{display:"flex",gap:10,padding:"12px 16px",overflowX:"auto",scrollbarWidth:"none"}}>
+            {filtered.map(c => {
+              const live = c.status === "live";
+              return (
+                <button key={c.id} onClick={()=>{ setSelId(c.id); if(live) onTapConvoy(c); }}
+                  style={{flexShrink:0,width:130,background:T.card,border:`1.5px solid ${live?c.color:T.border}`,borderRadius:14,padding:"10px 10px 10px",cursor:"pointer",textAlign:"left",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:c.color}}/>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,marginTop:2}}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:c.color,flexShrink:0,...(live?{animation:"pulse 1.4s infinite"}:{})}}/>
+                    <span style={{fontSize:9,fontWeight:800,color:c.color,letterSpacing:.4}}>{c.status.toUpperCase()}</span>
+                  </div>
+                  <div style={{fontSize:12,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:3}}>{c.name}</div>
+                  <div style={{fontSize:10,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:6}}>{c.destination}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <AvatarStack members={c.members} max={3}/>
+                    <span style={{fontSize:10,fontWeight:700,color:c.color,fontFamily:"'Space Mono',monospace"}}>{c.distance}km</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ALERTS SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const ALERT_SEED = [
+  { id:1,  type:"sos",      convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Rohan",   avatar:"https://i.pravatar.cc/150?img=11", title:"SOS Alert",              body:"Rohan triggered an SOS on Delhi Road Trip.",          time:"2m ago",   unread:true  },
+  { id:2,  type:"gap",      convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Aman",    avatar:"https://i.pravatar.cc/150?img=68", title:"Member Too Far",         body:"Aman is 5.4 km behind — beyond the 5 km alert limit.", time:"8m ago",   unread:true  },
+  { id:3,  type:"stopped",  convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Priya",   avatar:"https://i.pravatar.cc/150?img=47", title:"Member Stopped",         body:"Priya has stopped moving for more than 3 minutes.",    time:"12m ago",  unread:true  },
+  { id:4,  type:"live",     convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Rohan",   avatar:"https://i.pravatar.cc/150?img=11", title:"Convoy Started",         body:"Delhi Road Trip is now live. 4 members tracking.",     time:"1h ago",   unread:false },
+  { id:5,  type:"joined",   convoy:"Goa Beach Weekend",convoyColor:"#4A9EFF", member:"Vikram",  avatar:null,                               title:"New Member Joined",      body:"Vikram joined Goa Beach Weekend convoy.",              time:"2h ago",   unread:false },
+  { id:6,  type:"gap",      convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Rahul",   avatar:"https://i.pravatar.cc/150?img=52", title:"Member Too Far",         body:"Rahul was 3.2 km behind the convoy leader.",          time:"3h ago",   unread:false },
+  { id:7,  type:"upcoming", convoy:"Goa Beach Weekend",convoyColor:"#4A9EFF", member:null,      avatar:null,                               title:"Trip Tomorrow",          body:"Goa Beach Weekend departs tomorrow at 06:30 AM.",      time:"1d ago",   unread:false },
+  { id:8,  type:"upcoming", convoy:"Manali Expedition",convoyColor:"#9B6EFF", member:null,      avatar:null,                               title:"Trip in 3 Weeks",        body:"Manali Expedition on 15 Aug — time to prepare!",       time:"2d ago",   unread:false },
+  { id:9,  type:"done",     convoy:"Jaipur Day Trip",  convoyColor:"#F5A623", member:null,      avatar:null,                               title:"Convoy Completed",       body:"Jaipur Day Trip completed. Total time: 5h 20m.",       time:"3w ago",   unread:false },
+  { id:10, type:"joined",   convoy:"Manali Expedition",convoyColor:"#9B6EFF", member:"Anjali",  avatar:null,                               title:"New Member Joined",      body:"Anjali joined the Manali Expedition convoy.",          time:"3w ago",   unread:false },
+];
+
+const ALERT_META = {
+  sos:      { icon:"🆘", iconBg:"#FF4F4F22", iconColor:"#FF4F4F", label:"SOS"      },
+  gap:      { icon:"⚠️", iconBg:"#F5A62322", iconColor:"#F5A623", label:"Gap"      },
+  stopped:  { icon:"⏸",  iconBg:"#F5A62322", iconColor:"#F5A623", label:"Stopped"  },
+  live:     { icon:"🟢", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Live"     },
+  joined:   { icon:"👤", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Joined"   },
+  upcoming: { icon:"📅", iconBg:"#9B6EFF22", iconColor:"#9B6EFF", label:"Upcoming" },
+  done:     { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Done"     },
+};
+
+const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin }) => {
+  const T = useT();
+  const [alerts, setAlerts] = useState(ALERT_SEED);
+  const [filter, setFilter] = useState("all"); // all | unread | sos | gap
+
+  const filtered = alerts.filter(a => {
+    if (filter === "unread") return a.unread;
+    if (filter === "sos")    return a.type === "sos";
+    if (filter === "gap")    return a.type === "gap" || a.type === "stopped";
+    return true;
+  });
+
+  const unreadCount = alerts.filter(a => a.unread).length;
+
+  // Sync unread count up to parent
+  useEffect(() => {
+    if (onAlertUnreadChange) onAlertUnreadChange(unreadCount);
+  }, [unreadCount]);
+
+  const markRead   = id  => setAlerts(as => as.map(a => a.id === id ? {...a, unread:false} : a));
+  const dismiss    = id  => setAlerts(as => as.filter(a => a.id !== id));
+  const markAllRead = () => setAlerts(as => as.map(a => ({...a, unread:false})));
+  const clearAll    = () => setAlerts([]);
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
+
+      {/* ── Header ── */}
+      <div style={{padding:"14px 16px 10px",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:17,fontWeight:800,color:T.text}}>Alerts</span>
+              {unreadCount > 0 && (
+                <span style={{background:T.red,color:"#fff",fontSize:10,fontWeight:800,borderRadius:20,padding:"2px 8px",minWidth:20,textAlign:"center"}}>{unreadCount}</span>
+              )}
+            </div>
+            <div style={{fontSize:11,color:T.muted,marginTop:2}}>{alerts.length} notifications</div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            {unreadCount > 0 && (
+              <button onClick={markAllRead}
+                style={{padding:"6px 12px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}33`,cursor:"pointer",fontSize:11,fontWeight:700,color:T.accent}}>
+                Mark all read
+              </button>
+            )}
+            {alerts.length > 0 && (
+              <button onClick={clearAll}
+                style={{padding:"6px 12px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:11,fontWeight:700,color:T.muted}}>
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter chips */}
+        <div style={{display:"flex",gap:7,overflowX:"auto",scrollbarWidth:"none"}}>
+          {[["all","All"],["unread","Unread"],["sos","SOS"],["gap","Warnings"]].map(([val,lbl])=>(
+            <button key={val} onClick={()=>setFilter(val)}
+              style={{flexShrink:0,padding:"5px 14px",borderRadius:20,border:`1.5px solid ${filter===val?T.accent:T.border}`,background:filter===val?T.accentLo:T.card,color:filter===val?T.accent:T.muted,fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+              {lbl}
+              {val==="unread"&&unreadCount>0&&<span style={{background:T.red,color:"#fff",fontSize:9,fontWeight:800,borderRadius:10,padding:"1px 5px"}}>{unreadCount}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Simulate Join Invite button ── */}
+      <div style={{padding:"10px 14px 0",flexShrink:0}}>
+        <button onClick={onGoJoin}
+          style={{width:"100%",padding:"11px 14px",borderRadius:12,background:T.blueLo,border:`1.5px solid ${T.blue}44`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:32,height:32,borderRadius:10,background:T.blueLo,border:`1px solid ${T.blue}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🚗</div>
+          <div style={{flex:1,textAlign:"left"}}>
+            <div style={{fontSize:12,fontWeight:800,color:T.blue}}>Convoy Invite — Goa Beach Weekend</div>
+            <div style={{fontSize:10,color:T.muted,marginTop:1}}>Sneha invited you · Tap to view invite</div>
+          </div>
+          <button onClick={e=>{e.stopPropagation();onGoJoin();}} style={{padding:"5px 12px",borderRadius:20,background:T.blue,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",flexShrink:0}}>View Invite</button>
+        </button>
+      </div>
+
+      {/* ── Alert list ── */}
+      <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>
+        {filtered.length === 0 ? (
+          <div style={{textAlign:"center",padding:"60px 20px",color:T.muted,display:"flex",flexDirection:"column",alignItems:"center"}}>
+            <div style={{width:72,height:72,borderRadius:20,background:T.raised,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,marginBottom:16}}>🔔</div>
+            <div style={{fontSize:16,fontWeight:800,color:T.sub,marginBottom:6}}>All caught up!</div>
+            <div style={{fontSize:12,color:T.muted,lineHeight:1.5}}>
+              {filter==="unread"?"No unread alerts right now.":filter==="sos"?"No SOS alerts.":filter==="gap"?"No distance warnings.":"You have no notifications."}
+            </div>
+          </div>
+        ) : filtered.map((a, idx) => {
+          const meta = ALERT_META[a.type] || ALERT_META.live;
+          return (
+            <div key={a.id} onClick={()=>markRead(a.id)}
+              style={{background:a.unread?T.raised:T.card,border:`1px solid ${a.unread?T.borderHi:T.border}`,borderRadius:16,padding:"13px 13px",marginBottom:10,cursor:"pointer",position:"relative",transition:"background .2s",animation:`slideDown .25s ease ${idx*.04}s both`}}>
+
+              {/* Unread dot */}
+              {a.unread && <div style={{position:"absolute",top:14,right:13,width:7,height:7,borderRadius:"50%",background:T.accent}}/>}
+
+              <div style={{display:"flex",gap:11,alignItems:"flex-start"}}>
+
+                {/* Icon or avatar */}
+                <div style={{position:"relative",flexShrink:0}}>
+                  {a.avatar ? (
+                    <img src={a.avatar} alt="" style={{width:42,height:42,borderRadius:"50%",objectFit:"cover",border:`2px solid ${a.convoyColor}66`}}/>
+                  ) : (
+                    <div style={{width:42,height:42,borderRadius:14,background:meta.iconBg,border:`1px solid ${meta.iconColor}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
+                      {meta.icon}
+                    </div>
+                  )}
+                  {/* type badge on avatar */}
+                  {a.avatar && (
+                    <div style={{position:"absolute",bottom:-2,right:-2,width:18,height:18,borderRadius:"50%",background:meta.iconBg,border:`1.5px solid ${T.card}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10}}>
+                      {meta.icon}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+                    <span style={{fontSize:13,fontWeight:800,color:a.unread?T.text:T.sub}}>{a.title}</span>
+                    <span style={{fontSize:10,color:T.muted,marginLeft:8,flexShrink:0}}>{a.time}</span>
+                  </div>
+                  <div style={{fontSize:12,color:T.muted,lineHeight:1.45,marginBottom:7}}>{a.body}</div>
+
+                  {/* Convoy tag */}
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:5,background:T.bg,borderRadius:20,padding:"3px 9px 3px 6px",border:`1px solid ${T.border}`}}>
+                      <span style={{width:6,height:6,borderRadius:"50%",background:a.convoyColor,flexShrink:0,...(a.type==="live"||a.type==="sos"||a.type==="gap"||a.type==="stopped"?{animation:"pulse 1.4s infinite"}:{})}}/>
+                      <span style={{fontSize:10,fontWeight:700,color:T.sub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120}}>{a.convoy}</span>
+                    </div>
+                    <button onClick={e=>{e.stopPropagation();dismiss(a.id);}}
+                      style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:T.muted,fontSize:11,fontWeight:700}}>
+                      <Ic d={ICONS.close} size={12} color={T.muted}/>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* SOS action bar */}
+              {a.type === "sos" && (
+                <div style={{display:"flex",gap:8,marginTop:10,paddingTop:10,borderTop:`1px solid ${T.border}`}}>
+                  <button style={{flex:1,padding:"8px 0",borderRadius:10,background:`${T.red}14`,border:`1px solid ${T.red}44`,cursor:"pointer",fontSize:11,fontWeight:800,color:T.red}}>
+                    📍 View Location
+                  </button>
+                  <button style={{flex:1,padding:"8px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:11,fontWeight:800,color:T.accent}}>
+                    🚗 I'm On My Way
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PROFILE SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const PROFILE_DEFAULT = {
+  name:"Rohan Sharma", username:"@rohan_convoy", phone:"+91 98765 43210",
+  email:"rohan@example.com", vehicle:"Swift Dzire", plate:"DL 4C 1234",
+  emergency:"+91 91234 56789", city:"New Delhi",
+  bio:"Road trip enthusiast 🚗 Love exploring new routes.",
+  avatar:"https://i.pravatar.cc/150?img=11",
+  shareLocation:true, alerts:true, lowBattery:true,
+};
+
+const ProfileScreen = ({ onSignOut, onOpenSettings }) => {
+  const T = useT();
+  const [profile,     setProfile]     = useState(PROFILE_DEFAULT);
+  const [editing,     setEditing]     = useState(false);
+  const [draft,       setDraft]       = useState(null);
+  const [saved,       setSaved]       = useState(false);
+  const [section,     setSection]     = useState("profile");
+  const [activeField, setActiveField] = useState(null); // inline field edit
+  const [fieldVal,    setFieldVal]    = useState("");
+  const inputRef = useRef(null);
+
+  const fileInputRef = useRef(null);
+
+  const startEdit  = () => { setDraft({...profile}); setEditing(true); };
+  const cancelEdit = () => { setDraft(null); setEditing(false); };
+  const saveEdit   = () => {
+    setProfile({...draft}); setEditing(false); setDraft(null);
+    setSaved(true); setTimeout(()=>setSaved(false), 2200);
+  };
+  const set = (k,v) => setDraft(d=>({...d,[k]:v}));
+
+  const handlePhotoChange = e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target.result;
+      setProfile(p => ({...p, avatar: dataUrl}));
+      if (editing) set("avatar", dataUrl);
+      setSaved(true); setTimeout(() => setSaved(false), 2200);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ""; // reset so same file can be picked again
+  };
+  const P = editing ? draft : profile;
+
+  // Inline field edit helpers
+  const openField = (field) => {
+    setActiveField(field);
+    setFieldVal(profile[field]||"");
+    setTimeout(()=>inputRef.current?.focus(), 50);
+  };
+  const saveField = () => {
+    setProfile(p=>({...p,[activeField]:fieldVal}));
+    setActiveField(null);
+    setSaved(true); setTimeout(()=>setSaved(false),2200);
+  };
+  const cancelField = () => setActiveField(null);
+
+  const TabBtn = ({id,label,icon}) => (
+    <button onClick={()=>setSection(id)} style={{flex:1,background:"none",border:"none",padding:"9px 0",fontSize:12,fontWeight:700,color:section===id?T.accent:T.muted,borderBottom:`2px solid ${section===id?T.accent:"transparent"}`,cursor:"pointer",marginBottom:-1,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+      <Ic d={icon} size={13} color={section===id?T.accent:T.muted} sw={section===id?2:1.6}/>{label}
+    </button>
+  );
+
+  const Row = ({icon,label,field,placeholder,type="text"}) => {
+    const isActive = !editing && activeField===field;
+    return (
+      <div style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          {/* Icon */}
+          <div style={{width:36,height:36,borderRadius:10,background:isActive||editing?T.accentLo:T.raised,border:`1px solid ${isActive||editing?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+            <Ic d={icon} size={15} color={isActive||editing?T.accent:T.muted}/>
+          </div>
+
+          {/* Content */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5}}>{label}</div>
+
+            {editing ? (
+              /* Global edit mode — styled input */
+              <input value={P[field]||""} onChange={e=>set(field,e.target.value)} placeholder={placeholder} type={type}
+                style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}44`,borderRadius:9,padding:"9px 11px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:"border-color .2s"}}
+                onFocus={e=>e.target.style.borderColor=T.accent}
+                onBlur={e=>e.target.style.borderColor=T.accent+"44"}/>
+            ) : isActive ? (
+              /* Inline single-field edit */
+              <input ref={inputRef} value={fieldVal} onChange={e=>setFieldVal(e.target.value)} placeholder={placeholder} type={type}
+                onKeyDown={e=>{if(e.key==="Enter")saveField();if(e.key==="Escape")cancelField();}}
+                style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:9,padding:"9px 11px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            ) : (
+              <div style={{fontSize:13,color:P[field]?T.text:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{P[field]||"Not set"}</div>
+            )}
+          </div>
+
+          {/* Inline pencil (view mode only) */}
+          {!editing&&(
+            isActive ? (
+              <div style={{display:"flex",gap:6,flexShrink:0}}>
+                <button onClick={saveField} style={{width:30,height:30,borderRadius:8,background:T.accentLo,border:`1px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <Ic d={ICONS.check} size={13} color={T.accent} sw={2.5}/>
+                </button>
+                <button onClick={cancelField} style={{width:30,height:30,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <Ic d={ICONS.close} size={13} color={T.muted}/>
+                </button>
+              </div>
+            ) : (
+              <button onClick={()=>openField(field)} style={{width:30,height:30,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <Ic d={ICONS.edit} size={12} color={T.muted}/>
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const Toggle = ({field,icon,label,sub}) => (
+    <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:`1px solid ${T.border}`}}>
+      <div style={{width:36,height:36,borderRadius:11,background:P[field]?T.accentLo:T.raised,border:`1px solid ${P[field]?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+        <Ic d={icon} size={16} color={P[field]?T.accent:T.muted}/>
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:13,fontWeight:700,color:T.text}}>{label}</div>
+        <div style={{fontSize:11,color:T.muted,marginTop:1}}>{sub}</div>
+      </div>
+      <button onClick={()=>editing?set(field,!P[field]):setProfile(prev=>({...prev,[field]:!prev[field]}))}
+        style={{width:44,height:26,borderRadius:13,background:P[field]?T.accent:T.raised,border:`1px solid ${P[field]?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
+        <div style={{width:20,height:20,borderRadius:"50%",background:P[field]?(T.isDark?"#080B12":"#fff"):"#fff",marginLeft:P[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg,position:"relative"}}>
+
+      {/* ── Header ── */}
+      <div style={{padding:"14px 18px 0",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={{fontSize:18,fontWeight:800,color:T.text}}>My Profile</div>
+          {!editing ? (
+            <button onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:10,background:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer"}}>
+              <Ic d={ICONS.edit} size={13} color={T.accent} sw={2}/>
+              <span style={{fontSize:12,fontWeight:700,color:T.accent}}>Edit</span>
+            </button>
+          ) : (
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={cancelEdit} style={{padding:"7px 14px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.sub}}>Cancel</button>
+              <button onClick={saveEdit} style={{padding:"7px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:800,color:T.isDark?"#080B12":"#fff",display:"flex",alignItems:"center",gap:5}}>
+                <Ic d={ICONS.check} size={12} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>Save
+              </button>
+            </div>
+          )}
+        </div>
+        <div style={{display:"flex",borderBottom:`1px solid ${T.border}`}}>
+          <TabBtn id="profile" label="Profile" icon={ICONS.person}/>
+          <TabBtn id="vehicle" label="Vehicle"  icon={ICONS.car2}/>
+          <TabBtn id="privacy" label="Privacy"  icon={ICONS.shield}/>
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div style={{flex:1,overflowY:"auto",padding:"0 18px 24px"}}>
+
+        {section==="profile" && (
+          <>
+            {/* Hidden file input */}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{display:"none"}}/>
+
+            {/* Avatar */}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 0 16px"}}>
+              <div style={{position:"relative",marginBottom:12}}>
+                <img src={P.avatar} alt="" style={{width:88,height:88,borderRadius:"50%",objectFit:"cover",border:`3px solid ${T.accent}`,boxShadow:`0 0 0 4px ${T.accentLo},0 8px 24px rgba(0,0,0,.3)`}}/>
+                {/* Camera button — always visible, tappable */}
+                <button onClick={()=>fileInputRef.current?.click()}
+                  style={{position:"absolute",bottom:0,right:0,width:30,height:30,borderRadius:"50%",background:T.accent,border:`2.5px solid ${T.surface}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,.25)"}}>
+                  <Ic d={ICONS.camera} size={14} color={T.isDark?"#080B12":"#fff"} sw={2}/>
+                </button>
+              </div>
+              {!editing ? (
+                <>
+                  <div style={{fontSize:20,fontWeight:900,color:T.text,marginBottom:2}}>{P.name}</div>
+                  <div style={{fontSize:12,color:T.muted,marginBottom:8}}>{P.username}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:5,background:T.accentLo,borderRadius:20,padding:"4px 14px",border:`1px solid ${T.accent}33`}}>
+                    <span style={{width:5,height:5,borderRadius:"50%",background:T.accent,display:"inline-block"}}/>
+                    <span style={{fontSize:11,fontWeight:700,color:T.accent}}>Trip Organizer</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{width:"100%",display:"flex",flexDirection:"column",gap:8}}>
+                  <input value={P.name} onChange={e=>set("name",e.target.value)} placeholder="Full name"
+                    style={{textAlign:"center",background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"9px",fontSize:14,fontWeight:700,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}
+                    onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+                  <input value={P.username} onChange={e=>set("username",e.target.value)} placeholder="@username"
+                    style={{textAlign:"center",background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"8px",fontSize:12,color:T.muted,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}
+                    onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+                </div>
+              )}
+            </div>
+
+            {/* Stats */}
+            <div style={{display:"flex",gap:8,marginBottom:16}}>
+              {[{val:"4",lbl:"Convoys"},{val:"12",lbl:"Trips"},{val:"847",lbl:"KM"},{val:"3",lbl:"Friends"}].map(s=>(
+                <div key={s.lbl} style={{flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"10px 4px",textAlign:"center"}}>
+                  <div style={{fontSize:17,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
+                  <div style={{fontSize:9,color:T.muted,fontWeight:700,marginTop:3,letterSpacing:.4}}>{s.lbl.toUpperCase()}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bio */}
+            <div style={{marginBottom:4}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:7}}>About</div>
+              {editing ? (
+                <textarea value={P.bio} onChange={e=>set("bio",e.target.value)} rows={2} placeholder="Tell your convoy friends about you…"
+                  style={{width:"100%",background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}
+                  onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+              ) : (
+                <div style={{fontSize:13,color:T.sub,lineHeight:1.55}}>{P.bio||<span style={{color:T.muted}}>No bio added yet</span>}</div>
+              )}
+            </div>
+
+            <Row icon={ICONS.phone}  label="Phone"             field="phone"     placeholder="+91 00000 00000" type="tel"/>
+            <Row icon={ICONS.note}   label="Email"             field="email"     placeholder="you@email.com"   type="email"/>
+            <Row icon={ICONS.locate} label="City"              field="city"      placeholder="Your city"/>
+            <Row icon={ICONS.sos}    label="Emergency Contact" field="emergency" placeholder="+91 00000 00000" type="tel"/>
+
+            {/* ── Refer the App ── */}
+            {!editing&&(
+              <div style={{marginTop:20,marginBottom:4}}>
+                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Refer & Earn</div>
+                <div style={{background:`linear-gradient(135deg,${T.accent}18,${T.blue}10)`,border:`1px solid ${T.accent}30`,borderRadius:18,padding:"18px 16px"}}>
+                  {/* Header */}
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                    <div style={{width:46,height:46,borderRadius:14,background:`linear-gradient(135deg,${T.accent},${T.blue})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+                      🎁
+                    </div>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:800,color:T.text}}>Invite Friends to Convoy</div>
+                      <div style={{fontSize:11,color:T.muted,marginTop:2}}>Share the app & travel together!</div>
+                    </div>
+                  </div>
+
+                  {/* Referral code */}
+                  <div style={{background:T.isDark?"rgba(0,0,0,.25)":"rgba(255,255,255,.7)",borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between",border:`1px dashed ${T.accent}55`}}>
+                    <div>
+                      <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:3}}>Your Referral Code</div>
+                      <div style={{fontSize:18,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:2}}>ROHAN287</div>
+                    </div>
+                    <button onClick={()=>{
+                      navigator.clipboard?.writeText("ROHAN287").catch(()=>{});
+                      setSaved(true); setTimeout(()=>setSaved(false),2000);
+                    }} style={{padding:"7px 14px",borderRadius:10,background:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                      <Ic d={ICONS.note} size={13} color={T.accent} sw={2}/>
+                      <span style={{fontSize:12,fontWeight:800,color:T.accent}}>Copy</span>
+                    </button>
+                  </div>
+
+                  {/* Share buttons */}
+                  <div style={{display:"flex",gap:8}}>
+                    {/* WhatsApp */}
+                    <button onClick={()=>{
+                      const msg=encodeURIComponent(`Hey! 👋 I use Convoy App to track road trips with friends. Join me using my referral code ROHAN287 and download the app here: https://convoy.app/download?ref=ROHAN287 🚗`);
+                      window.open(`https://wa.me/?text=${msg}`,"_blank");
+                    }} style={{flex:1,padding:"11px 0",borderRadius:12,background:"#25D36614",border:"1.5px solid #25D36633",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                      <span style={{fontSize:18}}>💬</span>
+                      <span style={{fontSize:12,fontWeight:800,color:"#25D366"}}>WhatsApp</span>
+                    </button>
+
+                    {/* Native share / copy link */}
+                    <button onClick={()=>{
+                      const shareData={title:"Join Convoy App",text:"Track road trips with your convoy! Use my code ROHAN287",url:"https://convoy.app/download?ref=ROHAN287"};
+                      if(navigator.share){navigator.share(shareData).catch(()=>{});}
+                      else{navigator.clipboard?.writeText(shareData.url).catch(()=>{});}
+                    }} style={{flex:1,padding:"11px 0",borderRadius:12,background:T.raised,border:`1.5px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                      <span style={{fontSize:18}}>🔗</span>
+                      <span style={{fontSize:12,fontWeight:800,color:T.sub}}>Share Link</span>
+                    </button>
+                  </div>
+
+                  {/* SMS invite */}
+                  <button onClick={()=>{
+                    const msg=encodeURIComponent(`Join me on Convoy App! Use code ROHAN287 to download: https://convoy.app/download?ref=ROHAN287`);
+                    window.open(`sms:?body=${msg}`,"_blank");
+                  }} style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,background:T.raised,border:`1.5px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                    <span style={{fontSize:18}}>📱</span>
+                    <span style={{fontSize:12,fontWeight:800,color:T.sub}}>Invite via SMS</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {section==="vehicle" && (
+          <>
+            <div style={{background:`linear-gradient(135deg,${T.accent}14,${T.accent}05)`,border:`1px solid ${T.accent}30`,borderRadius:20,padding:"20px",margin:"16px 0 18px",textAlign:"center"}}>
+              <div style={{fontSize:44,marginBottom:10}}>🚗</div>
+              <div style={{fontSize:18,fontWeight:800,color:T.text,marginBottom:6}}>{P.vehicle||"No vehicle set"}</div>
+              <div style={{display:"inline-flex",background:T.isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)",borderRadius:10,padding:"6px 18px"}}>
+                <span style={{fontSize:15,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:2}}>{P.plate||"— — —"}</span>
+              </div>
+            </div>
+            <Row icon={ICONS.car2} label="Vehicle Model" field="vehicle" placeholder="e.g. Swift Dzire"/>
+            <Row icon={ICONS.flag} label="Number Plate"  field="plate"   placeholder="e.g. DL 4C 1234"/>
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Active Convoys</div>
+              {[{name:"Delhi Road Trip",st:"live",c:"#3DD68C"},{name:"Goa Beach Weekend",st:"upcoming",c:"#4A9EFF"}].map(cv=>(
+                <div key={cv.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px",background:T.card,borderRadius:14,marginBottom:8,border:`1px solid ${T.border}`}}>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:cv.c,flexShrink:0,...(cv.st==="live"?{animation:"pulse 1.4s infinite"}:{})}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.text}}>{cv.name}</div>
+                    <div style={{fontSize:10,color:T.muted,marginTop:1}}>{cv.st==="live"?"Currently Live":"Upcoming"}</div>
+                  </div>
+                  <Ic d={ICONS.chevron} size={13} color={T.muted}/>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {section==="privacy" && (
+          <>
+            <div style={{padding:"16px 0 4px",fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Tracking & Alerts</div>
+            <Toggle field="shareLocation" icon={ICONS.locate} label="Share Live Location" sub="Visible to convoy members during trips"/>
+            <Toggle field="alerts"        icon={ICONS.bell}   label="Distance Alerts"      sub="Notify when members are too far"/>
+            <Toggle field="lowBattery"    icon={ICONS.shield} label="Low Battery Warnings" sub="Alert others when battery below 20%"/>
+
+            <div style={{padding:"20px 0 4px",fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Account</div>
+            {[{icon:ICONS.bell,label:"App Settings",action:onOpenSettings},{icon:ICONS.note,label:"Terms of Service",action:null},{icon:ICONS.shield,label:"Privacy Policy",action:null}].map(item=>(
+              <div key={item.label} onClick={item.action||undefined} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 0",borderBottom:`1px solid ${T.border}`,cursor:item.action?"pointer":"default"}}>
+                <div style={{width:36,height:36,borderRadius:11,background:item.action?T.accentLo:T.raised,border:`1px solid ${item.action?T.accent+"33":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Ic d={item.icon} size={16} color={item.action?T.accent:T.muted}/>
+                </div>
+                <span style={{flex:1,fontSize:13,fontWeight:700,color:item.action?T.text:T.text}}>{item.label}</span>
+                <Ic d={ICONS.chevron} size={14} color={T.muted}/>
+              </div>
+            ))}
+            <button onClick={onSignOut} style={{width:"100%",marginTop:20,padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}44`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic d={ICONS.logout} size={16} color={T.red} sw={2}/>
+              <span style={{fontSize:14,fontWeight:800,color:T.red}}>Sign Out</span>
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* ── Sticky Save/Cancel bar when global edit is active ── */}
+      {editing&&(
+        <div style={{padding:"12px 18px 16px",background:T.surface,borderTop:`1px solid ${T.border}`,flexShrink:0,display:"flex",gap:10,animation:"slideDown .2s ease"}}>
+          <button onClick={cancelEdit}
+            style={{flex:1,padding:"13px",borderRadius:13,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:14,fontWeight:700,color:T.sub}}>
+            Cancel
+          </button>
+          <button onClick={saveEdit}
+            style={{flex:2,padding:"13px",borderRadius:13,background:T.accent,border:"none",cursor:"pointer",fontSize:14,fontWeight:800,color:T.isDark?"#080B12":"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={15} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            Save Changes
+          </button>
+        </div>
+      )}
+
+      {/* Save toast */}
+      {saved&&!editing&&(
+        <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",background:T.accentLo,border:`1px solid ${T.accent}`,borderRadius:12,padding:"10px 18px",display:"flex",alignItems:"center",gap:8,boxShadow:"0 8px 24px rgba(0,0,0,.3)",animation:"slideUp .3s ease",whiteSpace:"nowrap",zIndex:50}}>
+          <Ic d={ICONS.check} size={14} color={T.accent} sw={2.5}/>
+          <span style={{fontSize:13,fontWeight:700,color:T.accent}}>Profile saved!</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ONBOARDING / LOGIN SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const OnboardingScreen = ({ onDone }) => {
+  const T = useT();
+  const [tab, setTab] = useState("signin"); // "signin" | "signup"
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+
+  const handleSubmit = () => {
+    if (tab === "signup" && !name.trim()) { setErr("Please enter your name."); return; }
+    if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit phone number."); return; }
+    if (!password.trim() || password.length < 4) { setErr("Password must be at least 4 characters."); return; }
+    setErr("");
+    const user = { name: tab === "signup" ? name.trim() : (JSON.parse(localStorage.getItem("convoy_user")||"null")?.name || "User"), phone: phone.trim() };
+    localStorage.setItem("convoy_user", JSON.stringify(user));
+    localStorage.setItem("convoy_authed", "1");
+    onDone(user);
+  };
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
+      {/* Hero */}
+      <div style={{background:`linear-gradient(160deg,${T.accent}22,${T.blue}12)`,padding:"40px 24px 28px",textAlign:"center",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <div style={{fontSize:44,marginBottom:10}}>🚗</div>
+        <div style={{fontSize:26,fontWeight:900,color:T.text,letterSpacing:.5,lineHeight:1.1}}>Welcome to Convoy</div>
+        <div style={{fontSize:13,color:T.muted,marginTop:8,lineHeight:1.5}}>Plan & track group road trips together</div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        {[["signin","Sign In"],["signup","Sign Up"]].map(([id,lbl])=>(
+          <button key={id} onClick={()=>{setTab(id);setErr("");}} style={{flex:1,background:"none",border:"none",padding:"12px 0",fontSize:14,fontWeight:700,color:tab===id?T.accent:T.muted,borderBottom:`2px solid ${tab===id?T.accent:"transparent"}`,marginBottom:-1,cursor:"pointer"}}>{lbl}</button>
+        ))}
+      </div>
+
+      {/* Form */}
+      <div style={{flex:1,overflowY:"auto",padding:"24px 22px"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          {tab === "signup" && (
+            <Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your name"/>
+          )}
+          <Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
+          <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 4 characters" type="password"/>
+
+          {err && <div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
+
+          <button onClick={handleSubmit}
+            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            {tab === "signin" ? "Sign In" : "Create Account"}
+          </button>
+
+          <div style={{textAlign:"center",fontSize:12,color:T.muted,marginTop:4}}>
+            {tab === "signin" ? "Don't have an account? " : "Already have an account? "}
+            <button onClick={()=>{setTab(tab==="signin"?"signup":"signin");setErr("");}} style={{background:"none",border:"none",color:T.accent,fontWeight:700,cursor:"pointer",fontSize:12,padding:0}}>{tab==="signin"?"Sign Up":"Sign In"}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SETTINGS SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const SETTINGS_DEFAULT = {
+  notifyDistanceAlert: true,
+  notifySOS: true,
+  notifyMemberJoin: true,
+  notifyConvoyStart: true,
+  locationInterval: 10,   // seconds: 5 | 10 | 30 | 60
+  unit: "km",             // "km" | "mi"
+  autoEndConvoy: false,
+};
+
+const SettingsScreen = ({ onBack }) => {
+  const T = useT();
+  const [s, setS] = useState(() => {
+    try { return {...SETTINGS_DEFAULT,...JSON.parse(localStorage.getItem("convoy_settings")||"{}")}; }
+    catch { return SETTINGS_DEFAULT; }
+  });
+  const [saved, setSaved] = useState(false);
+
+  const upd = (k, v) => {
+    const next = {...s, [k]: v};
+    setS(next);
+    localStorage.setItem("convoy_settings", JSON.stringify(next));
+    setSaved(true); setTimeout(() => setSaved(false), 1600);
+  };
+
+  const Toggle = ({field, label, sub, icon}) => (
+    <div style={{display:"flex",alignItems:"center",gap:12,padding:"13px 0",borderBottom:`1px solid ${T.border}`}}>
+      <div style={{width:36,height:36,borderRadius:11,background:s[field]?T.accentLo:T.raised,border:`1px solid ${s[field]?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:16}}>
+        {icon}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:13,fontWeight:700,color:T.text}}>{label}</div>
+        {sub&&<div style={{fontSize:11,color:T.muted,marginTop:1}}>{sub}</div>}
+      </div>
+      <button onClick={()=>upd(field,!s[field])}
+        style={{width:44,height:26,borderRadius:13,background:s[field]?T.accent:T.raised,border:`1px solid ${s[field]?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
+        <div style={{width:20,height:20,borderRadius:"50%",background:s[field]?(T.isDark?"#080B12":"#fff"):"#fff",marginLeft:s[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
+      {/* Header */}
+      <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12,background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <button onClick={onBack} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={ICONS.back} size={16}/>
+        </button>
+        <div style={{flex:1}}>
+          <div style={{fontSize:16,fontWeight:800,color:T.text}}>Settings</div>
+          <div style={{fontSize:11,color:T.muted}}>App preferences & notifications</div>
+        </div>
+        {saved&&<span style={{fontSize:11,fontWeight:700,color:T.accent}}>✓ Saved</span>}
+      </div>
+
+      <div style={{flex:1,overflowY:"auto",padding:"0 18px 24px"}}>
+
+        {/* Notifications */}
+        <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",padding:"18px 0 4px"}}>Notifications</div>
+        <Toggle field="notifySOS"          label="SOS Alerts"            sub="Immediate alert when a member sends SOS"     icon="🆘"/>
+        <Toggle field="notifyDistanceAlert" label="Distance Warnings"     sub="Notify when a member exceeds the gap limit"  icon="⚠️"/>
+        <Toggle field="notifyMemberJoin"   label="Member Joined"         sub="Alert when someone joins your convoy"        icon="👤"/>
+        <Toggle field="notifyConvoyStart"  label="Convoy Started"        sub="Notify when a trip goes live"               icon="🚗"/>
+
+        {/* Location */}
+        <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",padding:"20px 0 8px"}}>Location Sharing</div>
+        <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"14px"}}>
+          <div style={{fontSize:13,fontWeight:700,color:T.text,marginBottom:4}}>Update Interval</div>
+          <div style={{fontSize:11,color:T.muted,marginBottom:12}}>How often your location is shared with convoy members</div>
+          <div style={{display:"flex",gap:8}}>
+            {[5,10,30,60].map(v=>(
+              <button key={v} onClick={()=>upd("locationInterval",v)}
+                style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${s.locationInterval===v?T.accent:T.border}`,background:s.locationInterval===v?T.accentLo:T.raised,color:s.locationInterval===v?T.accent:T.muted,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                {v}s
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Units */}
+        <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",padding:"20px 0 8px"}}>Distance Units</div>
+        <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"14px"}}>
+          <div style={{display:"flex",gap:10}}>
+            {[["km","Kilometres (km)"],["mi","Miles (mi)"]].map(([val,lbl])=>(
+              <button key={val} onClick={()=>upd("unit",val)}
+                style={{flex:1,padding:"12px 0",borderRadius:12,border:`1.5px solid ${s.unit===val?T.accent:T.border}`,background:s.unit===val?T.accentLo:T.raised,color:s.unit===val?T.accent:T.muted,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Other */}
+        <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",padding:"20px 0 4px"}}>Trip Behaviour</div>
+        <Toggle field="autoEndConvoy" label="Auto-end when all arrive" sub="Convoy marks complete when everyone reaches destination" icon="🏁"/>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TRIP SUMMARY SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const TripSummaryScreen = ({ convoy, onClose, onBack }) => {
+  const T = useT();
+  const wrapRef = useRef(null);
+  const mapRef  = useRef(null);
+  const [shared, setShared] = useState(false);
+
+  const totalMembers = convoy.members.length;
+  const totalHours   = convoy.distance ? Math.round(convoy.distance / 55 * 10) / 10 : 5.3;
+  const avgSpeed     = convoy.distance ? Math.round(convoy.distance / totalHours) : 53;
+  const fuelEst      = convoy.distance ? Math.round(convoy.distance * 0.085) : 24; // ~8.5L/100km
+
+  useEffect(() => {
+    loadLeaflet().then(L => {
+      if (mapRef.current || !wrapRef.current) return;
+      const map = L.map(wrapRef.current, {
+        zoomControl: false, attributionControl: false,
+        dragging: false, scrollWheelZoom: false,
+        center: [28.60, 77.27], zoom: 10,
+      });
+      mapRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+
+      const startPt = DEST_COORDS[1] || [28.5672, 77.3211];
+      const endPt   = DEST_COORDS[1] || [28.6448, 77.2167];
+
+      fetchOSRMRoute([[28.5672,77.3211],[28.6448,77.2167]]).then(coords => {
+        if (!mapRef.current) return;
+        L.polyline(coords, { color: convoy.color, weight: 4, opacity: .85 }).addTo(map);
+
+        // Start marker
+        L.marker([28.5672,77.3211], { icon: L.divIcon({ className:"", iconSize:[24,24], iconAnchor:[12,12],
+          html:`<div style="width:24px;height:24px;background:${T.blue};border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.3);">🟢</div>` }) }).addTo(map);
+
+        // End marker
+        L.marker([28.6448,77.2167], { icon: L.divIcon({ className:"", iconSize:[28,28], iconAnchor:[14,14],
+          html:`<div style="width:28px;height:28px;background:${convoy.color};border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);">🏁</div>` }) }).addTo(map);
+
+        map.fitBounds(L.latLngBounds([[28.5672,77.3211],[28.6448,77.2167]]).pad(0.25));
+      });
+    });
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+  }, []);
+
+  const handleShare = () => {
+    const text = `🚗 Trip Complete!\n${convoy.name}\n📍 ${convoy.startingPoint||"Start"} → ${convoy.destination}\n📏 ${convoy.distance}km · ⏱ ${totalHours}h · 👥 ${totalMembers} members\n\nShared via Convoy App`;
+    if (navigator.share) navigator.share({ title: convoy.name, text }).catch(()=>{});
+    else navigator.clipboard?.writeText(text).catch(()=>{});
+    setShared(true); setTimeout(()=>setShared(false), 2000);
+  };
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
+      {/* Header */}
+      <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12,background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <button onClick={onBack||onClose} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={ICONS.back} size={16}/>
+        </button>
+        <div style={{flex:1}}>
+          <div style={{fontSize:16,fontWeight:800,color:T.text}}>Trip Summary</div>
+          <div style={{fontSize:11,color:T.accent,fontWeight:700}}>✓ Completed</div>
+        </div>
+        <button onClick={handleShare}
+          style={{padding:"7px 14px",borderRadius:10,background:shared?T.accentLo:T.raised,border:`1.5px solid ${shared?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:14}}>🔗</span>
+          <span style={{fontSize:12,fontWeight:700,color:shared?T.accent:T.sub}}>{shared?"Copied!":"Share"}</span>
+        </button>
+      </div>
+
+      <div style={{flex:1,overflowY:"auto"}}>
+        {/* Hero banner */}
+        <div style={{background:`linear-gradient(135deg,${convoy.color}22,${convoy.color}08)`,padding:"24px 18px 18px",borderBottom:`1px solid ${convoy.color}30`,textAlign:"center"}}>
+          <div style={{fontSize:42,marginBottom:8}}>🎉</div>
+          <div style={{fontSize:18,fontWeight:900,color:T.text,marginBottom:4}}>{convoy.name}</div>
+          <div style={{fontSize:12,color:T.muted}}>{convoy.date}{convoy.endDate&&convoy.endDate!==convoy.date?` → ${convoy.endDate}`:""}</div>
+        </div>
+
+        {/* Stats grid */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"16px 16px 0"}}>
+          {[
+            {icon:"📏",label:"Distance",val:`${convoy.distance} km`,c:convoy.color},
+            {icon:"⏱",label:"Trip Duration",val:`${totalHours}h`,c:T.blue},
+            {icon:"⚡",label:"Avg Speed",val:`${avgSpeed} km/h`,c:T.violet},
+            {icon:"👥",label:"Members",val:totalMembers,c:T.accent},
+            {icon:"⛽",label:"Est. Fuel",val:`~${fuelEst}L`,c:T.amber},
+            {icon:"📅",label:"Days",val:convoy.endDate&&convoy.endDate!==convoy.date?`${Math.ceil((new Date(convoy.endDate)-new Date(convoy.date))/(1000*60*60*24))+1} days`:"1 day",c:T.blue},
+          ].map(s=>(
+            <div key={s.label} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"14px 12px",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:22,flexShrink:0}}>{s.icon}</span>
+              <div>
+                <div style={{fontSize:16,fontWeight:900,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:10,color:T.muted,fontWeight:700,marginTop:3}}>{s.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Route map */}
+        <div style={{margin:"16px 16px 0",borderRadius:16,overflow:"hidden",border:`1px solid ${T.border}`,height:180}}>
+          <div ref={wrapRef} style={{width:"100%",height:"100%"}}/>
+        </div>
+
+        {/* Route label */}
+        <div style={{margin:"10px 16px 0",background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:10,height:10,borderRadius:"50%",background:T.blue,flexShrink:0}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.startingPoint||"Starting Point"}</div>
+          </div>
+          <div style={{fontSize:12,color:T.muted,flexShrink:0}}>→</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,color:T.text,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{convoy.destination}</div>
+          </div>
+          <div style={{width:10,height:10,borderRadius:"50%",background:convoy.color,flexShrink:0}}/>
+        </div>
+
+        {/* Members who completed */}
+        <div style={{padding:"16px 16px 0"}}>
+          <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:10}}>Completed Together</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {convoy.members.map((m,i)=>(
+              <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
+                {m.avatar
+                  ? <img src={m.avatar} alt="" style={{width:38,height:38,borderRadius:"50%",objectFit:"cover",border:`2px solid ${m.color}66`,flexShrink:0}}/>
+                  : <Avatar name={m.name} color={m.color} size={38}/>}
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
+                    {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8}}>ADMIN</span>}
+                    {i===0&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 6px",borderRadius:8}}>YOU</span>}
+                  </div>
+                  <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.car||"Vehicle TBD"}</div>
+                </div>
+                <span style={{fontSize:18}}>✅</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Done button */}
+        <div style={{padding:"20px 16px 24px"}}>
+          <button onClick={onClose}
+            style={{width:"100%",padding:"14px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={16} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            Done — Back to Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// JOIN CONVOY SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+const SAMPLE_INVITE = {
+  convoyName: "Goa Beach Weekend",
+  date: "2025-07-04",
+  endDate: "2025-07-07",
+  destination: "Goa",
+  color: "#4A9EFF",
+  invitedBy: "Sneha",
+  members: [
+    { id:5,  name:"Sneha",  color:"#4A9EFF" },
+    { id:6,  name:"Vikram", color:"#9B6EFF" },
+  ],
+};
+
+const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack }) => {
+  const T = useT();
+  const [joined, setJoined] = useState(false);
+
+  if (joined) return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px",gap:16,background:T.bg}}>
+      <div style={{fontSize:56}}>🎉</div>
+      <div style={{fontSize:20,fontWeight:900,color:T.text}}>You've Joined!</div>
+      <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You are now part of <strong style={{color:T.text}}>{invite.convoyName}</strong>. See you on the road!</div>
+      <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+        Go to Convoy
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
+      {/* Header */}
+      <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:10,background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <button onClick={onBack} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={ICONS.back} size={16}/>
+        </button>
+        <div>
+          <div style={{fontSize:15,fontWeight:800,color:T.text}}>Convoy Invite</div>
+          <div style={{fontSize:11,color:T.muted}}>You've been invited to join</div>
+        </div>
+      </div>
+
+      <div style={{flex:1,overflowY:"auto",padding:"20px 18px"}}>
+        {/* Invite card */}
+        <div style={{background:T.card,border:`2px solid ${invite.color}55`,borderRadius:22,overflow:"hidden",marginBottom:20,boxShadow:`0 8px 32px ${invite.color}22`}}>
+          <div style={{height:5,background:invite.color}}/>
+          <div style={{padding:"20px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+              <div style={{width:46,height:46,borderRadius:14,background:`${invite.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
+              <div>
+                <div style={{fontSize:17,fontWeight:900,color:T.text}}>{invite.convoyName}</div>
+                <div style={{fontSize:11,color:T.muted,marginTop:2}}>Invited by <strong style={{color:T.sub}}>{invite.invitedBy}</strong></div>
+              </div>
+            </div>
+
+            {/* Route */}
+            <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Destination</div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:14}}>🏁</span>
+                <span style={{fontSize:14,fontWeight:800,color:T.text}}>{invite.destination}</span>
+              </div>
+            </div>
+
+            {/* Date */}
+            <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Date</div>
+              <div style={{fontSize:13,fontWeight:700,color:T.text}}>
+                📅 {invite.date}{invite.endDate && invite.endDate !== invite.date ? ` → ${invite.endDate}` : ""}
+              </div>
+            </div>
+
+            {/* Members */}
+            <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",border:`1px solid ${T.border}`}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:8}}>Members · {invite.members.length}</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {invite.members.map(m=>(
+                  <div key={m.id} style={{display:"flex",alignItems:"center",gap:6,background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px 4px 4px"}}>
+                    <Avatar name={m.name} color={m.color} size={22}/>
+                    <span style={{fontSize:11,fontWeight:700,color:T.text}}>{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <button onClick={()=>setJoined(true)}
+            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            Accept & Join
+          </button>
+          <button onClick={onDecline}
+            style={{width:"100%",padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}44`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.close} size={15} color={T.red} sw={2}/>
+            Decline
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1407,8 +3141,14 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew }) => {
 // ROOT APP
 // ══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [isDark,  setIsDark]  = useState(true);
+  const [isDark,  setIsDark]  = useState(false);
   const T = isDark ? DARK : LIGHT;
+
+  // ── Auth state ──
+  const [authed, setAuthed] = useState(() => !!localStorage.getItem("convoy_authed"));
+  const [authUser, setAuthUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("convoy_user")||"null"); } catch { return null; }
+  });
 
   const [convoys,   setConvoys]   = useState(SEED);
   const [screen,    setScreen]    = useState("home");
@@ -1418,7 +3158,12 @@ export default function App() {
   const [toast,     setToast]     = useState(null);
   const [navTab,    setNavTab]    = useState("home");
 
-  const flash=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),2600);};
+  // ── Global alert unread count (lifted) ──
+  const [alertUnread, setAlertUnread] = useState(() => ALERT_SEED.filter(a=>a.unread).length);
+
+  const flash=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),2600)};
+
+  const handleAuthDone = (user) => { setAuthUser(user); setAuthed(true); };
 
   const handleSave=data=>{
     if(convoys.find(c=>c.id===data.id)){
@@ -1426,7 +3171,7 @@ export default function App() {
       if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
       flash(`"${data.name}" updated`);
     } else {
-      setConvoys(cs=>[{...data,distance:Math.floor(200+Math.random()*600)},...cs]);
+      setConvoys(cs=>[{...data,distance:data.distance||0},...cs]);
       flash(`"${data.name}" created!`);
     }
     setSheet(null);
@@ -1441,10 +3186,14 @@ export default function App() {
 
   return (
     <ThemeCtx.Provider value={T}>
-      <div style={{fontFamily:"'DM Sans','Nunito',system-ui,sans-serif",background:isDark?"#050709":"#D8E4F8",minHeight:"100vh",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"24px 16px",transition:"background .4s"}}>
+      {/* Page background */}
+      <div style={{position:"fixed",inset:0,background:isDark?"#04060A":"#CBD5E8",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans','Nunito',system-ui,sans-serif"}}>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
 
-        <div style={{width:"100%",maxWidth:390,background:T.bg,borderRadius:44,border:`1px solid ${T.border}`,boxShadow:isDark?"0 40px 90px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.04)":"0 40px 90px rgba(80,120,200,.2),0 0 0 1px rgba(255,255,255,.8)",overflow:"hidden",minHeight:820,display:"flex",flexDirection:"column",position:"relative",transition:"background .3s,border-color .3s"}}>
+        {/* Phone shell */}
+        <div style={{width:"100%",maxWidth:390,height:"100%",maxHeight:844,background:T.bg,borderRadius:44,overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 32px 80px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08)",position:"relative",transition:"background .3s"}}>
+
+        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",background:T.bg}}>
 
           {/* ── Status Bar ── */}
           <div style={{padding:"14px 20px 8px",display:"flex",justifyContent:"space-between",alignItems:"center",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
@@ -1458,36 +3207,66 @@ export default function App() {
                 </div>
               </button>
               <span style={{fontSize:10,color:T.muted}}>9:41</span>
+              {/* Bell icon with unread badge */}
+              <button onClick={()=>{setNavTab("bell");setScreen("alerts");setActiveC(null);}}
+                style={{width:28,height:28,borderRadius:"50%",background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",flexShrink:0}}>
+                <Ic d={ICONS.bell} size={13} color={navTab==="bell"?T.accent:T.sub} sw={1.8}/>
+                {alertUnread>0&&<span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>}
+              </button>
               <div style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:isDark?"#080B12":"#fff",border:`2px solid ${T.surface}`}}>RO</div>
             </div>
           </div>
 
           {/* ── Screen content ── */}
           <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
-            {screen==="home"&&(
-              <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} onNew={()=>setSheet("create")}/>
-            )}
-            {screen==="detail"&&activeC&&(
-              (convoys.find(c=>c.id===activeC.id)||activeC).status==="live"
-                ?<LiveDetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}/>
-                :<DetailScreen     convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}/>
+            {!authed ? (
+              <OnboardingScreen onDone={handleAuthDone}/>
+            ) : (
+              <>
+                {screen==="home"&&(
+                  <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} onNew={()=>setSheet("create")}/>
+                )}
+                {screen==="detail"&&activeC&&(
+                  (convoys.find(c=>c.id===activeC.id)||activeC).status==="live"
+                    ?<LiveDetailScreen
+                        convoy={convoys.find(c=>c.id===activeC.id)||activeC}
+                        onBack={()=>{setScreen("home");setActiveC(null);}}
+                        onEdit={c=>setSheet(c)}
+                        onDelete={c=>setDelTarget(c)}
+                        onEndConvoy={c=>{
+                          setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"completed"}:cv));
+                          setScreen("summary");
+                        }}/>
+                    :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}/>
+                )}
+                {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
+                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
+                {screen==="profile"&&<ProfileScreen onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")}/>}
+                {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
+                {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
+                {screen==="join"&&<JoinConvoyScreen onAccept={()=>{setScreen("alerts");setNavTab("bell");}} onDecline={()=>{setScreen("alerts");setNavTab("bell");}} onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
+              </>
             )}
           </div>
 
-          {/* ── Bottom Nav ── */}
+          {/* ── Bottom Nav (only when authed) ── */}
+          {authed && (
           <div style={{background:T.surface,borderTop:`1px solid ${T.border}`,padding:"10px 8px 18px",display:"flex"}}>
-            {[{id:"home",icon:ICONS.home,label:"Convoys"},{id:"map",icon:ICONS.map,label:"Map"},{id:"bell",icon:ICONS.bell,label:"Alerts"},{id:"users",icon:ICONS.users,label:"Members"}].map(n=>(
-              <button key={n.id} onClick={()=>{setNavTab(n.id);if(n.id==="home"){setScreen("home");setActiveC(null);}}}
+            {[{id:"home",icon:ICONS.home,label:"Convoys",scr:"home"},{id:"map",icon:ICONS.map,label:"Map",scr:"map"},{id:"bell",icon:ICONS.bell,label:"Alerts",scr:"alerts"},{id:"profile",icon:ICONS.person,label:"Profile",scr:"profile"}].map(n=>(
+              <button key={n.id} onClick={()=>{setNavTab(n.id);if(n.scr){setScreen(n.scr);setActiveC(null);}}}
                 style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 4px"}}>
-                <div style={{width:40,height:30,borderRadius:10,background:navTab===n.id?T.accentLo:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
+                <div style={{width:40,height:30,borderRadius:10,background:navTab===n.id?T.accentLo:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s",position:"relative"}}>
                   <Ic d={n.icon} size={17} color={navTab===n.id?T.accent:T.muted} sw={navTab===n.id?2:1.6}/>
+                  {n.id==="profile"&&<div style={{position:"absolute",top:2,right:6,width:7,height:7,borderRadius:"50%",background:T.accent,border:`2px solid ${T.surface}`}}/>}
+                  {n.id==="bell"&&alertUnread>0&&<div style={{position:"absolute",top:1,right:5,width:7,height:7,borderRadius:"50%",background:T.red,border:`2px solid ${T.surface}`}}/>}
                 </div>
                 <span style={{fontSize:10,fontWeight:navTab===n.id?700:500,color:navTab===n.id?T.accent:T.muted}}>{n.label}</span>
               </button>
             ))}
           </div>
+          )}
 
-          {sheet!==null&&<FormSheet convoy={sheet==="create"?null:sheet} onSave={handleSave} onClose={()=>setSheet(null)}/>}
+          {sheet!==null&&<FormSheet convoy={sheet==="create"?null:sheet} onSave={handleSave} onClose={()=>setSheet(null)} allConvoys={convoys}/>}
           {delTarget&&<DeleteSheet convoy={delTarget} onConfirm={handleDelete} onClose={()=>setDelTarget(null)}/>}
 
           {toast&&(
@@ -1512,6 +3291,7 @@ export default function App() {
           input::placeholder,textarea::placeholder{opacity:.5;}
           input[type="date"],input[type="time"]{color-scheme:${isDark?"dark":"light"};}
         `}</style>
+        </div>
       </div>
     </ThemeCtx.Provider>
   );
