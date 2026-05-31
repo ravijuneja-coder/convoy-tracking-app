@@ -1821,7 +1821,7 @@ const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
 };
 
 // ── Home Screen ───────────────────────────────────────────────────────────────
-const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew }) => {
+const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpenPricing }) => {
   const T=useT();
   const [search,setSearch]=useState(""), [filter,setFilter]=useState("all");
   const filtered=convoys.filter(c=>(filter==="all"||c.status===filter)&&(c.name.toLowerCase().includes(search.toLowerCase())||c.destination.toLowerCase().includes(search.toLowerCase())));
@@ -1879,6 +1879,7 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew }) => {
           </div>
         ))}
       </div>
+
       <div style={{flex:1,overflowY:"auto",padding:"0 18px 10px"}}>
         {filtered.length===0?(
           <div style={{textAlign:"center",padding:"40px 0",color:T.muted}}>
@@ -1886,11 +1887,24 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew }) => {
             <div style={{fontSize:14,fontWeight:700,color:T.sub,marginBottom:6}}>No convoys found</div>
             <div style={{fontSize:12}}>Tap + to create your first convoy</div>
           </div>
-        ):filtered.map(c=>(
-          <div key={c.id} style={{marginBottom:12}}>
-            <ConvoyCard convoy={c} onTap={onTap} onEdit={onEdit} onDelete={onDelete}/>
-          </div>
-        ))}
+        ):filtered.map((c, idx)=>{
+          // Free users: show first convoy normally, lock the rest
+          const locked = !isPremium && idx >= 1;
+          return (
+            <div key={c.id} style={{marginBottom:12,position:"relative"}}>
+              <div style={{opacity:locked?.35:1,pointerEvents:locked?"none":"auto"}}>
+                <ConvoyCard convoy={c} onTap={onTap} onEdit={onEdit} onDelete={onDelete}/>
+              </div>
+              {locked&&(
+                <div onClick={onOpenPricing} style={{position:"absolute",inset:0,borderRadius:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",background:`${T.isDark?"rgba(8,11,18,.6)":"rgba(255,255,255,.6)"}`,backdropFilter:"blur(3px)",border:"1.5px solid #4A9EFF44"}}>
+                  <span style={{fontSize:24}}>🔒</span>
+                  <span style={{fontSize:12,fontWeight:800,color:"#4A9EFF"}}>Upgrade to unlock</span>
+                  <span style={{fontSize:10,color:T.muted}}>Premium · ₹299/month</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -2550,6 +2564,21 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium }) 
               )}
             </div>
 
+            {/* Premium / Upgrade banner */}
+            {!editing&&(
+              <div onClick={onOpenPricing} style={{display:"flex",alignItems:"center",gap:12,background:isPremium?"linear-gradient(135deg,#4A9EFF18,#9B6EFF10)":"linear-gradient(135deg,#F5A62318,#FF4F4F10)",border:`1.5px solid ${isPremium?"#4A9EFF44":"#F5A62344"}`,borderRadius:16,padding:"12px 14px",marginBottom:16,cursor:"pointer"}}>
+                <div style={{width:36,height:36,borderRadius:11,background:isPremium?"linear-gradient(135deg,#4A9EFF,#9B6EFF)":"linear-gradient(135deg,#F5A623,#FF4F4F)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+                  {isPremium?"👑":"🚀"}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:isPremium?"#4A9EFF":"#F5A623"}}>{isPremium?"Premium Active":"Upgrade to Premium"}</div>
+                  <div style={{fontSize:11,color:T.muted,marginTop:1}}>{isPremium?"Unlimited convoys & features":"₹299/month · First convoy free"}</div>
+                </div>
+                {!isPremium&&<Ic d={ICONS.chevron} size={15} color="#F5A623"/>}
+                {isPremium&&<span style={{fontSize:11,fontWeight:800,color:"#4A9EFF"}}>ACTIVE</span>}
+              </div>
+            )}
+
             {/* Stats */}
             <div style={{display:"flex",gap:8,marginBottom:16}}>
               {[{val:"4",lbl:"Convoys"},{val:"12",lbl:"Trips"},{val:"847",lbl:"KM"},{val:"3",lbl:"Friends"}].map(s=>(
@@ -2730,63 +2759,165 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium }) 
 // ══════════════════════════════════════════════════════════════════════════════
 // ONBOARDING / LOGIN SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
+const ONBOARD_SLIDES = [
+  {
+    emoji:"🚗",
+    title:"Welcome to Convoy",
+    subtitle:"The smartest way to plan and track group road trips with friends & family.",
+    bg:"#3DD68C",
+  },
+  {
+    emoji:"📍",
+    title:"Live GPS Tracking",
+    subtitle:"See every member's real-time location on the map. Know exactly who's ahead, behind, or stopped.",
+    bg:"#4A9EFF",
+  },
+  {
+    emoji:"🆘",
+    title:"SOS Emergency Alerts",
+    subtitle:"One tap sends an emergency alert with your live location to all convoy members instantly.",
+    bg:"#FF4F4F",
+  },
+  {
+    emoji:"📲",
+    title:"Easy Invites",
+    subtitle:"Invite members via WhatsApp. They get a link, download the app, and join your convoy in seconds.",
+    bg:"#25D366",
+  },
+];
+
 const OnboardingScreen = ({ onDone }) => {
   const T = useT();
-  const [tab, setTab] = useState("signin"); // "signin" | "signup"
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [step,     setStep]     = useState(0); // 0-3 = slides, 4 = auth
+  const [authTab,  setAuthTab]  = useState("signup");
+  const [name,     setName]     = useState("");
+  const [phone,    setPhone]    = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
+  const [err,      setErr]      = useState("");
+
+  const isLastSlide = step === ONBOARD_SLIDES.length - 1;
+  const slide       = ONBOARD_SLIDES[step] || {};
 
   const handleSubmit = () => {
-    if (tab === "signup" && !name.trim()) { setErr("Please enter your name."); return; }
+    if (authTab === "signup" && !name.trim()) { setErr("Please enter your name."); return; }
     if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit phone number."); return; }
     if (!password.trim() || password.length < 4) { setErr("Password must be at least 4 characters."); return; }
     setErr("");
-    const user = { name: tab === "signup" ? name.trim() : (JSON.parse(localStorage.getItem("convoy_user")||"null")?.name || "User"), phone: phone.trim() };
+    const user = { name: authTab==="signup" ? name.trim() : (JSON.parse(localStorage.getItem("convoy_user")||"null")?.name||"User"), phone: phone.trim() };
     localStorage.setItem("convoy_user", JSON.stringify(user));
-    localStorage.setItem("convoy_authed", "1");
+    localStorage.setItem("convoy_authed","1");
     onDone(user);
   };
 
-  return (
+  /* ── AUTH SCREEN ── */
+  if (step >= ONBOARD_SLIDES.length) return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
-      {/* Hero */}
-      <div style={{background:`linear-gradient(160deg,${T.accent}22,${T.blue}12)`,padding:"40px 24px 28px",textAlign:"center",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-        <div style={{fontSize:44,marginBottom:10}}>🚗</div>
-        <div style={{fontSize:26,fontWeight:900,color:T.text,letterSpacing:.5,lineHeight:1.1}}>Welcome to Convoy</div>
-        <div style={{fontSize:13,color:T.muted,marginTop:8,lineHeight:1.5}}>Plan & track group road trips together</div>
+      {/* Back button */}
+      <div style={{padding:"14px 16px 0",flexShrink:0}}>
+        <button onClick={()=>setStep(ONBOARD_SLIDES.length-1)}
+          style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={ICONS.back} size={16}/>
+        </button>
+      </div>
+
+      {/* Header */}
+      <div style={{padding:"20px 24px 16px",flexShrink:0,textAlign:"center"}}>
+        <div style={{fontSize:36,marginBottom:8}}>🚗</div>
+        <div style={{fontSize:22,fontWeight:900,color:T.text,marginBottom:4}}>
+          {authTab==="signup"?"Create Account":"Welcome Back"}
+        </div>
+        <div style={{fontSize:13,color:T.muted}}>
+          {authTab==="signup"?"Join thousands of convoy travellers":"Sign in to your Convoy account"}
+        </div>
       </div>
 
       {/* Tabs */}
-      <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-        {[["signin","Sign In"],["signup","Sign Up"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>{setTab(id);setErr("");}} style={{flex:1,background:"none",border:"none",padding:"12px 0",fontSize:14,fontWeight:700,color:tab===id?T.accent:T.muted,borderBottom:`2px solid ${tab===id?T.accent:"transparent"}`,marginBottom:-1,cursor:"pointer"}}>{lbl}</button>
+      <div style={{display:"flex",margin:"0 20px",background:T.raised,borderRadius:14,padding:4,flexShrink:0,border:`1px solid ${T.border}`}}>
+        {[["signup","Sign Up"],["signin","Sign In"]].map(([id,lbl])=>(
+          <button key={id} onClick={()=>{setAuthTab(id);setErr("");}}
+            style={{flex:1,padding:"9px 0",borderRadius:11,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,background:authTab===id?T.surface:T.raised,color:authTab===id?T.text:T.muted,boxShadow:authTab===id?"0 2px 8px rgba(0,0,0,.1)":"none",transition:"all .2s"}}>
+            {lbl}
+          </button>
         ))}
       </div>
 
       {/* Form */}
-      <div style={{flex:1,overflowY:"auto",padding:"24px 22px"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          {tab === "signup" && (
-            <Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your name"/>
-          )}
+          {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
           <Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
           <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 4 characters" type="password"/>
 
-          {err && <div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
+          {err&&<div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
 
           <button onClick={handleSubmit}
-            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`}}>
             <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
-            {tab === "signin" ? "Sign In" : "Create Account"}
+            {authTab==="signup"?"Create Account 🚗":"Sign In"}
           </button>
 
-          <div style={{textAlign:"center",fontSize:12,color:T.muted,marginTop:4}}>
-            {tab === "signin" ? "Don't have an account? " : "Already have an account? "}
-            <button onClick={()=>{setTab(tab==="signin"?"signup":"signin");setErr("");}} style={{background:"none",border:"none",color:T.accent,fontWeight:700,cursor:"pointer",fontSize:12,padding:0}}>{tab==="signin"?"Sign Up":"Sign In"}</button>
+          <div style={{textAlign:"center",fontSize:12,color:T.muted}}>
+            {authTab==="signup"?"Already have an account? ":"Don't have an account? "}
+            <button onClick={()=>{setAuthTab(authTab==="signup"?"signin":"signup");setErr("");}}
+              style={{background:"none",border:"none",color:T.accent,fontWeight:700,cursor:"pointer",fontSize:12,padding:0}}>
+              {authTab==="signup"?"Sign In":"Sign Up"}
+            </button>
+          </div>
+
+          <div style={{textAlign:"center",fontSize:11,color:T.muted,marginTop:4,lineHeight:1.5}}>
+            By continuing you agree to our Terms of Service & Privacy Policy
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  /* ── SLIDE SCREENS ── */
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg,animation:"fsIn .3s ease"}}>
+
+      {/* Slide visual */}
+      <div style={{flex:1,background:`linear-gradient(160deg,${slide.bg}22,${slide.bg}08)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",position:"relative"}}>
+        {/* Skip button */}
+        <button onClick={()=>setStep(ONBOARD_SLIDES.length)}
+          style={{position:"absolute",top:16,right:16,background:"none",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:T.muted,padding:"6px 12px"}}>
+          Skip
+        </button>
+
+        {/* Emoji bubble */}
+        <div style={{width:130,height:130,borderRadius:40,background:`${slide.bg}20`,border:`3px solid ${slide.bg}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:64,marginBottom:32,boxShadow:`0 20px 60px ${slide.bg}30`}}>
+          {slide.emoji}
+        </div>
+
+        <div style={{fontSize:24,fontWeight:900,color:T.text,textAlign:"center",lineHeight:1.2,marginBottom:14}}>
+          {slide.title}
+        </div>
+        <div style={{fontSize:14,color:T.muted,textAlign:"center",lineHeight:1.65,maxWidth:280}}>
+          {slide.subtitle}
+        </div>
+      </div>
+
+      {/* Dots + buttons */}
+      <div style={{padding:"24px 24px 36px",background:T.surface,borderTop:`1px solid ${T.border}`,flexShrink:0}}>
+        {/* Progress dots */}
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:24}}>
+          {ONBOARD_SLIDES.map((_,i)=>(
+            <div key={i} onClick={()=>setStep(i)} style={{width:i===step?22:8,height:8,borderRadius:4,background:i===step?slide.bg:T.border,transition:"all .3s",cursor:"pointer"}}/>
+          ))}
+        </div>
+
+        {/* Next / Get Started */}
+        <button onClick={()=>setStep(s=>s+1)}
+          style={{width:"100%",padding:"15px",borderRadius:14,background:slide.bg,border:"none",color:["#3DD68C","#25D366"].includes(slide.bg)?(T.isDark?"#080B12":"#fff"):"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${slide.bg}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {isLastSlide?"Get Started 🚀":"Next →"}
+        </button>
+
+        {step===0&&(
+          <button onClick={()=>setStep(ONBOARD_SLIDES.length)}
+            style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,background:"none",border:`1px solid ${T.border}`,color:T.muted,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+            Already have an account? Sign In
+          </button>
+        )}
       </div>
     </div>
   );
@@ -2803,7 +2934,7 @@ const PLANS = [
     period:"forever",
     color:"#3DD68C",
     emoji:"🆓",
-    highlight:false,
+    highlight:true,
     features:[
       {ok:true,  text:"1 convoy"},
       {ok:true,  text:"Up to 4 members per convoy"},
@@ -2825,7 +2956,7 @@ const PLANS = [
     yearlyPeriod:"per year  (save 30%)",
     color:"#4A9EFF",
     emoji:"👑",
-    highlight:true,
+    highlight:false,
     features:[
       {ok:true, text:"Unlimited convoys"},
       {ok:true, text:"Unlimited members per convoy"},
@@ -2879,8 +3010,7 @@ const PricingScreen = ({ onBack, onUpgrade, isPremium }) => {
 
         {/* Plan cards */}
         {PLANS.map(plan=>(
-          <div key={plan.id} style={{background:T.card,border:`2px solid ${plan.highlight?"#4A9EFF":"transparent"}`,borderRadius:20,marginBottom:14,overflow:"hidden",boxShadow:plan.highlight?`0 8px 32px #4A9EFF22`:"none",position:"relative"}}>
-            {plan.highlight&&<div style={{position:"absolute",top:14,right:14,background:"#4A9EFF",color:"#fff",fontSize:9,fontWeight:900,padding:"3px 10px",borderRadius:20,letterSpacing:.8}}>POPULAR</div>}
+          <div key={plan.id} style={{background:T.card,border:`2px solid ${plan.highlight?plan.color:"transparent"}`,borderRadius:20,marginBottom:14,overflow:"hidden",boxShadow:plan.highlight?`0 8px 32px ${plan.color}22`:"none",position:"relative"}}>
             <div style={{height:4,background:plan.color}}/>
             <div style={{padding:"18px 16px"}}>
               {/* Plan name + price */}
@@ -3379,7 +3509,7 @@ export default function App() {
   const T = isDark ? DARK : LIGHT;
 
   // ── Auth state ──
-  const [authed, setAuthed] = useState(() => !!localStorage.getItem("convoy_authed"));
+  const [authed, setAuthed] = useState(false); // always show onboarding first
   const [authUser, setAuthUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem("convoy_user")||"null"); } catch { return null; }
   });
@@ -3391,7 +3521,7 @@ export default function App() {
   const [delTarget,  setDelTarget] = useState(null);
   const [toast,      setToast]     = useState(null);
   const [navTab,     setNavTab]    = useState("home");
-  const [isPremium,  setIsPremium] = useState(()=>!!localStorage.getItem("convoy_premium"));
+  const [isPremium,  setIsPremium] = useState(false); // default free plan
   const [showPaywall,setShowPaywall]=useState(false);
 
   // ── Global alert unread count (lifted) ──
@@ -3461,6 +3591,7 @@ export default function App() {
               <>
                 {screen==="home"&&(
                   <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}
+                    isPremium={isPremium} onOpenPricing={()=>setScreen("pricing")}
                     onNew={()=>{
                       const activeConvoys = convoys.filter(c=>c.status!=="completed").length;
                       if(!isPremium && activeConvoys>=1){ setShowPaywall(true); }
