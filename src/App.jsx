@@ -939,6 +939,11 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
   const [fSelId,    setFSelId]   = useState(null);
   const [members,   setMembers]  = useState(convoy.members);
   const [endConfirm,setEndConfirm]=useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementInput, setAnnouncementInput] = useState("");
+  const [stopAlerts, setStopAlerts] = useState([]);
+  const [stopModalOpen, setStopModalOpen] = useState(false);
+  const STOP_REASONS = ["⛽ Fuel Stop","🔧 Breakdown","☕ Rest Break","🚻 Nature Break"];
 
   // Logged-in user is admin if their name matches any admin member (or if first member is admin and no authUser)
   const isAdmin = authUser
@@ -1161,10 +1166,11 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
                           <div style={{position:"absolute",bottom:-1,right:-1,width:12,height:12,borderRadius:"50%",background:moving?T.accent:T.amber,border:`2px solid ${T.card}`}}/>
                         </div>
                         <div>
-                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                             <span style={{fontSize:14,fontWeight:800,color:T.text}}>{m.name}</span>
                             {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
                             {(authUser?m.name.toLowerCase()===authUser.name?.toLowerCase():i===0)&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
+                            {ld.eta&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"2px 8px",borderRadius:10,border:`1px solid ${T.blue}44`}}>🕐 {ld.eta}</span>}
                           </div>
                           <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.car}</div>
                         </div>
@@ -1209,8 +1215,31 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
               );
             })}
           </div>
+          {/* Active stop alerts banner */}
+          {stopAlerts.length>0&&(
+            <div style={{marginTop:12,background:T.amberLo,border:`1px solid ${T.amber}44`,borderRadius:14,padding:"10px 14px"}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.amber,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Active Stop Alerts</div>
+              {stopAlerts.map((a,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <span style={{fontSize:13}}>{a.reason.split(" ")[0]}</span>
+                  <span style={{fontSize:12,color:T.text,fontWeight:700}}>{a.senderName}</span>
+                  <span style={{fontSize:11,color:T.muted}}>{a.reason.split(" ").slice(1).join(" ")}</span>
+                  <span style={{marginLeft:"auto",fontSize:10,color:T.muted}}>{a.time}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Report Stop button */}
+          <div style={{marginTop:12}}>
+            <button onClick={()=>setStopModalOpen(true)} style={{width:"100%",padding:"13px",borderRadius:14,background:T.amberLo,border:`1.5px solid ${T.amber}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <span style={{fontSize:16}}>🛑</span>
+              <span style={{fontSize:13,fontWeight:800,color:T.amber}}>Report Stop</span>
+            </button>
+          </div>
+
           {/* SOS button in members tab */}
-          <div style={{marginTop:16}}>
+          <div style={{marginTop:12}}>
             <button onClick={()=>setSosOpen(true)} style={{width:"100%",padding:"16px",borderRadius:16,background:`${T.red}14`,border:`2px solid ${T.red}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",inset:0,background:`radial-gradient(circle at 50% 50%, ${T.red}18, transparent 70%)`,animation:"sosPulse 2s ease-in-out infinite"}}/>
               <span style={{fontSize:26,position:"relative"}}>🆘</span>
@@ -1287,6 +1316,55 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
           {convoy.notes&&<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",gap:10}}>
             <Ic d={ICONS.note} size={15}/><span style={{fontSize:12,color:T.sub,lineHeight:1.5}}>{convoy.notes}</span>
           </div>}
+
+          {/* Invite Code */}
+          {convoy.inviteCode&&(
+            <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:4}}>Invite Code</div>
+                <div style={{fontSize:22,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:3}}>{convoy.inviteCode}</div>
+              </div>
+              <button onClick={()=>{ navigator.clipboard?.writeText(convoy.inviteCode); }}
+                style={{padding:"8px 14px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.accent,flexShrink:0}}>
+                Copy
+              </button>
+            </div>
+          )}
+
+          {/* Announcements */}
+          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"14px",marginBottom:14}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>📢 Announcements</div>
+            {announcements.length===0&&<div style={{fontSize:12,color:T.muted,textAlign:"center",padding:"8px 0"}}>No announcements yet.</div>}
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:isAdmin?12:0}}>
+              {announcements.map((a,i)=>(
+                <div key={i} style={{background:T.raised,borderRadius:12,padding:"10px 12px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:11,fontWeight:800,color:T.accent}}>{a.sender}</span>
+                    <span style={{fontSize:10,color:T.muted}}>{a.time}</span>
+                  </div>
+                  <div style={{fontSize:12,color:T.text,lineHeight:1.5}}>{a.message}</div>
+                </div>
+              ))}
+            </div>
+            {isAdmin&&(
+              <div style={{display:"flex",gap:8,marginTop:announcements.length>0?0:0}}>
+                <input value={announcementInput} onChange={e=>setAnnouncementInput(e.target.value)}
+                  placeholder="Type an announcement…"
+                  style={{flex:1,background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"9px 12px",fontSize:12,color:T.text,outline:"none",fontFamily:"inherit"}}
+                  onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+                <button onClick={()=>{
+                  if(!announcementInput.trim()) return;
+                  const now = new Date();
+                  const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
+                  setAnnouncements(as=>[...as,{sender:authUser?.name||convoy.members[0]?.name||"Admin",message:announcementInput.trim(),time}]);
+                  setAnnouncementInput("");
+                }} style={{padding:"9px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:T.isDark?"#080B12":"#fff",flexShrink:0}}>
+                  📢 Send
+                </button>
+              </div>
+            )}
+          </div>
+
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
@@ -1324,6 +1402,30 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
       {/* Fullscreen Map */}
       {fullMap && <FullscreenMap convoy={convoy} initialSelId={fSelId} onClose={()=>setFullMap(false)}/>}
 
+      {/* Stop Report Modal */}
+      {stopModalOpen&&(
+        <div style={{position:"absolute",inset:0,zIndex:80,display:"flex",flexDirection:"column",background:`rgba(4,6,10,${T.isDark?.7:.4})`,backdropFilter:"blur(6px)",alignItems:"center",justifyContent:"flex-end"}}>
+          <div style={{width:"100%",background:T.surface,borderRadius:"22px 22px 0 0",padding:"24px 22px 32px",boxShadow:`0 -20px 60px rgba(0,0,0,${T.isDark?.5:.2})`}}>
+            <div style={{width:36,height:4,background:T.border,borderRadius:4,margin:"0 auto 20px"}}/>
+            <div style={{fontSize:18,fontWeight:800,color:T.text,marginBottom:16}}>🛑 Report a Stop</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+              {STOP_REASONS.map(r=>(
+                <button key={r} onClick={()=>{
+                  const senderName = authUser?.name||convoy.members[0]?.name||"You";
+                  const now = new Date();
+                  const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
+                  setStopAlerts(sa=>[...sa,{reason:r,senderName,time}]);
+                  setStopModalOpen(false);
+                }} style={{padding:"13px 16px",borderRadius:14,background:T.card,border:`1px solid ${T.border}`,color:T.text,fontSize:13,fontWeight:700,cursor:"pointer",textAlign:"left"}}>
+                  {r}
+                </button>
+              ))}
+            </div>
+            <button onClick={()=>setStopModalOpen(false)} style={{width:"100%",padding:"13px",borderRadius:14,background:T.raised,border:`1px solid ${T.border}`,color:T.muted,fontSize:14,fontWeight:700,cursor:"pointer"}}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       {/* SOS Confirm Modal */}
       {sosOpen && <SosModal convoy={convoy} onConfirm={fireSos} onClose={()=>setSosOpen(false)}/>}
 
@@ -1336,8 +1438,19 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
 // ══════════════════════════════════════════════════════════════════════════════
 // STANDARD DETAIL SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
-const DetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
+const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUser }) => {
   const T = useT();
+  const [memberStatuses, setMemberStatuses] = useState({});
+  const isUpcoming = convoy.status === "upcoming";
+  const myMember = authUser ? convoy.members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase()) : null;
+  const isMe = (m) => authUser ? m.name.toLowerCase() === authUser.name?.toLowerCase() : false;
+
+  const STATUS_OPTS = [
+    { key:"ready",    label:"✅ Ready",        color:"#3DD68C" },
+    { key:"late",     label:"🕐 Running Late", color:"#F5A623" },
+    { key:"enroute",  label:"🚗 En Route",     color:"#4A9EFF" },
+  ];
+
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,borderBottom:`1px solid ${T.border}`}}>
@@ -1400,22 +1513,67 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
         {convoy.notes&&<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",gap:10}}>
           <Ic d={ICONS.note} size={15}/><span style={{fontSize:12,color:T.sub,lineHeight:1.5}}>{convoy.notes}</span>
         </div>}
+
+        {/* Invite Code */}
+        {convoy.inviteCode&&(
+          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:4}}>Invite Code</div>
+              <div style={{fontSize:22,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:3}}>{convoy.inviteCode}</div>
+            </div>
+            <button onClick={()=>{ navigator.clipboard?.writeText(convoy.inviteCode); }}
+              style={{padding:"8px 14px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.accent,flexShrink:0}}>
+              Copy
+            </button>
+          </div>
+        )}
+
         <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:10}}>Members · {convoy.members.length}</div>
         <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
-          {convoy.members.map(m=>(
+          {/* Member ready status buttons for self */}
+          {isUpcoming&&myMember&&(
+            <div style={{background:T.raised,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:4}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:8}}>Your Status</div>
+              <div style={{display:"flex",gap:6}}>
+                {STATUS_OPTS.map(o=>{
+                  const active = memberStatuses[myMember.id] === o.key;
+                  return (
+                    <button key={o.key} onClick={()=>setMemberStatuses(s=>({...s,[myMember.id]:o.key}))}
+                      style={{flex:1,padding:"7px 4px",borderRadius:10,border:`1.5px solid ${active?o.color:T.border}`,background:active?o.color+"22":T.card,color:active?o.color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .15s"}}>
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {convoy.members.map(m=>{
+            const st = memberStatuses[m.id];
+            const stInfo = STATUS_OPTS.find(o=>o.key===st);
+            return (
             <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 14px",display:"flex",alignItems:"center",gap:11}}>
               <Avatar name={m.name} color={m.color} size={38}/>
               <div style={{flex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
                   {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
+                  {isMe(m)&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                 </div>
                 <div style={{fontSize:11,color:T.muted,marginTop:2}}>{m.car}</div>
               </div>
+              {isUpcoming&&stInfo&&(
+                <span style={{fontSize:10,fontWeight:700,color:stInfo.color,background:stInfo.color+"22",border:`1px solid ${stInfo.color}44`,borderRadius:20,padding:"3px 9px",flexShrink:0}}>{stInfo.label}</span>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {isUpcoming&&onStartConvoy&&(
+            <button onClick={()=>onStartConvoy(convoy)} style={{padding:"14px",borderRadius:14,background:"#1a3a25",border:"1.5px solid #3DD68C",color:"#3DD68C",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              🚀 Start Convoy
+            </button>
+          )}
           <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
           </button>
@@ -1450,6 +1608,8 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
   const [showAddForm,setShowAddForm]=useState(false);
   const [showMapPicker,setShowMapPicker]=useState(false);
   const [showStartPicker,setShowStartPicker]=useState(false);
+  const [pitStops, setPitStops] = useState(convoy?.pitStops||[]);
+  const [pitStopInput, setPitStopInput] = useState("");
 
   // Deduplicated members from all other convoys, not already in current form
   const existingPool = (() => {
@@ -1590,6 +1750,33 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                 </div>
               )}
               <FieldArea label="Notes" value={form.notes} onChange={v=>set("notes",v)} placeholder="Meeting point, fuel stops, route notes…"/>
+
+              {/* ── Pit Stops ── */}
+              <div>
+                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:8,textAlign:"left"}}>Pit Stops</div>
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  <input value={pitStopInput} onChange={e=>setPitStopInput(e.target.value)}
+                    placeholder="Add a pit stop (place name)"
+                    onKeyDown={e=>{ if(e.key==="Enter"&&pitStopInput.trim()){ const ps={id:Date.now(),name:pitStopInput.trim()}; setPitStops(ps=>[...ps,{id:Date.now(),name:pitStopInput.trim()}]); setPitStopInput(""); } }}
+                    style={{flex:1,background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"10px 12px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit"}}/>
+                  <button onClick={()=>{ if(pitStopInput.trim()){ setPitStops(ps=>[...ps,{id:Date.now(),name:pitStopInput.trim()}]); setPitStopInput(""); } }}
+                    style={{padding:"10px 14px",borderRadius:10,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                    + Add
+                  </button>
+                </div>
+                {pitStops.length>0&&(
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {pitStops.map(ps=>(
+                      <div key={ps.id} style={{display:"flex",alignItems:"center",gap:5,background:T.raised,border:`1px solid ${T.border}`,borderRadius:20,padding:"5px 10px"}}>
+                        <span style={{fontSize:12,color:T.text}}>⛽ {ps.name}</span>
+                        <button onClick={()=>setPitStops(p=>p.filter(x=>x.id!==ps.id))} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center"}}>
+                          <Ic d={ICONS.close} size={11} color={T.red}/>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           {tab==="members"&&(
@@ -1745,7 +1932,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
           )}
         </div>
         <div style={{padding:"12px 18px 20px",borderTop:`1px solid ${T.border}`}}>
-          <button onClick={()=>valid&&onSave({...form,id:convoy?.id||Date.now()})} disabled={!valid}
+          <button onClick={()=>valid&&onSave({...form,id:convoy?.id||Date.now(),pitStops})} disabled={!valid}
             style={{width:"100%",padding:"15px",borderRadius:14,background:valid?T.accent:T.muted,border:"none",color:valid?(T.isDark?"#080B12":"#fff"):T.surface,fontSize:15,fontWeight:800,cursor:valid?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <Ic d={ICONS.check} size={17} color={valid?(T.isDark?"#080B12":"#fff"):T.surface} sw={2.5}/>{editing?"Save Changes":"Create Convoy"}
           </button>
@@ -3665,20 +3852,38 @@ const SAMPLE_INVITE = {
   ],
 };
 
-const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack }) => {
+const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, convoys=[], authUser=null, onJoin }) => {
   const T = useT();
   const [joined, setJoined] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [foundConvoy, setFoundConvoy] = useState(null);
+  const [mode, setMode] = useState("invite"); // "invite" | "code"
 
-  if (joined) return (
-    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px",gap:16,background:T.bg}}>
-      <div style={{fontSize:56}}>🎉</div>
-      <div style={{fontSize:20,fontWeight:900,color:T.text}}>You've Joined!</div>
-      <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You are now part of <strong style={{color:T.text}}>{invite.convoyName}</strong>. See you on the road!</div>
-      <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
-        Go to Convoy
-      </button>
-    </div>
-  );
+  const handleCodeJoin = () => {
+    const code = codeInput.trim();
+    if(code.length !== 6) { setCodeError("Please enter a 6-digit code"); return; }
+    const match = convoys.find(c => c.inviteCode === code);
+    if(!match) { setCodeError("No convoy found with this code"); return; }
+    setCodeError("");
+    setFoundConvoy(match);
+    if(onJoin && authUser) { onJoin(match, authUser); }
+    setJoined(true);
+  };
+
+  if (joined) {
+    const nm = foundConvoy || invite;
+    return (
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px",gap:16,background:T.bg}}>
+        <div style={{fontSize:56}}>🎉</div>
+        <div style={{fontSize:20,fontWeight:900,color:T.text}}>You've Joined!</div>
+        <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You are now part of <strong style={{color:T.text}}>{nm.convoyName||nm.name}</strong>. See you on the road!</div>
+        <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+          Go to Convoy
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
@@ -3687,70 +3892,106 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack })
         <button onClick={onBack} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <Ic d={ICONS.back} size={16}/>
         </button>
-        <div>
+        <div style={{flex:1}}>
           <div style={{fontSize:15,fontWeight:800,color:T.text}}>Convoy Invite</div>
-          <div style={{fontSize:11,color:T.muted}}>You've been invited to join</div>
+          <div style={{fontSize:11,color:T.muted}}>Join via invite or code</div>
+        </div>
+        {/* Mode toggle */}
+        <div style={{display:"flex",background:T.raised,borderRadius:10,padding:2,border:`1px solid ${T.border}`}}>
+          {[["invite","Invite"],["code","Code"]].map(([m,l])=>(
+            <button key={m} onClick={()=>setMode(m)} style={{padding:"5px 12px",borderRadius:8,background:mode===m?T.accent:"transparent",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,color:mode===m?(T.isDark?"#080B12":"#fff"):T.muted,transition:"all .15s"}}>{l}</button>
+          ))}
         </div>
       </div>
 
       <div style={{flex:1,overflowY:"auto",padding:"20px 18px"}}>
-        {/* Invite card */}
-        <div style={{background:T.card,border:`2px solid ${invite.color}55`,borderRadius:22,overflow:"hidden",marginBottom:20,boxShadow:`0 8px 32px ${invite.color}22`}}>
-          <div style={{height:5,background:invite.color}}/>
-          <div style={{padding:"20px"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-              <div style={{width:46,height:46,borderRadius:14,background:`${invite.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
-              <div>
-                <div style={{fontSize:17,fontWeight:900,color:T.text}}>{invite.convoyName}</div>
-                <div style={{fontSize:11,color:T.muted,marginTop:2}}>Invited by <strong style={{color:T.sub}}>{invite.invitedBy}</strong></div>
-              </div>
-            </div>
 
-            {/* Route */}
-            <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
-              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Destination</div>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontSize:14}}>🏁</span>
-                <span style={{fontSize:14,fontWeight:800,color:T.text}}>{invite.destination}</span>
-              </div>
+        {/* ── Code join mode ── */}
+        {mode==="code"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{textAlign:"center",marginBottom:8}}>
+              <div style={{fontSize:36,marginBottom:8}}>🔑</div>
+              <div style={{fontSize:17,fontWeight:800,color:T.text}}>Enter Invite Code</div>
+              <div style={{fontSize:12,color:T.muted,marginTop:4}}>Ask the convoy admin for the 6-digit code</div>
             </div>
-
-            {/* Date */}
-            <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
-              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Date</div>
-              <div style={{fontSize:13,fontWeight:700,color:T.text}}>
-                📅 {invite.date}{invite.endDate && invite.endDate !== invite.date ? ` → ${invite.endDate}` : ""}
-              </div>
-            </div>
-
-            {/* Members */}
-            <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",border:`1px solid ${T.border}`}}>
-              <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:8}}>Members · {invite.members.length}</div>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {invite.members.map(m=>(
-                  <div key={m.id} style={{display:"flex",alignItems:"center",gap:6,background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px 4px 4px"}}>
-                    <Avatar name={m.name} color={m.color} size={22}/>
-                    <span style={{fontSize:11,fontWeight:700,color:T.text}}>{m.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <input
+              value={codeInput}
+              onChange={e=>{ setCodeInput(e.target.value.replace(/\D/g,"").slice(0,6)); setCodeError(""); }}
+              placeholder="000000"
+              maxLength={6}
+              style={{textAlign:"center",fontSize:28,fontWeight:800,letterSpacing:8,background:T.raised,border:`2px solid ${codeError?T.red:codeInput.length===6?T.accent:T.border}`,borderRadius:14,padding:"16px",color:T.text,outline:"none",fontFamily:"'Space Mono',monospace",width:"100%",boxSizing:"border-box"}}
+            />
+            {codeError&&<div style={{fontSize:11,color:T.red,fontWeight:700,textAlign:"center"}}>⚠ {codeError}</div>}
+            <button onClick={handleCodeJoin}
+              style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+              Join Convoy
+            </button>
           </div>
-        </div>
+        )}
 
-        {/* Actions */}
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          <button onClick={()=>setJoined(true)}
-            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
-            Accept & Join
-          </button>
-          <button onClick={onDecline}
-            style={{width:"100%",padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}44`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.close} size={15} color={T.red} sw={2}/>
-            Decline
-          </button>
-        </div>
+        {/* ── Standard invite mode ── */}
+        {mode==="invite"&&(
+          <>
+            {/* Invite card */}
+            <div style={{background:T.card,border:`2px solid ${invite.color}55`,borderRadius:22,overflow:"hidden",marginBottom:20,boxShadow:`0 8px 32px ${invite.color}22`}}>
+              <div style={{height:5,background:invite.color}}/>
+              <div style={{padding:"20px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                  <div style={{width:46,height:46,borderRadius:14,background:`${invite.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
+                  <div>
+                    <div style={{fontSize:17,fontWeight:900,color:T.text}}>{invite.convoyName}</div>
+                    <div style={{fontSize:11,color:T.muted,marginTop:2}}>Invited by <strong style={{color:T.sub}}>{invite.invitedBy}</strong></div>
+                  </div>
+                </div>
+
+                {/* Route */}
+                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+                  <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Destination</div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:14}}>🏁</span>
+                    <span style={{fontSize:14,fontWeight:800,color:T.text}}>{invite.destination}</span>
+                  </div>
+                </div>
+
+                {/* Date */}
+                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+                  <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Date</div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.text}}>
+                    📅 {invite.date}{invite.endDate && invite.endDate !== invite.date ? ` → ${invite.endDate}` : ""}
+                  </div>
+                </div>
+
+                {/* Members */}
+                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",border:`1px solid ${T.border}`}}>
+                  <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:8}}>Members · {invite.members.length}</div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {invite.members.map(m=>(
+                      <div key={m.id} style={{display:"flex",alignItems:"center",gap:6,background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px 4px 4px"}}>
+                        <Avatar name={m.name} color={m.color} size={22}/>
+                        <span style={{fontSize:11,fontWeight:700,color:T.text}}>{m.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button onClick={()=>setJoined(true)}
+                style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+                Accept & Join
+              </button>
+              <button onClick={onDecline}
+                style={{width:"100%",padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}44`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Ic d={ICONS.close} size={15} color={T.red} sw={2}/>
+                Decline
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -3792,7 +4033,8 @@ export default function App() {
       if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
       flash(`"${data.name}" updated`);
     } else {
-      setConvoys(cs=>[{...data,distance:data.distance||0},...cs]);
+      const newConvoy={...data,distance:data.distance||0,inviteCode:data.inviteCode||Math.floor(100000+Math.random()*900000).toString()};
+      setConvoys(cs=>[newConvoy,...cs]);
       flash(`"${data.name}" created!`);
     }
     setSheet(null);
@@ -3865,7 +4107,7 @@ export default function App() {
                           setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"completed"}:cv));
                           setScreen("summary");
                         }}/>
-                    :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}/>
+                    :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser} onStartConvoy={c=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"live"}:cv)); setActiveC(prev=>({...prev,status:"live"})); flash("Convoy started! 🚀"); }}/>
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
@@ -3873,7 +4115,7 @@ export default function App() {
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
-                {screen==="join"&&<JoinConvoyScreen onAccept={()=>{setScreen("alerts");setNavTab("bell");}} onDecline={()=>{setScreen("alerts");setNavTab("bell");}} onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
+                {screen==="join"&&<JoinConvoyScreen convoys={convoys} authUser={authUser} onJoin={(c,user)=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,members:[...cv.members,{id:Date.now(),name:user.name,initials:(user.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),color:"#4A9EFF",role:"member"}]}:cv)); flash(`Joined ${c.name}!`); }} onAccept={()=>{setScreen("alerts");setNavTab("bell");}} onDecline={()=>{setScreen("alerts");setNavTab("bell");}} onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
               </>
             )}
           </div>
