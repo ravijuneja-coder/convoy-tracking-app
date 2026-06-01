@@ -2499,6 +2499,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   const [saved,       setSaved]       = useState(false);
   const [section,     setSection]     = useState("profile");
   const [profileMembers, setProfileMembers] = useState([]);
+  const [pmOpen, setPmOpen] = useState(false);
   const [pmName, setPmName] = useState(""); const [pmPhone, setPmPhone] = useState(""); const [pmPhoneErr, setPmPhoneErr] = useState(false); const [pmSent, setPmSent] = useState(false);
   const addProfileMember = () => {
     if(!pmName.trim()) return;
@@ -2508,7 +2509,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setProfileMembers(ms=>[...ms,{id:Date.now(),name:pmName.trim(),initials,phone:pmPhone.trim(),color:"#4A9EFF"}]);
     const msg=encodeURIComponent(`Hi ${pmName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/download 🚗`);
     window.open(`https://wa.me/${pmPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
-    setPmName(""); setPmPhone(""); setPmSent(true); setTimeout(()=>setPmSent(false),3000);
+    setPmName(""); setPmPhone(""); setPmOpen(false); setPmSent(true); setTimeout(()=>setPmSent(false),3000);
   };
   const [activeField, setActiveField] = useState(null); // inline field edit
   const [fieldVal,    setFieldVal]    = useState("");
@@ -2845,25 +2846,34 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
         {section==="members" && (
           <>
-            {/* Add member form */}
-            <div style={{marginTop:16,marginBottom:20,background:T.card,border:`1px solid ${T.border}`,borderRadius:18,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
-              <div style={{fontSize:13,fontWeight:800,color:T.text}}>Add Member</div>
-              <input value={pmName} onChange={e=>setPmName(e.target.value)} placeholder="Name"
-                style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-              <div style={{position:"relative"}}>
-                <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
-                <input value={pmPhone} onChange={e=>{setPmPhone(e.target.value);setPmPhoneErr(false);}} placeholder="Mobile number" type="tel"
-                  style={{width:"100%",background:T.surface,border:`1.5px solid ${pmPhoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-              </div>
-              {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
-              <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
-                📲 Add & Send Invite on WhatsApp
+            {/* Header row with + button */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16,marginBottom:12}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Members · {profileMembers.length}</div>
+              <button onClick={()=>{setPmOpen(o=>!o);setPmName("");setPmPhone("");setPmPhoneErr(false);}}
+                style={{width:32,height:32,borderRadius:10,background:pmOpen?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:pmOpen?(T.isDark?"#080B12":"#fff"):T.accent,transition:"all .15s"}}>
+                {pmOpen?"✕":"+"}
               </button>
-              {pmSent&&<div style={{textAlign:"center",fontSize:12,fontWeight:700,color:T.accent}}>✓ Invite sent via WhatsApp!</div>}
             </div>
 
+            {/* Collapsible add form */}
+            {pmOpen&&(
+              <div style={{marginBottom:16,background:T.card,border:`1px solid ${T.border}`,borderRadius:18,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
+                <input value={pmName} onChange={e=>setPmName(e.target.value)} placeholder="Name"
+                  style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                <div style={{position:"relative"}}>
+                  <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
+                  <input value={pmPhone} onChange={e=>{setPmPhone(e.target.value);setPmPhoneErr(false);}} placeholder="Mobile number" type="tel"
+                    style={{width:"100%",background:T.surface,border:`1.5px solid ${pmPhoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                </div>
+                {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
+                <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                  📲 Add & Send Invite on WhatsApp
+                </button>
+              </div>
+            )}
+            {pmSent&&<div style={{textAlign:"center",fontSize:12,fontWeight:700,color:T.accent,marginBottom:10}}>✓ Invite sent via WhatsApp!</div>}
+
             {/* Members list */}
-            <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Added Members · {profileMembers.length}</div>
             {profileMembers.length===0?(
               <div style={{textAlign:"center",padding:"32px 0",color:T.muted}}>
                 <div style={{fontSize:32,marginBottom:8}}>👥</div>
