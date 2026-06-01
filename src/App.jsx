@@ -1830,6 +1830,104 @@ const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
   );
 };
 
+// ── Members Modal ─────────────────────────────────────────────────────────────
+const MembersModal = ({ allMembers, onClose }) => {
+  const T = useT();
+  const [showAdd,  setShowAdd]  = useState(false);
+  const [mName,    setMName]    = useState("");
+  const [mPhone,   setMPhone]   = useState("");
+  const [phoneErr, setPhoneErr] = useState(false);
+  const [members,  setMembers]  = useState(allMembers);
+
+  const addMember = () => {
+    if(!mName.trim()) return;
+    if(mPhone.trim().replace(/\D/g,"").length<10){ setPhoneErr(true); return; }
+    setPhoneErr(false);
+    const initials=mName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    const newM={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:"",color:"#4A9EFF",role:"member",convoys:[]};
+    setMembers(ms=>[...ms,newM]);
+    const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/join/link 🚗`);
+    window.open(`https://wa.me/${mPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
+    setMName(""); setMPhone(""); setShowAdd(false);
+  };
+
+  return (
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.bg,borderRadius:"24px 24px 0 0",maxHeight:"80%",display:"flex",flexDirection:"column"}}>
+        {/* Drag handle */}
+        <div style={{display:"flex",justifyContent:"center",padding:"12px 0 0"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:T.border}}/>
+        </div>
+        {/* Header */}
+        <div style={{padding:"12px 20px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${T.border}`}}>
+          <div>
+            <div style={{fontSize:17,fontWeight:800,color:T.text}}>All Members</div>
+            <div style={{fontSize:12,color:T.muted,marginTop:2}}>{members.length} unique across all convoys</div>
+          </div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <button onClick={()=>setShowAdd(s=>!s)} style={{padding:"7px 14px",borderRadius:20,border:`1.5px solid ${T.accent}`,background:showAdd?T.accent:T.accentLo,color:showAdd?(T.isDark?"#080B12":"#fff"):T.accent,fontSize:12,fontWeight:700,cursor:"pointer"}}>+ Add</button>
+            <button onClick={onClose} style={{width:30,height:30,borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          </div>
+        </div>
+
+        {/* Add Member inline form */}
+        {showAdd&&(
+          <div style={{padding:"14px 20px",borderBottom:`1px solid ${T.border}`,background:T.surface,display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.8,textTransform:"uppercase"}}>New Member</div>
+            <input value={mName} onChange={e=>setMName(e.target.value)} placeholder="Full name"
+              style={{width:"100%",background:T.card,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <div style={{display:"flex",gap:8}}>
+              <div style={{flex:1,position:"relative"}}>
+                <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted}}>📱 +91</span>
+                <input value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number" type="tel"
+                  style={{width:"100%",background:T.card,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"10px 14px 10px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+              </div>
+              <button onClick={addMember} style={{padding:"0 18px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
+                Invite
+              </button>
+            </div>
+            {phoneErr&&<div style={{fontSize:11,color:T.red}}>Enter a valid 10-digit mobile number</div>}
+          </div>
+        )}
+
+        {/* List */}
+        <div style={{overflowY:"auto",flex:1,padding:"8px 20px 24px"}}>
+          {members.length===0?(
+            <div style={{textAlign:"center",padding:"40px 0",color:T.muted}}>
+              <div style={{fontSize:36,marginBottom:10}}>👥</div>
+              <div style={{fontSize:14,fontWeight:700,color:T.sub,marginBottom:4}}>No members yet</div>
+              <div style={{fontSize:12}}>Tap + Add to invite someone</div>
+            </div>
+          ):members.map((m,i)=>(
+            <div key={m.id||i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:i<members.length-1?`1px solid ${T.border}`:"none"}}>
+              <div style={{width:44,height:44,borderRadius:14,background:`${T.accent}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:700,color:T.accent,flexShrink:0,overflow:"hidden"}}>
+                {m.avatar?<img src={m.avatar} style={{width:44,height:44,objectFit:"cover"}}/>:(m.name[0]||"?").toUpperCase()}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                  <span style={{fontSize:14,fontWeight:700,color:T.text}}>{m.name}</span>
+                  {m.role==="admin"&&<span style={{fontSize:9,fontWeight:800,color:T.accent,background:T.accentLo,padding:"2px 6px",borderRadius:6}}>ADMIN</span>}
+                </div>
+                <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                  {m.phone||"No phone"}{m.convoys?.filter(Boolean).length?` · ${m.convoys.filter(Boolean).join(", ")}` : ""}
+                </div>
+              </div>
+              {m.phone&&(
+                <button onClick={()=>{
+                  const msg=encodeURIComponent(`Hi ${m.name}! 👋 Join the convoy on Convoy App: https://convoy.app/join/link 🚗`);
+                  window.open(`https://wa.me/${m.phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
+                }} style={{width:34,height:34,borderRadius:10,background:"#25D36614",border:"1px solid #25D36644",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>
+                  📲
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Home Screen ───────────────────────────────────────────────────────────────
 const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpenPricing }) => {
   const T=useT();
@@ -1925,40 +2023,7 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
 
       {/* Members Modal */}
       {showMembers&&(
-        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setShowMembers(false)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:T.bg,borderRadius:"24px 24px 0 0",padding:"0 0 24px",maxHeight:"70%",display:"flex",flexDirection:"column"}}>
-            <div style={{padding:"16px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${T.border}`}}>
-              <div>
-                <div style={{fontSize:16,fontWeight:800,color:T.text}}>All Members</div>
-                <div style={{fontSize:12,color:T.muted,marginTop:2}}>{allMembers.length} unique across all convoys</div>
-              </div>
-              <button onClick={()=>setShowMembers(false)} style={{width:28,height:28,borderRadius:8,border:"none",background:T.card,color:T.muted,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-            </div>
-            <div style={{overflowY:"auto",padding:"12px 20px",flex:1}}>
-              {allMembers.length===0?(
-                <div style={{textAlign:"center",padding:"32px 0",color:T.muted}}>
-                  <div style={{fontSize:32,marginBottom:8}}>👥</div>
-                  <div style={{fontSize:13}}>No members yet</div>
-                </div>
-              ):allMembers.map((m,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<allMembers.length-1?`1px solid ${T.border}`:"none"}}>
-                  <div style={{width:40,height:40,borderRadius:14,background:`${T.accent}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:T.accent,flexShrink:0}}>
-                    {m.avatar?<img src={m.avatar} style={{width:40,height:40,borderRadius:14,objectFit:"cover"}}/>:m.name[0]?.toUpperCase()}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:700,color:T.text,display:"flex",alignItems:"center",gap:6}}>
-                      {m.name}
-                      {m.role==="admin"&&<span style={{fontSize:9,fontWeight:800,color:T.accent,background:T.accentLo,padding:"2px 6px",borderRadius:6}}>ADMIN</span>}
-                    </div>
-                    <div style={{fontSize:11,color:T.muted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                      {m.phone||"No phone"} · {m.convoys.filter(Boolean).join(", ")||"No convoy"}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <MembersModal allMembers={allMembers} onClose={()=>setShowMembers(false)}/>
       )}
     </div>
   );
