@@ -1633,7 +1633,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                         {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
                         {m.isOwner&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                       </div>
-                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car||"—"}</div>
+                      {m.car&&<div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"left"}}>{m.car}</div>}
                     </div>
                     {!m.isOwner&&<button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <Ic d={ICONS.close} size={12} color={T.red}/>
@@ -1642,7 +1642,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                   {m.phone&&(
                     <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
                       <Ic d={ICONS.phone} size={12} color={T.muted}/>
-                      <span style={{fontSize:11,color:T.muted,flex:1}}>{m.phone}</span>
+                      <span style={{fontSize:11,color:T.muted,flex:1,textAlign:"left"}}>{m.phone}</span>
                       <button onClick={()=>{
                         const msg=encodeURIComponent(`Hi ${m.name}! 👋 Reminder: join the "${form.name}" convoy trip on Convoy App.\n\nDownload & join: https://convoy.app/join/link 🚗`);
                         window.open(`https://wa.me/${m.phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
