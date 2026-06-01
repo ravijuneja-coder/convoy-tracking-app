@@ -2500,11 +2500,18 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   const [section,     setSection]     = useState("profile");
   const [profileMembers, setProfileMembers] = useState([]);
   const [pmOpen, setPmOpen] = useState(false);
+  const [pmEditId, setPmEditId] = useState(null);
   const [pmName, setPmName] = useState(""); const [pmPhone, setPmPhone] = useState(""); const [pmPhoneErr, setPmPhoneErr] = useState(false); const [pmSent, setPmSent] = useState(false);
+  const openPmEdit = (m) => { setPmEditId(m.id); setPmName(m.name); setPmPhone(m.phone); setPmPhoneErr(false); setPmOpen(true); };
   const addProfileMember = () => {
     if(!pmName.trim()) return;
     if(pmPhone.trim().replace(/\D/g,"").length<10){ setPmPhoneErr(true); return; }
     setPmPhoneErr(false);
+    if(pmEditId){
+      const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+      setProfileMembers(ms=>ms.map(m=>m.id===pmEditId?{...m,name:pmName.trim(),initials,phone:pmPhone.trim()}:m));
+      setPmEditId(null); setPmName(""); setPmPhone(""); setPmOpen(false); return;
+    }
     const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     setProfileMembers(ms=>[...ms,{id:Date.now(),name:pmName.trim(),initials,phone:pmPhone.trim(),color:"#4A9EFF"}]);
     const msg=encodeURIComponent(`Hi ${pmName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/download 🚗`);
@@ -2849,7 +2856,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             {/* Header row with + button */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16,marginBottom:12}}>
               <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Members · {profileMembers.length}</div>
-              <button onClick={()=>{setPmOpen(o=>!o);setPmName("");setPmPhone("");setPmPhoneErr(false);}}
+              <button onClick={()=>{setPmOpen(o=>!o);setPmName("");setPmPhone("");setPmPhoneErr(false);setPmEditId(null);}}
                 style={{width:32,height:32,borderRadius:10,background:pmOpen?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:pmOpen?(T.isDark?"#080B12":"#fff"):T.accent,transition:"all .15s"}}>
                 {pmOpen?"✕":"+"}
               </button>
@@ -2857,7 +2864,8 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
             {/* Collapsible add form */}
             {pmOpen&&(
-              <div style={{marginBottom:16,background:T.card,border:`1px solid ${T.border}`,borderRadius:18,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
+              <div style={{marginBottom:16,background:T.card,border:`1.5px solid ${T.accent}44`,borderRadius:18,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
+                <div style={{fontSize:13,fontWeight:800,color:T.text}}>{pmEditId?"Edit Member":"New Member"}</div>
                 <input value={pmName} onChange={e=>setPmName(e.target.value)} placeholder="Name"
                   style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                 <div style={{position:"relative"}}>
@@ -2867,7 +2875,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 </div>
                 {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
                 <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
-                  📲 Add & Send Invite on WhatsApp
+                  {pmEditId?"✓ Save Changes":"📲 Add & Send Invite on WhatsApp"}
                 </button>
               </div>
             )}
@@ -2888,6 +2896,9 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                   <div style={{fontSize:14,fontWeight:700,color:T.text}}>{m.name}</div>
                   <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.phone}</div>
                 </div>
+                <button onClick={()=>openPmEdit(m)} style={{width:34,height:34,borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Ic d={ICONS.edit} size={13} color={T.accent}/>
+                </button>
                 <button onClick={()=>{
                   const msg=encodeURIComponent(`Hi ${m.name}! 👋 Join the convoy: https://convoy.app/download 🚗`);
                   window.open(`https://wa.me/${m.phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
