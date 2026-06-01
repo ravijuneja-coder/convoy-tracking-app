@@ -2428,12 +2428,9 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null }) => {
   const T = useT();
-  const [profile,     setProfile]     = useState(()=>{
-    const u = authUser;
-    return {...PROFILE_DEFAULT, ...(u?.name?{name:u.name}:{}), ...(u?.phone?{phone:u.phone}:{})};
-  });
+  const [profile,     setProfile]     = useState({...PROFILE_DEFAULT});
   const [editing,     setEditing]     = useState(false);
   const [draft,       setDraft]       = useState(null);
   const [saved,       setSaved]       = useState(false);
@@ -2444,11 +2441,24 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
   const fileInputRef = useRef(null);
 
+  // Sync authUser name/phone into profile whenever authUser changes
+  useEffect(()=>{
+    if(authUser?.name){
+      setProfile(p=>({...p, name:authUser.name, ...(authUser.phone?{phone:authUser.phone}:{})}));
+    }
+  },[authUser?.name, authUser?.phone]);
+
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
   const cancelEdit = () => { setDraft(null); setEditing(false); };
   const saveEdit   = () => {
     setProfile({...draft}); setEditing(false); setDraft(null);
     setSaved(true); setTimeout(()=>setSaved(false), 2200);
+    // Persist name/phone back to authUser and localStorage
+    if(draft?.name){
+      const updated={...(authUser||{}), name:draft.name, phone:draft.phone||authUser?.phone||""};
+      localStorage.setItem("convoy_user", JSON.stringify(updated));
+      onProfileUpdate?.(updated);
+    }
   };
   const set = (k,v) => setDraft(d=>({...d,[k]:v}));
 
@@ -3586,6 +3596,7 @@ export default function App() {
   const flash=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),2600)};
 
   const handleAuthDone = (user) => { setAuthUser(user); setAuthed(true); };
+  const handleProfileUpdate = (updated) => { setAuthUser(updated); };
 
   const handleSave=data=>{
     if(convoys.find(c=>c.id===data.id)){
@@ -3670,7 +3681,7 @@ export default function App() {
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
