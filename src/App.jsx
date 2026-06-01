@@ -1435,9 +1435,10 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null }) =>
   const T=useT();
   const editing=!!convoy?.id;
   const makeDefaultMembers=()=>{
-    if(!authUser) return [];
-    const initials=(authUser.name||"U").trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    return [{id:Date.now(),name:authUser.name||"You",initials,phone:authUser.phone||"",car:"",color:"#3DD68C",role:"admin",isOwner:true}];
+    if(!authUser?.name) return [];
+    const n=authUser.name.trim();
+    const initials=n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    return [{id:Date.now(),name:n,initials,phone:authUser.phone||"",car:"",color:"#3DD68C",role:"admin",isOwner:true}];
   };
   const blank={name:"",startingPoint:"",startCoords:null,destination:"",destCoords:null,distance:0,date:"",endDate:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
   const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:{...blank,members:makeDefaultMembers()});
@@ -2856,7 +2857,10 @@ const OnboardingScreen = ({ onDone }) => {
     if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit phone number."); return; }
     if (!password.trim() || password.length < 4) { setErr("Password must be at least 4 characters."); return; }
     setErr("");
-    const user = { name: authTab==="signup" ? name.trim() : (JSON.parse(localStorage.getItem("convoy_user")||"null")?.name||"User"), phone: phone.trim() };
+    const storedName = JSON.parse(localStorage.getItem("convoy_user")||"null")?.name;
+    const resolvedName = authTab==="signup" ? name.trim() : (storedName||name.trim());
+    if(!resolvedName){ setErr("Please enter your name."); return; }
+    const user = { name: resolvedName, phone: phone.trim() };
     localStorage.setItem("convoy_user", JSON.stringify(user));
     localStorage.setItem("convoy_authed","1");
     onDone(user);
@@ -2897,7 +2901,7 @@ const OnboardingScreen = ({ onDone }) => {
       {/* Form */}
       <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
+          {(authTab==="signup"||!JSON.parse(localStorage.getItem("convoy_user")||"null")?.name)&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
           <Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
           <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 4 characters" type="password"/>
 
