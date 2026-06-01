@@ -1974,17 +1974,21 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
         </div>
       </div>
       <div style={{display:"flex",gap:10,padding:"0 18px 14px",overflowX:"auto",scrollbarWidth:"none"}}>
-        {[
-          {label:"Total",   val:convoys.length,                                color:T.accent,  onClick:null},
-          {label:"Live",    val:convoys.filter(c=>c.status==="live").length,   color:T.red,     onClick:null},
-          {label:"Upcoming",val:convoys.filter(c=>c.status==="upcoming").length,color:T.blue,  onClick:null},
-          {label:"Members", val:allMembers.length,                             color:T.violet,  onClick:()=>setShowMembers(true)},
-        ].map(s=>(
-          <div key={s.label} onClick={s.onClick||undefined} style={{flexShrink:0,background:T.card,border:`1px solid ${s.onClick?T.violet:T.border}`,borderRadius:14,padding:"10px 16px",minWidth:70,textAlign:"center",boxShadow:T.isDark?"none":"0 2px 8px rgba(0,0,0,.06)",cursor:s.onClick?"pointer":"default",transition:"all .15s"}}>
-            <div style={{fontSize:20,fontWeight:800,color:s.color,fontFamily:"'Space Mono',monospace"}}>{s.val}</div>
-            <div style={{fontSize:10,color:T.muted,fontWeight:700,marginTop:2}}>{s.label}</div>
-          </div>
-        ))}
+        {(()=>{
+          const scope = filter==="all" ? convoys : convoys.filter(c=>c.status===filter);
+          const scopeMembers = Object.values(scope.flatMap(c=>c.members).reduce((acc,m)=>{acc[m.name]=m;return acc},{}));
+          return [
+            {label:"Total",   val:scope.length,                                       color:T.accent, onClick:null},
+            {label:"Live",    val:scope.filter(c=>c.status==="live").length,           color:T.red,    onClick:null},
+            {label:"Upcoming",val:scope.filter(c=>c.status==="upcoming").length,       color:T.blue,   onClick:null},
+            {label:"Members", val:scopeMembers.length,                                color:T.violet, onClick:()=>setShowMembers(true)},
+          ].map(s=>(
+            <div key={s.label} onClick={s.onClick||undefined} style={{flexShrink:0,background:T.card,border:`1px solid ${s.onClick?T.violet:T.border}`,borderRadius:14,padding:"10px 16px",minWidth:70,textAlign:"center",boxShadow:T.isDark?"none":"0 2px 8px rgba(0,0,0,.06)",cursor:s.onClick?"pointer":"default",transition:"all .15s"}}>
+              <div style={{fontSize:20,fontWeight:800,color:s.color,fontFamily:"'Space Mono',monospace"}}>{s.val}</div>
+              <div style={{fontSize:10,color:T.muted,fontWeight:700,marginTop:2}}>{s.label}</div>
+            </div>
+          ));
+        })()}
       </div>
 
       <div style={{flex:1,overflowY:"auto",padding:"0 18px 10px"}}>
