@@ -1626,13 +1626,13 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                 </div>
               ))}
               {/* ── Profile Members (with checkboxes) ── */}
-              {profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase()).length>0&&(
+              {(()=>{const pm=profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase());return pm.length>0&&(
                 <div style={{borderRadius:14,border:`1.5px solid ${T.border}`,overflow:"hidden",marginBottom:2}}>
-                  <div style={{padding:"12px 14px",background:T.card,borderBottom:`1px solid ${T.border}`}}>
+                  <div style={{padding:"12px 14px",background:T.card,borderBottom:`1px solid ${T.border}`,textAlign:"left"}}>
                     <div style={{fontSize:12,fontWeight:800,color:T.accent}}>My Members</div>
-                    <div style={{fontSize:10,color:T.muted,marginTop:1}}>{profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase()).length} from your profile — tap to add</div>
+                    <div style={{fontSize:10,color:T.muted,marginTop:1}}>{pm.length} from your profile — tap to add</div>
                   </div>
-                  {profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase()).map(m=>{
+                  {pm.map(m=>{
                     const already=!!form.members.find(fm=>fm.name.toLowerCase()===m.name.toLowerCase());
                     const toggle=()=>{
                       if(already){ set("members",form.members.filter(fm=>fm.name.toLowerCase()!==m.name.toLowerCase())); }
@@ -1646,18 +1646,18 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                         <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${already?T.accent:T.border}`,background:already?T.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
                           {already&&<Ic d={ICONS.check} size={11} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>}
                         </div>
-                        <div style={{width:32,height:32,borderRadius:10,background:`#4A9EFF22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#4A9EFF",flexShrink:0}}>
+                        <div style={{width:34,height:34,borderRadius:10,background:`#4A9EFF22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#4A9EFF",flexShrink:0}}>
                           {(m.initials||(m.name[0]||"?").toUpperCase())}
                         </div>
-                        <div style={{flex:1,minWidth:0}}>
+                        <div style={{flex:1,minWidth:0,textAlign:"left"}}>
                           <div style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</div>
-                          <div style={{fontSize:10,color:T.muted}}>{m.phone}</div>
+                          <div style={{fontSize:10,color:T.muted,marginTop:1}}>{m.phone}</div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              )}
+              );})()}
 
               {/* ── Existing members picker ── */}
               {existingPool.length>0&&(
