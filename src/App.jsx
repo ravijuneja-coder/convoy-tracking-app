@@ -2853,11 +2853,12 @@ const OnboardingScreen = ({ onDone }) => {
   const slide       = ONBOARD_SLIDES[step] || {};
 
   const handleSubmit = () => {
-    if (!name.trim()) { setErr("Please enter your name."); return; }
+    if (authTab==="signup" && !name.trim()) { setErr("Please enter your name."); return; }
     if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit phone number."); return; }
     if (!password.trim() || password.length < 4) { setErr("Password must be at least 4 characters."); return; }
     setErr("");
-    const user = { name: name.trim(), phone: phone.trim() };
+    const storedName = JSON.parse(localStorage.getItem("convoy_user")||"null")?.name;
+    const user = { name: authTab==="signup" ? name.trim() : (storedName||""), phone: phone.trim() };
     localStorage.setItem("convoy_user", JSON.stringify(user));
     localStorage.setItem("convoy_authed","1");
     onDone(user);
@@ -2898,7 +2899,7 @@ const OnboardingScreen = ({ onDone }) => {
       {/* Form */}
       <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>
+          {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
           <Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
           <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 4 characters" type="password"/>
 
