@@ -127,7 +127,7 @@ const Field = ({ label, value, onChange, placeholder, type="text", min }) => {
   const T = useT();
   return (
     <div style={{display:"flex",flexDirection:"column",gap:5}}>
-      {label&&<label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>{label}</label>}
+      {label&&<label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",textAlign:"left"}}>{label}</label>}
       <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
         {...(min!==undefined?{min}:{})}
         style={{background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}
@@ -139,7 +139,7 @@ const FieldArea = ({ label, value, onChange, placeholder }) => {
   const T = useT();
   return (
     <div style={{display:"flex",flexDirection:"column",gap:5}}>
-      {label&&<label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>{label}</label>}
+      {label&&<label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",textAlign:"left"}}>{label}</label>}
       <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={3}
         style={{background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}
         onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
@@ -1523,7 +1523,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {/* Starting Point */}
                 <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                  <label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>Starting Point</label>
+                  <label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",textAlign:"left"}}>Starting Point</label>
                   <button onClick={()=>setShowStartPicker(true)}
                     style={{background:T.raised,border:`1.5px solid ${form.startingPoint?T.blue:T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:form.startingPoint?T.text:T.muted,width:"100%",boxSizing:"border-box",fontFamily:"inherit",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
                     <span style={{fontSize:16,flexShrink:0}}>🟢</span>
@@ -1545,7 +1545,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
 
                 {/* Destination */}
                 <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                  <label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase"}}>Destination</label>
+                  <label style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",textAlign:"left"}}>Destination</label>
                   <button onClick={()=>setShowMapPicker(true)}
                     style={{background:T.raised,border:`1.5px solid ${form.destination?T.accent:T.border}`,borderRadius:10,padding:"11px 13px",fontSize:13,color:form.destination?T.text:T.muted,width:"100%",boxSizing:"border-box",fontFamily:"inherit",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
                     <span style={{fontSize:16,flexShrink:0}}>🏁</span>
@@ -1564,7 +1564,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
               </div>
               <Field label="Departure Time" type="time" value={form.time} onChange={v=>set("time",v)}/>
               <div>
-                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:8}}>Alert Distance</div>
+                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:8,textAlign:"left"}}>Alert Distance</div>
                 <div style={{display:"flex",gap:8}}>
                   {[2,5,10,20].map(km=>(
                     <button key={km} onClick={()=>set("alertKm",km)} style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${form.alertKm===km?T.amber:T.border}`,background:form.alertKm===km?T.amberLo:T.raised,color:form.alertKm===km?T.amber:T.muted,fontSize:13,fontWeight:700,cursor:"pointer"}}>{km}km</button>
