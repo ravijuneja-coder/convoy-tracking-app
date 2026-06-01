@@ -1508,10 +1508,16 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
               <Ic d={ICONS.close} size={14}/>
             </button>
           </div>
-          <div style={{display:"flex",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,alignItems:"center"}}>
             {[["details","Details"],["members",`Members (${form.members.length})`]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setTab(id)} style={{flex:1,background:"none",border:"none",padding:"9px 0",fontSize:13,fontWeight:700,color:tab===id?T.accent:T.muted,borderBottom:`2px solid ${tab===id?T.accent:"transparent"}`,marginBottom:-1,cursor:"pointer"}}>{lbl}</button>
             ))}
+            {tab==="members"&&(
+              <button onClick={()=>{setShowAddForm(s=>!s);setMName("");setMPhone("");setMCar("");setPhoneErr(false);}}
+                style={{width:30,height:30,borderRadius:9,background:showAddForm?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:showAddForm?(T.isDark?"#080B12":"#fff"):T.accent,flexShrink:0,marginRight:2,marginBottom:-1}}>
+                {showAddForm?"✕":"+"}
+              </button>
+            )}
           </div>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"16px 18px"}}>
@@ -1626,41 +1632,28 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                   )}
                 </div>
               ))}
-              {/* Add new member — toggle */}
-              <div style={{borderRadius:14,border:`1.5px solid ${showAddForm?T.accent:T.border}`,overflow:"hidden",transition:"border-color .2s"}}>
-                <button onClick={()=>{setShowAddForm(s=>!s);setMName("");setMPhone("");setMCar("");setPhoneErr(false);}}
-                  style={{width:"100%",padding:"12px 14px",background:showAddForm?T.accentLo:T.card,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:28,height:28,borderRadius:8,background:showAddForm?T.accent:T.accentLo,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:showAddForm?(T.isDark?"#080B12":"#fff"):T.accent,flexShrink:0,transition:"all .15s"}}>+</div>
-                    <div style={{textAlign:"left"}}>
-                      <div style={{fontSize:12,fontWeight:800,color:T.accent}}>Add New Member</div>
-                      <div style={{fontSize:10,color:T.muted,marginTop:1}}>Invite via WhatsApp</div>
-                    </div>
-                  </div>
-                  <Ic d={showAddForm?ICONS.close:ICONS.chevron} size={14} color={T.accent} sw={2}/>
-                </button>
-                {showAddForm&&(
-                  <div style={{borderTop:`1px solid ${T.border}`,background:T.card,padding:"14px",display:"flex",flexDirection:"column",gap:8}}>
-                    <Field value={mName} onChange={v=>{setMName(v);}} placeholder="Member name"/>
-                    <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                      <div style={{position:"relative"}}>
-                        <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none",display:"flex",alignItems:"center",gap:4}}>
-                          <span>📲</span><span style={{fontSize:12,color:T.muted,fontWeight:600}}>+91</span>
-                        </div>
-                        <input type="tel" value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number"
-                          style={{background:T.surface,border:`1.5px solid ${phoneErr?T.red:mPhone.trim().length>=10?T.accent:T.border}`,borderRadius:10,padding:"11px 13px 11px 56px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}/>
+              {/* Add new member — inline form (shown when + tapped) */}
+              {showAddForm&&(
+                <div style={{background:T.card,border:`1.5px solid ${T.accent}`,borderRadius:14,padding:"14px",display:"flex",flexDirection:"column",gap:8}}>
+                  <Field value={mName} onChange={v=>{setMName(v);}} placeholder="Member name"/>
+                  <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                    <div style={{position:"relative"}}>
+                      <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none",display:"flex",alignItems:"center",gap:4}}>
+                        <span>📲</span><span style={{fontSize:12,color:T.muted,fontWeight:600}}>+91</span>
                       </div>
-                      {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700,paddingLeft:4}}>⚠ Valid mobile number is required</span>}
-                      <span style={{fontSize:10,color:T.muted,paddingLeft:4}}>Member will receive a WhatsApp invite with the app download link</span>
+                      <input type="tel" value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number"
+                        style={{background:T.surface,border:`1.5px solid ${phoneErr?T.red:mPhone.trim().length>=10?T.accent:T.border}`,borderRadius:10,padding:"11px 13px 11px 56px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}/>
                     </div>
-                    <Field value={mCar} onChange={setMCar} placeholder="Car · Number plate (optional)"/>
-                    <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
-                      style={{padding:"12px",borderRadius:10,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .15s"}}>
-                      <span style={{fontSize:16}}>📲</span> Add & Send WhatsApp Invite
-                    </button>
+                    {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700,paddingLeft:4}}>⚠ Valid mobile number is required</span>}
+                    <span style={{fontSize:10,color:T.muted,paddingLeft:4}}>Member will receive a WhatsApp invite with the app download link</span>
                   </div>
-                )}
-              </div>
+                  <Field value={mCar} onChange={setMCar} placeholder="Car · Number plate (optional)"/>
+                  <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
+                    style={{padding:"12px",borderRadius:10,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .15s"}}>
+                    <span style={{fontSize:16}}>📲</span> Add & Send WhatsApp Invite
+                  </button>
+                </div>
+              )}
 
               {/* ── Profile Members (with checkboxes) ── */}
               {(()=>{const pm=profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase());return pm.length>0&&(
