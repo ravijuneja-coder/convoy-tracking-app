@@ -1860,7 +1860,7 @@ const MembersModal = ({ allMembers, onClose }) => {
         </div>
         {/* Header */}
         <div style={{padding:"12px 20px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${T.border}`}}>
-          <div>
+          <div style={{textAlign:"left"}}>
             <div style={{fontSize:17,fontWeight:800,color:T.text}}>All Members</div>
             <div style={{fontSize:12,color:T.muted,marginTop:2}}>{members.length} unique across all convoys</div>
           </div>
@@ -1893,7 +1893,7 @@ const MembersModal = ({ allMembers, onClose }) => {
         {/* List */}
         <div style={{overflowY:"auto",flex:1,padding:"8px 20px 24px"}}>
           {members.length===0?(
-            <div style={{textAlign:"center",padding:"40px 0",color:T.muted}}>
+            <div style={{textAlign:"left",padding:"32px 0",color:T.muted}}>
               <div style={{fontSize:36,marginBottom:10}}>👥</div>
               <div style={{fontSize:14,fontWeight:700,color:T.sub,marginBottom:4}}>No members yet</div>
               <div style={{fontSize:12}}>Tap + Add to invite someone</div>
