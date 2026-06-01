@@ -1824,10 +1824,16 @@ const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
 const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpenPricing }) => {
   const T=useT();
   const [search,setSearch]=useState(""), [filter,setFilter]=useState("all");
+  const [showMembers,setShowMembers]=useState(false);
   const filtered=convoys.filter(c=>(filter==="all"||c.status===filter)&&(c.name.toLowerCase().includes(search.toLowerCase())||c.destination.toLowerCase().includes(search.toLowerCase())));
   const live=convoys.filter(c=>c.status==="live");
+  const allMembers=Object.values(convoys.flatMap(c=>c.members).reduce((acc,m)=>{
+    if(!acc[m.name]){acc[m.name]={...m,convoys:[]};}
+    acc[m.name].convoys.push(convoys.find(c=>c.members.some(mm=>mm.name===m.name))?.name||"");
+    return acc;
+  },{}))
   return (
-    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
       <div style={{padding:"16px 18px 12px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
@@ -1868,12 +1874,12 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
       </div>
       <div style={{display:"flex",gap:10,padding:"0 18px 14px",overflowX:"auto",scrollbarWidth:"none"}}>
         {[
-          {label:"Total",   val:convoys.length,                                color:T.accent},
-          {label:"Live",    val:convoys.filter(c=>c.status==="live").length,   color:T.red   },
-          {label:"Upcoming",val:convoys.filter(c=>c.status==="upcoming").length,color:T.blue },
-          {label:"Members", val:[...new Set(convoys.flatMap(c=>c.members.map(m=>m.name)))].length,color:T.violet},
+          {label:"Total",   val:convoys.length,                                color:T.accent,  onClick:null},
+          {label:"Live",    val:convoys.filter(c=>c.status==="live").length,   color:T.red,     onClick:null},
+          {label:"Upcoming",val:convoys.filter(c=>c.status==="upcoming").length,color:T.blue,  onClick:null},
+          {label:"Members", val:allMembers.length,                             color:T.violet,  onClick:()=>setShowMembers(true)},
         ].map(s=>(
-          <div key={s.label} style={{flexShrink:0,background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"10px 16px",minWidth:70,textAlign:"center",boxShadow:T.isDark?"none":"0 2px 8px rgba(0,0,0,.06)"}}>
+          <div key={s.label} onClick={s.onClick||undefined} style={{flexShrink:0,background:T.card,border:`1px solid ${s.onClick?T.violet:T.border}`,borderRadius:14,padding:"10px 16px",minWidth:70,textAlign:"center",boxShadow:T.isDark?"none":"0 2px 8px rgba(0,0,0,.06)",cursor:s.onClick?"pointer":"default",transition:"all .15s"}}>
             <div style={{fontSize:20,fontWeight:800,color:s.color,fontFamily:"'Space Mono',monospace"}}>{s.val}</div>
             <div style={{fontSize:10,color:T.muted,fontWeight:700,marginTop:2}}>{s.label}</div>
           </div>
@@ -1906,6 +1912,44 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
           );
         })}
       </div>
+
+      {/* Members Modal */}
+      {showMembers&&(
+        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setShowMembers(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.bg,borderRadius:"24px 24px 0 0",padding:"0 0 24px",maxHeight:"70%",display:"flex",flexDirection:"column"}}>
+            <div style={{padding:"16px 20px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${T.border}`}}>
+              <div>
+                <div style={{fontSize:16,fontWeight:800,color:T.text}}>All Members</div>
+                <div style={{fontSize:12,color:T.muted,marginTop:2}}>{allMembers.length} unique across all convoys</div>
+              </div>
+              <button onClick={()=>setShowMembers(false)} style={{width:28,height:28,borderRadius:8,border:"none",background:T.card,color:T.muted,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            <div style={{overflowY:"auto",padding:"12px 20px",flex:1}}>
+              {allMembers.length===0?(
+                <div style={{textAlign:"center",padding:"32px 0",color:T.muted}}>
+                  <div style={{fontSize:32,marginBottom:8}}>👥</div>
+                  <div style={{fontSize:13}}>No members yet</div>
+                </div>
+              ):allMembers.map((m,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<allMembers.length-1?`1px solid ${T.border}`:"none"}}>
+                  <div style={{width:40,height:40,borderRadius:14,background:`${T.accent}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:T.accent,flexShrink:0}}>
+                    {m.avatar?<img src={m.avatar} style={{width:40,height:40,borderRadius:14,objectFit:"cover"}}/>:m.name[0]?.toUpperCase()}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:700,color:T.text,display:"flex",alignItems:"center",gap:6}}>
+                      {m.name}
+                      {m.role==="admin"&&<span style={{fontSize:9,fontWeight:800,color:T.accent,background:T.accentLo,padding:"2px 6px",borderRadius:6}}>ADMIN</span>}
+                    </div>
+                    <div style={{fontSize:11,color:T.muted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      {m.phone||"No phone"} · {m.convoys.filter(Boolean).join(", ")||"No convoy"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -3514,7 +3558,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("convoy_user")||"null"); } catch { return null; }
   });
 
-  const [convoys,    setConvoys]   = useState(SEED);
+  const [convoys,    setConvoys]   = useState([]);
   const [screen,     setScreen]    = useState("home");
   const [activeC,    setActiveC]   = useState(null);
   const [sheet,      setSheet]     = useState(null);
