@@ -929,7 +929,7 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // LIVE DETAIL SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
-const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy }) => {
+const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authUser=null }) => {
   const T = useT();
   const [selId,    setSelId]    = useState(null);
   const [mapTab,   setMapTab]   = useState("map");
@@ -940,7 +940,10 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy }) => 
   const [members,   setMembers]  = useState(convoy.members);
   const [endConfirm,setEndConfirm]=useState(false);
 
-  const isAdmin = members[0]?.role === "admin"; // first member = "You"
+  // Logged-in user is admin if their name matches any admin member (or if first member is admin and no authUser)
+  const isAdmin = authUser
+    ? members.some(m=>m.name.toLowerCase()===authUser.name?.toLowerCase()&&m.role==="admin")
+    : members[0]?.role==="admin";
 
   const removeMember = id => setMembers(ms => ms.filter(m => m.id !== id));
   const makeAdmin    = id => setMembers(ms => ms.map(m => ({
@@ -1161,7 +1164,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy }) => 
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             <span style={{fontSize:14,fontWeight:800,color:T.text}}>{m.name}</span>
                             {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
-                            {i===0&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
+                            {(authUser?m.name.toLowerCase()===authUser.name?.toLowerCase():i===0)&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                           </div>
                           <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.car}</div>
                         </div>
@@ -1188,8 +1191,8 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy }) => 
                         <span style={{fontSize:11,color:T.amber,fontWeight:700}}>{m.name} is {ld.dist}km behind — beyond {convoy.alertKm}km threshold</span>
                       </div>
                     )}
-                    {/* Admin controls — shown for all members except yourself (i===0) */}
-                    {isAdmin&&i!==0&&(
+                    {/* Admin controls — hide for logged-in user (can't remove yourself) */}
+                    {isAdmin&&!(authUser?m.name.toLowerCase()===authUser.name?.toLowerCase():i===0)&&(
                       <div style={{display:"flex",gap:8,marginTop:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
                         <button onClick={()=>makeAdmin(m.id)}
                           style={{flex:1,padding:"7px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:11,fontWeight:800,color:T.accent}}>
@@ -1428,11 +1431,16 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // FORM SHEET
 // ══════════════════════════════════════════════════════════════════════════════
-const FormSheet = ({ convoy, onSave, onClose, allConvoys=[] }) => {
+const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null }) => {
   const T=useT();
   const editing=!!convoy?.id;
+  const makeDefaultMembers=()=>{
+    if(!authUser) return [];
+    const initials=(authUser.name||"U").trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    return [{id:Date.now(),name:authUser.name||"You",initials,phone:authUser.phone||"",car:"",color:"#3DD68C",role:"admin",isOwner:true}];
+  };
   const blank={name:"",startingPoint:"",startCoords:null,destination:"",destCoords:null,distance:0,date:"",endDate:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
-  const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:blank);
+  const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:{...blank,members:makeDefaultMembers()});
   const [tab,setTab]=useState("details");
   const [mName,setMName]=useState(""); const [mCar,setMCar]=useState(""); const [mPhone,setMPhone]=useState("");
   const [phoneErr,setPhoneErr]=useState(false);
@@ -1463,7 +1471,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[] }) => {
 
   const addExisting = m => {
     if(form.members.find(fm=>fm.name.toLowerCase()===m.name.toLowerCase())) return;
-    const newM={...m,id:Date.now()+Math.random(),color:MC[form.members.length%MC.length],role:form.members.length===0?"admin":"member"};
+    const newM={...m,id:Date.now()+Math.random(),color:MC[form.members.length%MC.length],role:"member"};
     set("members",[...form.members,newM]);
   };
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -1475,7 +1483,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[] }) => {
     if(mPhone.trim().length<10){ setPhoneErr(true); return; }
     setPhoneErr(false);
     const initials=mName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    const newMember={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:mCar.trim()||"Vehicle TBD",color:MC[form.members.length%MC.length],role:form.members.length===0?"admin":"member"};
+    const newMember={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:mCar.trim()||"Vehicle TBD",color:MC[form.members.length%MC.length],role:"member"};
     set("members",[...form.members,newMember]);
     // Open WhatsApp with invite link
     const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join the "${form.name||"Convoy"}" trip on Convoy App.\n\n📍 Destination: ${form.destination||"TBD"}\n📅 Start: ${form.date||"TBD"}${form.endDate?`  →  End: ${form.endDate}`:""}\n🕐 Departure: ${form.time||"TBD"}\n\nDownload the app & join: https://convoy.app/join/link\n\nSee you on the road! 🚗`);
@@ -1593,12 +1601,13 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[] }) => {
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
                         <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
                         {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
+                        {m.isOwner&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                       </div>
-                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car}</div>
+                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.car||"—"}</div>
                     </div>
-                    <button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {!m.isOwner&&<button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <Ic d={ICONS.close} size={12} color={T.red}/>
-                    </button>
+                    </button>}
                   </div>
                   {m.phone&&(
                     <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
@@ -3649,6 +3658,7 @@ export default function App() {
                         onBack={()=>{setScreen("home");setActiveC(null);}}
                         onEdit={c=>setSheet(c)}
                         onDelete={c=>setDelTarget(c)}
+                        authUser={authUser}
                         onEndConvoy={c=>{
                           setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"completed"}:cv));
                           setScreen("summary");
@@ -3683,7 +3693,7 @@ export default function App() {
           </div>
           )}
 
-          {sheet!==null&&<FormSheet convoy={sheet==="create"?null:sheet} onSave={handleSave} onClose={()=>setSheet(null)} allConvoys={convoys}/>}
+          {sheet!==null&&<FormSheet convoy={sheet==="create"?null:sheet} onSave={handleSave} onClose={()=>setSheet(null)} allConvoys={convoys} authUser={authUser}/>}
           {delTarget&&<DeleteSheet convoy={delTarget} onConfirm={handleDelete} onClose={()=>setDelTarget(null)}/>}
           {showPaywall&&<PaywallModal onUpgrade={()=>{setShowPaywall(false);setScreen("pricing");}} onClose={()=>setShowPaywall(false)}/>}
 
