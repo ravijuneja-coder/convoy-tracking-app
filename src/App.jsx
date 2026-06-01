@@ -2444,7 +2444,6 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
 // ── Add Member Card (used inside ProfileScreen) ────────────────────────────
 const AddMemberCard = () => {
   const T = useT();
-  const [open,     setOpen]     = useState(false);
   const [mName,    setMName]    = useState("");
   const [mPhone,   setMPhone]   = useState("");
   const [phoneErr, setPhoneErr] = useState(false);
@@ -2456,39 +2455,26 @@ const AddMemberCard = () => {
     setPhoneErr(false);
     const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/download 🚗`);
     window.open(`https://wa.me/${mPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
-    setMName(""); setMPhone(""); setSent(true); setOpen(false);
-    setTimeout(()=>setSent(false),3000);
+    setMName(""); setMPhone("");
+    setSent(true); setTimeout(()=>setSent(false),3000);
   };
 
   return (
     <div style={{marginTop:20,marginBottom:4}}>
       <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Add Member</div>
-      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden"}}>
-        <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",padding:"14px 16px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:12,textAlign:"left"}}>
-          <div style={{width:40,height:40,borderRadius:12,background:`${T.accent}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>👥</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:14,fontWeight:700,color:T.text}}>Invite a Member</div>
-            <div style={{fontSize:12,color:T.muted,marginTop:1}}>Send WhatsApp invite with app link</div>
-          </div>
-          <span style={{fontSize:18,color:T.muted,transform:`rotate(${open?90:0}deg)`,transition:"transform .2s"}}>›</span>
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
+        <input value={mName} onChange={e=>setMName(e.target.value)} placeholder="Name"
+          style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+        <div style={{position:"relative"}}>
+          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
+          <input value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number" type="tel"
+            style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+        </div>
+        {phoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
+        <button onClick={invite} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Add & Send Invite on WhatsApp
         </button>
-        {open&&(
-          <div style={{padding:"0 16px 16px",display:"flex",flexDirection:"column",gap:10,borderTop:`1px solid ${T.border}`}}>
-            <div style={{height:10}}/>
-            <input value={mName} onChange={e=>setMName(e.target.value)} placeholder="Member's full name"
-              style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-            <div style={{position:"relative"}}>
-              <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
-              <input value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number" type="tel"
-                style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"10px 14px 10px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-            </div>
-            {phoneErr&&<div style={{fontSize:11,color:T.red}}>Enter a valid 10-digit mobile number</div>}
-            <button onClick={invite} style={{padding:"12px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
-              📲 Send WhatsApp Invite
-            </button>
-          </div>
-        )}
-        {sent&&<div style={{padding:"10px 16px",background:T.accentLo,borderTop:`1px solid ${T.accent}22`,fontSize:12,fontWeight:700,color:T.accent}}>✓ Invite sent via WhatsApp!</div>}
+        {sent&&<div style={{textAlign:"center",fontSize:12,fontWeight:700,color:T.accent}}>✓ Invite sent via WhatsApp!</div>}
       </div>
     </div>
   );
