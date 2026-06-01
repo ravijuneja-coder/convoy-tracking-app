@@ -2428,9 +2428,12 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null }) => {
   const T = useT();
-  const [profile,     setProfile]     = useState(PROFILE_DEFAULT);
+  const [profile,     setProfile]     = useState(()=>{
+    const u = authUser;
+    return {...PROFILE_DEFAULT, ...(u?.name?{name:u.name}:{}), ...(u?.phone?{phone:u.phone}:{})};
+  });
   const [editing,     setEditing]     = useState(false);
   const [draft,       setDraft]       = useState(null);
   const [saved,       setSaved]       = useState(false);
@@ -3565,9 +3568,7 @@ export default function App() {
 
   // ── Auth state ──
   const [authed, setAuthed] = useState(false); // always show onboarding first
-  const [authUser, setAuthUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("convoy_user")||"null"); } catch { return null; }
-  });
+  const [authUser, setAuthUser] = useState(null); // set only after onboarding completes
 
   const [convoys,    setConvoys]   = useState([]);
   const [screen,     setScreen]    = useState("home");
@@ -3669,7 +3670,7 @@ export default function App() {
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
