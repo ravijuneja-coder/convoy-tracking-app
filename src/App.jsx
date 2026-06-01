@@ -1436,7 +1436,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
   const editing=!!convoy?.id;
   const makeDefaultMembers=()=>{
     if(!authUser?.name) return [];
-    const n=authUser.name.trim();
+    const n=authUser.name.trim().replace(/\b\w/g,c=>c.toUpperCase());
     const initials=n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     return [{id:Date.now(),name:n,initials,phone:authUser.phone||"",car:"",color:"#3DD68C",role:"admin",isOwner:true}];
   };
@@ -1626,13 +1626,13 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                 </div>
               ))}
               {/* ── Profile Members (with checkboxes) ── */}
-              {profileMembers.length>0&&(
+              {profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase()).length>0&&(
                 <div style={{borderRadius:14,border:`1.5px solid ${T.border}`,overflow:"hidden",marginBottom:2}}>
                   <div style={{padding:"12px 14px",background:T.card,borderBottom:`1px solid ${T.border}`}}>
                     <div style={{fontSize:12,fontWeight:800,color:T.accent}}>My Members</div>
-                    <div style={{fontSize:10,color:T.muted,marginTop:1}}>{profileMembers.length} from your profile — tap to add</div>
+                    <div style={{fontSize:10,color:T.muted,marginTop:1}}>{profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase()).length} from your profile — tap to add</div>
                   </div>
-                  {profileMembers.map(m=>{
+                  {profileMembers.filter(m=>m.name.toLowerCase()!==authUser?.name?.toLowerCase()).map(m=>{
                     const already=!!form.members.find(fm=>fm.name.toLowerCase()===m.name.toLowerCase());
                     const toggle=()=>{
                       if(already){ set("members",form.members.filter(fm=>fm.name.toLowerCase()!==m.name.toLowerCase())); }
@@ -3049,7 +3049,8 @@ const OnboardingScreen = ({ onDone }) => {
     if (!password.trim() || password.length < 4) { setErr("Password must be at least 4 characters."); return; }
     setErr("");
     const storedName = JSON.parse(localStorage.getItem("convoy_user")||"null")?.name;
-    const user = { name: authTab==="signup" ? name.trim() : (storedName||""), phone: phone.trim() };
+    const rawName = authTab==="signup" ? name.trim() : (storedName||"");
+    const user = { name: rawName.replace(/\b\w/g,c=>c.toUpperCase()), phone: phone.trim() };
     localStorage.setItem("convoy_user", JSON.stringify(user));
     localStorage.setItem("convoy_authed","1");
     onDone(user);
