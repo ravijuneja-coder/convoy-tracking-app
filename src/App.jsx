@@ -1508,16 +1508,10 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
               <Ic d={ICONS.close} size={14}/>
             </button>
           </div>
-          <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,alignItems:"center"}}>
+          <div style={{display:"flex",borderBottom:`1px solid ${T.border}`}}>
             {[["details","Details"],["members",`Members (${form.members.length})`]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setTab(id)} style={{flex:1,background:"none",border:"none",padding:"9px 0",fontSize:13,fontWeight:700,color:tab===id?T.accent:T.muted,borderBottom:`2px solid ${tab===id?T.accent:"transparent"}`,marginBottom:-1,cursor:"pointer"}}>{lbl}</button>
             ))}
-            {tab==="members"&&(
-              <button onClick={()=>{setShowAddForm(s=>!s);setMName("");setMPhone("");setMCar("");setPhoneErr(false);}}
-                style={{width:30,height:30,borderRadius:9,background:showAddForm?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:showAddForm?(T.isDark?"#080B12":"#fff"):T.accent,flexShrink:0,marginRight:2,marginBottom:-1}}>
-                {showAddForm?"✕":"+"}
-              </button>
-            )}
           </div>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"16px 18px"}}>
@@ -1600,7 +1594,15 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
           )}
           {tab==="members"&&(
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {form.members.length===0&&<div style={{textAlign:"center",padding:"20px 0",fontSize:12,color:T.muted}}>No members yet.</div>}
+              {/* Members header with + button */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Members · {form.members.length}</div>
+                <button onClick={()=>{setShowAddForm(s=>!s);setMName("");setMPhone("");setMCar("");setPhoneErr(false);}}
+                  style={{width:30,height:30,borderRadius:9,background:showAddForm?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:showAddForm?(T.isDark?"#080B12":"#fff"):T.accent,flexShrink:0,transition:"all .15s"}}>
+                  {showAddForm?"✕":"+"}
+                </button>
+              </div>
+              {form.members.length===0&&!showAddForm&&<div style={{textAlign:"center",padding:"20px 0",fontSize:12,color:T.muted}}>No members yet.</div>}
               {form.members.map(m=>(
                 <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 12px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:m.phone?8:0}}>
