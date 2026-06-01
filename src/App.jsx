@@ -1833,24 +1833,7 @@ const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
 // ── Members Modal ─────────────────────────────────────────────────────────────
 const MembersModal = ({ allMembers, onClose }) => {
   const T = useT();
-  const [showAdd,  setShowAdd]  = useState(false);
-  const [mName,    setMName]    = useState("");
-  const [mPhone,   setMPhone]   = useState("");
-  const [phoneErr, setPhoneErr] = useState(false);
-  const [members,  setMembers]  = useState(allMembers);
-
-  const addMember = () => {
-    if(!mName.trim()) return;
-    if(mPhone.trim().replace(/\D/g,"").length<10){ setPhoneErr(true); return; }
-    setPhoneErr(false);
-    const initials=mName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    const newM={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:"",color:"#4A9EFF",role:"member",convoys:[]};
-    setMembers(ms=>[...ms,newM]);
-    const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/join/link 🚗`);
-    window.open(`https://wa.me/${mPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
-    setMName(""); setMPhone(""); setShowAdd(false);
-  };
-
+  const members = allMembers;
   return (
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.bg,borderRadius:"24px 24px 0 0",maxHeight:"80%",display:"flex",flexDirection:"column"}}>
@@ -1864,39 +1847,15 @@ const MembersModal = ({ allMembers, onClose }) => {
             <div style={{fontSize:17,fontWeight:800,color:T.text}}>All Members</div>
             <div style={{fontSize:12,color:T.muted,marginTop:2}}>{members.length} unique across all convoys</div>
           </div>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <button onClick={()=>setShowAdd(s=>!s)} style={{padding:"7px 14px",borderRadius:20,border:`1.5px solid ${T.accent}`,background:showAdd?T.accent:T.accentLo,color:showAdd?(T.isDark?"#080B12":"#fff"):T.accent,fontSize:12,fontWeight:700,cursor:"pointer"}}>+ Add</button>
-            <button onClick={onClose} style={{width:30,height:30,borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-          </div>
+          <button onClick={onClose} style={{width:30,height:30,borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
         </div>
-
-        {/* Add Member inline form */}
-        {showAdd&&(
-          <div style={{padding:"14px 20px",borderBottom:`1px solid ${T.border}`,background:T.surface,display:"flex",flexDirection:"column",gap:10}}>
-            <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.8,textTransform:"uppercase"}}>New Member</div>
-            <input value={mName} onChange={e=>setMName(e.target.value)} placeholder="Full name"
-              style={{width:"100%",background:T.card,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-            <div style={{display:"flex",gap:8}}>
-              <div style={{flex:1,position:"relative"}}>
-                <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted}}>📱 +91</span>
-                <input value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number" type="tel"
-                  style={{width:"100%",background:T.card,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"10px 14px 10px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-              </div>
-              <button onClick={addMember} style={{padding:"0 18px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
-                Invite
-              </button>
-            </div>
-            {phoneErr&&<div style={{fontSize:11,color:T.red}}>Enter a valid 10-digit mobile number</div>}
-          </div>
-        )}
-
         {/* List */}
         <div style={{overflowY:"auto",flex:1,padding:"8px 20px 24px"}}>
           {members.length===0?(
             <div style={{textAlign:"left",padding:"32px 0",color:T.muted}}>
               <div style={{fontSize:36,marginBottom:10}}>👥</div>
               <div style={{fontSize:14,fontWeight:700,color:T.sub,marginBottom:4}}>No members yet</div>
-              <div style={{fontSize:12}}>Tap + Add to invite someone</div>
+              <div style={{fontSize:12}}>Add members from your Profile</div>
             </div>
           ):members.map((m,i)=>(
             <div key={m.id||i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:i<members.length-1?`1px solid ${T.border}`:"none"}}>
@@ -2482,6 +2441,59 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
+// ── Add Member Card (used inside ProfileScreen) ────────────────────────────
+const AddMemberCard = () => {
+  const T = useT();
+  const [open,     setOpen]     = useState(false);
+  const [mName,    setMName]    = useState("");
+  const [mPhone,   setMPhone]   = useState("");
+  const [phoneErr, setPhoneErr] = useState(false);
+  const [sent,     setSent]     = useState(false);
+
+  const invite = () => {
+    if(!mName.trim()) return;
+    if(mPhone.trim().replace(/\D/g,"").length<10){ setPhoneErr(true); return; }
+    setPhoneErr(false);
+    const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/download 🚗`);
+    window.open(`https://wa.me/${mPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
+    setMName(""); setMPhone(""); setSent(true); setOpen(false);
+    setTimeout(()=>setSent(false),3000);
+  };
+
+  return (
+    <div style={{marginTop:20,marginBottom:4}}>
+      <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Add Member</div>
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,overflow:"hidden"}}>
+        <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",padding:"14px 16px",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:12,textAlign:"left"}}>
+          <div style={{width:40,height:40,borderRadius:12,background:`${T.accent}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>👥</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:700,color:T.text}}>Invite a Member</div>
+            <div style={{fontSize:12,color:T.muted,marginTop:1}}>Send WhatsApp invite with app link</div>
+          </div>
+          <span style={{fontSize:18,color:T.muted,transform:`rotate(${open?90:0}deg)`,transition:"transform .2s"}}>›</span>
+        </button>
+        {open&&(
+          <div style={{padding:"0 16px 16px",display:"flex",flexDirection:"column",gap:10,borderTop:`1px solid ${T.border}`}}>
+            <div style={{height:10}}/>
+            <input value={mName} onChange={e=>setMName(e.target.value)} placeholder="Member's full name"
+              style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"10px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <div style={{position:"relative"}}>
+              <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
+              <input value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number" type="tel"
+                style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"10px 14px 10px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+            </div>
+            {phoneErr&&<div style={{fontSize:11,color:T.red}}>Enter a valid 10-digit mobile number</div>}
+            <button onClick={invite} style={{padding:"12px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+              📲 Send WhatsApp Invite
+            </button>
+          </div>
+        )}
+        {sent&&<div style={{padding:"10px 16px",background:T.accentLo,borderTop:`1px solid ${T.accent}22`,fontSize:12,fontWeight:700,color:T.accent}}>✓ Invite sent via WhatsApp!</div>}
+      </div>
+    </div>
+  );
+};
+
 // PROFILE SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 const PROFILE_DEFAULT = {
@@ -2737,6 +2749,9 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             <Row icon={ICONS.note}   label="Email"             field="email"     placeholder="you@email.com"   type="email"/>
             <Row icon={ICONS.locate} label="City"              field="city"      placeholder="Your city"/>
             <Row icon={ICONS.sos}    label="Emergency Contact" field="emergency" placeholder="+91 00000 00000" type="tel"/>
+
+            {/* ── Add Member ── */}
+            {!editing&&<AddMemberCard/>}
 
             {/* ── Refer the App ── */}
             {!editing&&(
