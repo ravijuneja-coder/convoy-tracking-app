@@ -1634,23 +1634,21 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
               ))}
               {/* Add new member — inline form (shown when + tapped) */}
               {showAddForm&&(
-                <div style={{background:T.card,border:`1.5px solid ${T.accent}`,borderRadius:14,padding:"14px",display:"flex",flexDirection:"column",gap:8}}>
-                  <Field value={mName} onChange={v=>{setMName(v);}} placeholder="Member name"/>
-                  <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                    <div style={{position:"relative"}}>
-                      <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none",display:"flex",alignItems:"center",gap:4}}>
-                        <span>📲</span><span style={{fontSize:12,color:T.muted,fontWeight:600}}>+91</span>
-                      </div>
-                      <input type="tel" value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number"
-                        style={{background:T.surface,border:`1.5px solid ${phoneErr?T.red:mPhone.trim().length>=10?T.accent:T.border}`,borderRadius:10,padding:"11px 13px 11px 56px",fontSize:13,color:T.text,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit"}}/>
-                    </div>
-                    {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700,paddingLeft:4}}>⚠ Valid mobile number is required</span>}
-                    <span style={{fontSize:10,color:T.muted,paddingLeft:4}}>Member will receive a WhatsApp invite with the app download link</span>
+                <div style={{background:T.card,border:`1.5px solid ${T.accent}44`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",gap:12}}>
+                  <div style={{fontSize:15,fontWeight:800,color:T.text,textAlign:"center"}}>New Member</div>
+                  <input value={mName} onChange={e=>setMName(e.target.value)} placeholder="Name"
+                    style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"12px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                  <div style={{position:"relative"}}>
+                    <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none",display:"flex",alignItems:"center",gap:4}}>
+                      <span>📱</span><span style={{fontWeight:600}}>+91</span>
+                    </span>
+                    <input type="tel" value={mPhone} onChange={e=>{setMPhone(e.target.value);setPhoneErr(false);}} placeholder="Mobile number"
+                      style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"12px 14px 12px 60px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                   </div>
-                  <Field value={mCar} onChange={setMCar} placeholder="Car · Number plate (optional)"/>
+                  {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700}}>⚠ Valid mobile number is required</span>}
                   <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
-                    style={{padding:"12px",borderRadius:10,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .15s"}}>
-                    <span style={{fontSize:16}}>📲</span> Add & Send WhatsApp Invite
+                    style={{padding:"13px",borderRadius:12,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .15s"}}>
+                    <span>📲</span> Add & Send Invite on WhatsApp
                   </button>
                 </div>
               )}
