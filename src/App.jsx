@@ -2498,6 +2498,18 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   const [draft,       setDraft]       = useState(null);
   const [saved,       setSaved]       = useState(false);
   const [section,     setSection]     = useState("profile");
+  const [profileMembers, setProfileMembers] = useState([]);
+  const [pmName, setPmName] = useState(""); const [pmPhone, setPmPhone] = useState(""); const [pmPhoneErr, setPmPhoneErr] = useState(false); const [pmSent, setPmSent] = useState(false);
+  const addProfileMember = () => {
+    if(!pmName.trim()) return;
+    if(pmPhone.trim().replace(/\D/g,"").length<10){ setPmPhoneErr(true); return; }
+    setPmPhoneErr(false);
+    const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    setProfileMembers(ms=>[...ms,{id:Date.now(),name:pmName.trim(),initials,phone:pmPhone.trim(),color:"#4A9EFF"}]);
+    const msg=encodeURIComponent(`Hi ${pmName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/download 🚗`);
+    window.open(`https://wa.me/${pmPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
+    setPmName(""); setPmPhone(""); setPmSent(true); setTimeout(()=>setPmSent(false),3000);
+  };
   const [activeField, setActiveField] = useState(null); // inline field edit
   const [fieldVal,    setFieldVal]    = useState("");
   const inputRef = useRef(null);
@@ -2651,6 +2663,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
         <div style={{display:"flex",borderBottom:`1px solid ${T.border}`}}>
           <TabBtn id="profile" label="Profile" icon={ICONS.person}/>
           <TabBtn id="vehicle" label="Vehicle"  icon={ICONS.car2}/>
+          <TabBtn id="members" label="Members"  icon={ICONS.group||ICONS.person}/>
           <TabBtn id="privacy" label="Privacy"  icon={ICONS.shield}/>
         </div>
       </div>
@@ -2735,9 +2748,6 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             <Row icon={ICONS.note}   label="Email"             field="email"     placeholder="you@email.com"   type="email"/>
             <Row icon={ICONS.locate} label="City"              field="city"      placeholder="Your city"/>
             <Row icon={ICONS.sos}    label="Emergency Contact" field="emergency" placeholder="+91 00000 00000" type="tel"/>
-
-            {/* ── Add Member ── */}
-            {!editing&&<AddMemberCard/>}
 
             {/* ── Refer the App ── */}
             {!editing&&(
@@ -2830,6 +2840,53 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 </div>
               ))}
             </div>
+          </>
+        )}
+
+        {section==="members" && (
+          <>
+            {/* Add member form */}
+            <div style={{marginTop:16,marginBottom:20,background:T.card,border:`1px solid ${T.border}`,borderRadius:18,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
+              <div style={{fontSize:13,fontWeight:800,color:T.text}}>Add Member</div>
+              <input value={pmName} onChange={e=>setPmName(e.target.value)} placeholder="Name"
+                style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+              <div style={{position:"relative"}}>
+                <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
+                <input value={pmPhone} onChange={e=>{setPmPhone(e.target.value);setPmPhoneErr(false);}} placeholder="Mobile number" type="tel"
+                  style={{width:"100%",background:T.surface,border:`1.5px solid ${pmPhoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+              </div>
+              {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
+              <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                📲 Add & Send Invite on WhatsApp
+              </button>
+              {pmSent&&<div style={{textAlign:"center",fontSize:12,fontWeight:700,color:T.accent}}>✓ Invite sent via WhatsApp!</div>}
+            </div>
+
+            {/* Members list */}
+            <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Added Members · {profileMembers.length}</div>
+            {profileMembers.length===0?(
+              <div style={{textAlign:"center",padding:"32px 0",color:T.muted}}>
+                <div style={{fontSize:32,marginBottom:8}}>👥</div>
+                <div style={{fontSize:13}}>No members added yet</div>
+              </div>
+            ):profileMembers.map((m,i)=>(
+              <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:i<profileMembers.length-1?`1px solid ${T.border}`:"none"}}>
+                <div style={{width:42,height:42,borderRadius:13,background:`${m.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:m.color,flexShrink:0}}>
+                  {m.initials}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:T.text}}>{m.name}</div>
+                  <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.phone}</div>
+                </div>
+                <button onClick={()=>{
+                  const msg=encodeURIComponent(`Hi ${m.name}! 👋 Join the convoy: https://convoy.app/download 🚗`);
+                  window.open(`https://wa.me/${m.phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
+                }} style={{width:34,height:34,borderRadius:10,background:"#25D36614",border:"1px solid #25D36644",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>📲</button>
+                <button onClick={()=>setProfileMembers(ms=>ms.filter(x=>x.id!==m.id))} style={{width:34,height:34,borderRadius:10,background:T.redLo,border:`1px solid ${T.red}33`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Ic d={ICONS.close} size={13} color={T.red}/>
+                </button>
+              </div>
+            ))}
           </>
         )}
 
