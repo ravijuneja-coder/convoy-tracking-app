@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut as fbSignOut, updateProfile } from "firebase/auth";
-import { doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "firebase/firestore";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // THEME SYSTEM
@@ -3308,7 +3308,7 @@ const OnboardingScreen = ({ onDone }) => {
         const { getDocs, query: fsQuery, where: fsWhere, collection: fsCol } = await import("firebase/firestore");
         const rawSignupPhone = phone.trim().replace(/\D/g,"");
         const normSignupPhone = rawSignupPhone.length>10 ? rawSignupPhone.slice(-10) : rawSignupPhone;
-        const phoneCheck = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",normSignupPhone)));
+        const phoneCheck = await getDocs(query(collection(db,"users"), where("phone","==",normSignupPhone)));
         if(!phoneCheck.empty){ setErr("This mobile number is already registered. Please sign in."); setLoading(false); return; }
 
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
@@ -3324,15 +3324,13 @@ const OnboardingScreen = ({ onDone }) => {
         onDone(user);
       } else {
         // Sign in: find email by phone number from Firestore
-        const { getDocs, query: fsQuery, where: fsWhere, collection: fsCol } = await import("firebase/firestore");
-        // Normalize: strip non-digits, try multiple formats
         const rawPhone = phone.trim().replace(/\D/g,"");
         const last10 = rawPhone.slice(-10);
         const with91 = "91" + last10;
         // Try all possible stored formats
-        let snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",last10)));
-        if(snap.empty) snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",with91)));
-        if(snap.empty) snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",rawPhone)));
+        let snap = await getDocs(query(collection(db,"users"), where("phone","==",last10)));
+        if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",with91)));
+        if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",rawPhone)));
         if (snap.empty) { setErr("No account found with this mobile number."); setLoading(false); return; }
         const userData = snap.docs[0].data();
         const userEmail = userData.email;
