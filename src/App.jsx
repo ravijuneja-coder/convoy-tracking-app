@@ -3152,7 +3152,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 <div style={{width:36,height:36,borderRadius:11,background:item.accent?"#4A9EFF18":item.action?T.accentLo:T.raised,border:`1px solid ${item.accent?"#4A9EFF44":item.action?T.accent+"33":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                   <Ic d={item.icon} size={16} color={item.accent?"#4A9EFF":item.action?T.accent:T.muted}/>
                 </div>
-                <span style={{flex:1,fontSize:13,fontWeight:item.accent?800:700,color:item.accent?"#4A9EFF":T.text}}>{item.label}</span>
+                <span style={{flex:1,fontSize:13,fontWeight:item.accent?800:700,color:item.accent?"#4A9EFF":T.text,textAlign:"left"}}>{item.label}</span>
                 <Ic d={ICONS.chevron} size={14} color={T.muted}/>
               </div>
             ))}
