@@ -3621,7 +3621,7 @@ const SettingsScreen = ({ onBack }) => {
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
       {/* Header */}
-      <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12,background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+      <div style={{padding:"14px 16px 12px",display:"flex",alignItems:"center",gap:12,background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0,position:"relative"}}>
         <button onClick={onBack} style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <Ic d={ICONS.back} size={16}/>
         </button>
@@ -3629,7 +3629,7 @@ const SettingsScreen = ({ onBack }) => {
           <div style={{fontSize:16,fontWeight:800,color:T.text}}>Settings</div>
           <div style={{fontSize:11,color:T.muted}}>App preferences & notifications</div>
         </div>
-        {saved&&<span style={{fontSize:11,fontWeight:700,color:T.accent}}>✓ Saved</span>}
+        {saved&&<span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:11,fontWeight:700,color:T.accent}}>✓ Saved</span>}
       </div>
 
       <div style={{flex:1,overflowY:"auto",padding:"0 18px 24px"}}>
