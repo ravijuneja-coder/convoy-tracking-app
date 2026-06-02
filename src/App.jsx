@@ -2720,7 +2720,7 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null }) => {
   const T = useT();
   const [profile,     setProfile]     = useState({...PROFILE_DEFAULT});
   const [editing,     setEditing]     = useState(false);
@@ -3136,6 +3136,21 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
         {section==="privacy" && (
           <>
+            <div style={{padding:"16px 0 4px",fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Appearance</div>
+            <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:`1px solid ${T.border}`}}>
+              <div style={{width:36,height:36,borderRadius:11,background:T.raised,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>
+                {isDark?"🌙":"☀️"}
+              </div>
+              <div style={{flex:1,textAlign:"left"}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"left"}}>{isDark?"Dark Mode":"Light Mode"}</div>
+                <div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>Tap to switch theme</div>
+              </div>
+              <button onClick={onToggleDark}
+                style={{width:44,height:26,borderRadius:13,background:isDark?T.accent:T.raised,border:`1px solid ${isDark?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
+                <div style={{width:20,height:20,borderRadius:"50%",background:isDark?(T.isDark?"#080B12":"#fff"):"#fff",marginLeft:isDark?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+              </button>
+            </div>
+
             <div style={{padding:"16px 0 4px",fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Tracking & Alerts</div>
             <Toggle field="shareLocation" icon={ICONS.locate} label="Share Live Location" sub="Visible to convoy members during trips"/>
             <Toggle field="alerts"        icon={ICONS.bell}   label="Distance Alerts"      sub="Notify when members are too far"/>
@@ -4056,13 +4071,6 @@ export default function App() {
           <div style={{padding:"14px 20px 8px",display:"flex",justifyContent:"space-between",alignItems:"center",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
             <span style={{fontFamily:"'Space Mono',monospace",fontSize:12,fontWeight:700,color:T.accent,letterSpacing:1.2}}>CONVOY</span>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              {/* Theme toggle */}
-              <button onClick={()=>setIsDark(d=>!d)}
-                style={{width:60,height:28,borderRadius:14,background:isDark?T.raised:T.accentLo,border:`1.5px solid ${isDark?T.border:T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",padding:"2px 4px",transition:"all .3s",position:"relative",flexShrink:0}}>
-                <div style={{width:22,height:22,borderRadius:"50%",background:isDark?T.muted:T.accent,transform:`translateX(${isDark?0:30}px)`,transition:"transform .3s, background .3s",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(0,0,0,.3)"}}>
-                  <span style={{fontSize:11}}>{isDark?"🌙":"☀️"}</span>
-                </div>
-              </button>
               {authed&&<>
                 {/* Bell icon with unread badge */}
                 <button onClick={()=>{setNavTab("bell");setScreen("alerts");setActiveC(null);}}
@@ -4070,9 +4078,10 @@ export default function App() {
                   <Ic d={ICONS.bell} size={13} color={navTab==="bell"?T.accent:T.sub} sw={1.8}/>
                   {alertUnread>0&&<span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>}
                 </button>
-                <div style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:isDark?"#080B12":"#fff",border:`2px solid ${T.surface}`}}>
+                <button onClick={()=>{setNavTab("profile");setScreen("profile");setActiveC(null);}}
+                  style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:isDark?"#080B12":"#fff",border:`2px solid ${T.surface}`,cursor:"pointer"}}>
                   {authUser?.name?.slice(0,2).toUpperCase()||"ME"}
-                </div>
+                </button>
               </>}
             </div>
           </div>
@@ -4108,7 +4117,7 @@ export default function App() {
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
