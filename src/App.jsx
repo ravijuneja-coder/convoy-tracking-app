@@ -2715,11 +2715,11 @@ const AddMemberCard = () => {
 // PROFILE SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 const PROFILE_DEFAULT = {
-  name:"Rohan Sharma", username:"@rohan_convoy", phone:"+91 98765 43210",
-  email:"rohan@example.com", vehicle:"Swift Dzire", plate:"DL 4C 1234",
-  emergency:"+91 91234 56789", city:"New Delhi",
-  bio:"Road trip enthusiast 🚗 Love exploring new routes.",
-  avatar:"https://i.pravatar.cc/150?img=11",
+  name:"", username:"", phone:"",
+  email:"", vehicle:"", plate:"",
+  emergency:"", city:"",
+  bio:"",
+  avatar:null,
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
@@ -2756,12 +2756,17 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
   const fileInputRef = useRef(null);
 
-  // Sync authUser name/phone into profile whenever authUser changes
+  // Sync authUser data into profile whenever authUser changes
   useEffect(()=>{
-    if(authUser?.name){
-      setProfile(p=>({...p, name:authUser.name, ...(authUser.phone?{phone:authUser.phone}:{})}));
+    if(authUser?.name||authUser?.email||authUser?.phone){
+      setProfile(p=>({
+        ...p,
+        ...(authUser.name ?{name:authUser.name}:{}),
+        ...(authUser.phone?{phone:authUser.phone}:{}),
+        ...(authUser.email?{email:authUser.email}:{}),
+      }));
     }
-  },[authUser?.name, authUser?.phone]);
+  },[authUser?.name, authUser?.phone, authUser?.email]);
 
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
   const cancelEdit = () => { setDraft(null); setEditing(false); };
