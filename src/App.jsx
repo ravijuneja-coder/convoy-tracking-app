@@ -3950,35 +3950,33 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
             <div style={{background:T.card,border:`2px solid ${invite.color}55`,borderRadius:22,overflow:"hidden",marginBottom:20,boxShadow:`0 8px 32px ${invite.color}22`}}>
               <div style={{height:5,background:invite.color}}/>
               <div style={{padding:"20px"}}>
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-                  <div style={{width:46,height:46,borderRadius:14,background:`${invite.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
-                  <div>
-                    <div style={{fontSize:17,fontWeight:900,color:T.text}}>{invite.convoyName}</div>
-                    <div style={{fontSize:11,color:T.muted,marginTop:2}}>Invited by <strong style={{color:T.sub}}>{invite.invitedBy}</strong></div>
-                  </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,marginBottom:16,textAlign:"center"}}>
+                  <div style={{width:52,height:52,borderRadius:16,background:`${invite.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🚗</div>
+                  <div style={{fontSize:18,fontWeight:900,color:T.text}}>{invite.convoyName}</div>
+                  <div style={{fontSize:12,color:T.muted}}>Invited by <strong style={{color:T.sub}}>{invite.invitedBy}</strong></div>
                 </div>
 
                 {/* Route */}
-                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`,textAlign:"center"}}>
                   <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Destination</div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                     <span style={{fontSize:14}}>🏁</span>
                     <span style={{fontSize:14,fontWeight:800,color:T.text}}>{invite.destination}</span>
                   </div>
                 </div>
 
                 {/* Date */}
-                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${T.border}`,textAlign:"center"}}>
                   <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:6}}>Date</div>
-                  <div style={{fontSize:13,fontWeight:700,color:T.text}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"center"}}>
                     📅 {invite.date}{invite.endDate && invite.endDate !== invite.date ? ` → ${invite.endDate}` : ""}
                   </div>
                 </div>
 
                 {/* Members */}
-                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",border:`1px solid ${T.border}`}}>
+                <div style={{background:T.raised,borderRadius:12,padding:"12px 14px",border:`1px solid ${T.border}`,textAlign:"center"}}>
                   <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:8}}>Members · {invite.members.length}</div>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
                     {invite.members.map(m=>(
                       <div key={m.id} style={{display:"flex",alignItems:"center",gap:6,background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px 4px 4px"}}>
                         <Avatar name={m.name} color={m.color} size={22}/>
