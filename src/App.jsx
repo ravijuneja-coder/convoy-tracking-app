@@ -2812,9 +2812,9 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     const isActive = !editing && activeField===field;
     return (
       <div style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          {/* Icon */}
-          <div style={{width:36,height:36,borderRadius:10,background:isActive||editing?T.accentLo:T.raised,border:`1px solid ${isActive||editing?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+          {/* Icon — push down to align with input (label ~18px + 5px gap) */}
+          <div style={{width:36,height:36,borderRadius:10,background:isActive||editing?T.accentLo:T.raised,border:`1px solid ${isActive||editing?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s",marginTop:(isActive||editing)?18:0}}>
             <Ic d={icon} size={15} color={isActive||editing?T.accent:T.muted}/>
           </div>
 
@@ -2823,13 +2823,11 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left"}}>{label}</div>
 
             {editing ? (
-              /* Global edit mode — styled input */
               <input value={P[field]||""} onChange={e=>set(field,e.target.value)} placeholder={placeholder} type={type}
                 style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}44`,borderRadius:9,padding:"9px 11px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:"border-color .2s"}}
                 onFocus={e=>e.target.style.borderColor=T.accent}
                 onBlur={e=>e.target.style.borderColor=T.accent+"44"}/>
             ) : isActive ? (
-              /* Inline single-field edit */
               <input ref={inputRef} value={fieldVal} onChange={e=>setFieldVal(e.target.value)} placeholder={placeholder} type={type}
                 onKeyDown={e=>{if(e.key==="Enter")saveField();if(e.key==="Escape")cancelField();}}
                 style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:9,padding:"9px 11px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
@@ -2838,10 +2836,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             )}
           </div>
 
-          {/* Inline pencil (view mode only) */}
+          {/* Buttons — push down to align with input */}
           {!editing&&(
             isActive ? (
-              <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center",alignSelf:"center"}}>
+              <div style={{display:"flex",gap:6,flexShrink:0,marginTop:18}}>
                 <button onClick={saveField} style={{width:30,height:30,borderRadius:8,background:T.accentLo,border:`1px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <Ic d={ICONS.check} size={13} color={T.accent} sw={2.5}/>
                 </button>
