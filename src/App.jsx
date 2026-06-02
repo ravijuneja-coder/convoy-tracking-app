@@ -2129,8 +2129,8 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
       <div style={{padding:"16px 18px 12px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontSize:22,fontWeight:800,color:T.text,lineHeight:1.1}}>My Convoys</div>
-            <div style={{fontSize:12,color:T.muted,marginTop:3}}>{convoys.length} trips · {live.length} live</div>
+            <div style={{fontSize:22,fontWeight:800,color:T.text,lineHeight:1.1,textAlign:"left"}}>My Convoys</div>
+            <div style={{fontSize:12,color:T.muted,marginTop:3,textAlign:"left"}}>{convoys.length} trips · {live.length} live</div>
           </div>
           <button onClick={onNew} style={{width:40,height:40,borderRadius:13,background:T.accent,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 20px ${T.accent}44`,flexShrink:0}}>
             <Ic d={ICONS.plus} size={18} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
