@@ -3284,13 +3284,14 @@ const ONBOARD_SLIDES = [
 const OnboardingScreen = ({ onDone }) => {
   const T = useT();
   const [step,     setStep]     = useState(0); // 0-3 = slides, 4 = auth
-  const [authTab,  setAuthTab]  = useState("signup");
-  const [name,     setName]     = useState("");
-  const [email,    setEmail]    = useState("");
-  const [phone,    setPhone]    = useState("");
-  const [password, setPassword] = useState("");
-  const [err,      setErr]      = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [authTab,    setAuthTab]    = useState("signup");
+  const [useEmail,   setUseEmail]   = useState(false); // sign-in with email fallback
+  const [name,       setName]       = useState("");
+  const [email,      setEmail]      = useState("");
+  const [phone,      setPhone]      = useState("");
+  const [password,   setPassword]   = useState("");
+  const [err,        setErr]        = useState("");
+  const [loading,    setLoading]    = useState(false);
 
   const isLastSlide = step === ONBOARD_SLIDES.length - 1;
   const slide       = ONBOARD_SLIDES[step] || {};
@@ -3327,33 +3328,33 @@ const OnboardingScreen = ({ onDone }) => {
         localStorage.setItem("convoy_phone_map", JSON.stringify(phoneMap));
         onDone(user);
       } else {
-        // Sign in: find email by phone number
-        const rawPhone = phone.trim().replace(/\D/g,"");
-        const last10 = rawPhone.slice(-10);
-        const with91 = "91" + last10;
-
-        // 1. Check localStorage phone map first (fastest, works offline)
-        const phoneMap = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
-        let userEmail = phoneMap[last10] || phoneMap[with91] || phoneMap[rawPhone];
-
-        // 2. If not in localStorage, try Firestore
-        if(!userEmail){
-          let snap = await getDocs(query(collection(db,"users"), where("phone","==",last10)));
-          if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",with91)));
-          if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",rawPhone)));
-          if(!snap.empty){
-            const userData = snap.docs[0].data();
-            userEmail = userData.email;
-            // Save to localStorage for next time
-            const pm = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
-            pm[last10] = userEmail;
-            localStorage.setItem("convoy_phone_map", JSON.stringify(pm));
+        let signInEmail = "";
+        if(useEmail){
+          if(!email.trim()){ setErr("Enter your email."); setLoading(false); return; }
+          signInEmail = email.trim();
+        } else {
+          const rawPhone = phone.trim().replace(/\D/g,"");
+          const last10 = rawPhone.slice(-10);
+          const with91 = "91" + last10;
+          const phoneMap = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
+          signInEmail = phoneMap[last10] || phoneMap[with91] || phoneMap[rawPhone];
+          if(!signInEmail){
+            let snap = await getDocs(query(collection(db,"users"), where("phone","==",last10)));
+            if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",with91)));
+            if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",rawPhone)));
+            if(!snap.empty){
+              signInEmail = snap.docs[0].data().email;
+              const pm = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
+              pm[last10] = signInEmail;
+              localStorage.setItem("convoy_phone_map", JSON.stringify(pm));
+            }
           }
+          if(!signInEmail){ setErr("Account not found. Tap \"Use email instead\" below."); setLoading(false); return; }
         }
-
-        if(!userEmail){ setErr("No account found with this mobile number."); setLoading(false); return; }
-        const cred = await signInWithEmailAndPassword(auth, userEmail, password);
-        const user = { uid: cred.user.uid, name: userData.name || "", phone: userData.phone || phone.trim(), email: userEmail };
+        const cred = await signInWithEmailAndPassword(auth, signInEmail, password);
+        const userDoc = await getDoc(doc(db,"users",cred.user.uid));
+        const userData = userDoc.exists()?userDoc.data():{};
+        const user = { uid: cred.user.uid, name: userData.name||cred.user.displayName||"", phone: userData.phone||phone.trim(), email: signInEmail };
         localStorage.setItem("convoy_user", JSON.stringify(user));
         onDone(user);
       }
@@ -3406,10 +3407,16 @@ const OnboardingScreen = ({ onDone }) => {
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
           {authTab==="signup"&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
-          <Field label="Mobile Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
+          {(authTab==="signup"||!useEmail)&&<Field label="Mobile Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>}
+          {authTab==="signin"&&useEmail&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
           <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 6 characters" type="password"/>
 
           {err&&<div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
+          {authTab==="signin"&&(
+            <button onClick={()=>{setUseEmail(e=>!e);setErr("");}} style={{background:"none",border:"none",color:T.accent,fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",padding:0}}>
+              {useEmail?"Use mobile number instead":"Use email instead"}
+            </button>
+          )}
 
           <button onClick={handleSubmit} disabled={loading}
             style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`,opacity:loading?0.7:1}}>
