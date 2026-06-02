@@ -3607,9 +3607,9 @@ const SettingsScreen = ({ onBack }) => {
       <div style={{width:36,height:36,borderRadius:11,background:s[field]?T.accentLo:T.raised,border:`1px solid ${s[field]?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:16}}>
         {icon}
       </div>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontSize:13,fontWeight:700,color:T.text}}>{label}</div>
-        {sub&&<div style={{fontSize:11,color:T.muted,marginTop:1}}>{sub}</div>}
+      <div style={{flex:1,minWidth:0,textAlign:"left"}}>
+        <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"left"}}>{label}</div>
+        {sub&&<div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>{sub}</div>}
       </div>
       <button onClick={()=>upd(field,!s[field])}
         style={{width:44,height:26,borderRadius:13,background:s[field]?T.accent:T.raised,border:`1px solid ${s[field]?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
