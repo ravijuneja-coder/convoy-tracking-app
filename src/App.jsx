@@ -3990,7 +3990,28 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
 
             {/* Actions */}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <button onClick={()=>setJoined(true)}
+              <button onClick={()=>{
+                  // Add the invited convoy to the convoys list
+                  const newConvoy = {
+                    id: Date.now(),
+                    name: invite.convoyName,
+                    destination: invite.destination,
+                    date: invite.date,
+                    endDate: invite.endDate||invite.date,
+                    time: "",
+                    status: "upcoming",
+                    distance: 0,
+                    alertKm: 5,
+                    color: invite.color||"#4A9EFF",
+                    notes: "",
+                    members: [
+                      ...invite.members,
+                      authUser?{id:Date.now()+1,name:authUser.name,initials:(authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),color:"#3DD68C",role:"member"}:null
+                    ].filter(Boolean),
+                  };
+                  onJoin?.(newConvoy);
+                  onAccept?.();
+                }}
                 style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
                 Accept & Join
@@ -4123,7 +4144,11 @@ export default function App() {
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
-                {screen==="join"&&<JoinConvoyScreen convoys={convoys} authUser={authUser} onJoin={(c,user)=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,members:[...cv.members,{id:Date.now(),name:user.name,initials:(user.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),color:"#4A9EFF",role:"member"}]}:cv)); flash(`Joined ${c.name}!`); }} onAccept={()=>{setScreen("alerts");setNavTab("bell");}} onDecline={()=>{setScreen("alerts");setNavTab("bell");}} onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
+                {screen==="join"&&<JoinConvoyScreen convoys={convoys} authUser={authUser}
+                  onJoin={(newConvoy)=>{ setConvoys(cs=>[newConvoy,...cs]); flash(`Joined "${newConvoy.name}"! 🎉`); }}
+                  onAccept={()=>{setScreen("home");setNavTab("home");setActiveC(null);}}
+                  onDecline={()=>{setScreen("alerts");setNavTab("bell");}}
+                  onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
               </>
             )}
           </div>
