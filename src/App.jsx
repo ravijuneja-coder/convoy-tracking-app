@@ -4069,7 +4069,6 @@ export default function App() {
                   <span style={{fontSize:11}}>{isDark?"🌙":"☀️"}</span>
                 </div>
               </button>
-              <span style={{fontSize:10,color:T.muted}}>9:41</span>
               {authed&&<>
                 {/* Bell icon with unread badge */}
                 <button onClick={()=>{setNavTab("bell");setScreen("alerts");setActiveC(null);}}
