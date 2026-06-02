@@ -2812,8 +2812,8 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     const isActive = !editing && activeField===field;
     return (
       <div style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
-        {/* Label row */}
-        {(isActive||editing)&&<div style={{fontSize:10,fontWeight:700,color:T.accent,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left",paddingLeft:48}}>{label}</div>}
+        {/* Label always above the row */}
+        <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left",paddingLeft:48}}>{label}</div>
 
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           {/* Icon */}
@@ -2823,8 +2823,6 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
           {/* Content */}
           <div style={{flex:1,minWidth:0}}>
-            {!isActive&&!editing&&<div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left"}}>{label}</div>}
-
             {editing ? (
               <input value={P[field]||""} onChange={e=>set(field,e.target.value)} placeholder={placeholder} type={type}
                 style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}44`,borderRadius:9,padding:"9px 11px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box",transition:"border-color .2s"}}
