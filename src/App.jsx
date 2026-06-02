@@ -3297,8 +3297,8 @@ const OnboardingScreen = ({ onDone }) => {
 
   const handleSubmit = async () => {
     if (authTab==="signup" && !name.trim()) { setErr("Please enter your name."); return; }
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) { setErr("Enter a valid email address."); return; }
-    if (authTab==="signup" && (!phone.trim() || phone.replace(/\D/g,"").length < 10)) { setErr("Enter a valid 10-digit phone number."); return; }
+    if (authTab==="signup" && (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim()))) { setErr("Enter a valid email address."); return; }
+    if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit mobile number."); return; }
     if (!password.trim() || password.length < 6) { setErr("Password must be at least 6 characters."); return; }
     setErr("");
     setLoading(true);
@@ -3308,7 +3308,7 @@ const OnboardingScreen = ({ onDone }) => {
         await updateProfile(cred.user, { displayName: name.trim().replace(/\b\w/g,c=>c.toUpperCase()) });
         await setDoc(doc(db, "users", cred.user.uid), {
           name: name.trim().replace(/\b\w/g,c=>c.toUpperCase()),
-          phone: phone.trim(),
+          phone: phone.trim().replace(/\D/g,""),
           email: email.trim(),
           createdAt: serverTimestamp()
         });
@@ -3316,20 +3316,23 @@ const OnboardingScreen = ({ onDone }) => {
         localStorage.setItem("convoy_user", JSON.stringify(user));
         onDone(user);
       } else {
-        const storedEmail = JSON.parse(localStorage.getItem("convoy_user")||"null")?.email || email.trim();
-        const cred = await signInWithEmailAndPassword(auth, storedEmail, password);
-        const userDoc = await getDoc(doc(db, "users", cred.user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-        const user = { uid: cred.user.uid, name: userData.name || cred.user.displayName || "", phone: userData.phone || phone.trim(), email: storedEmail };
+        // Sign in: find email by phone number from Firestore
+        const { getDocs, query: fsQuery, where: fsWhere, collection: fsCol } = await import("firebase/firestore");
+        const q = fsQuery(fsCol(db, "users"), fsWhere("phone", "==", phone.trim().replace(/\D/g,"")));
+        const snap = await getDocs(q);
+        if (snap.empty) { setErr("No account found with this mobile number."); setLoading(false); return; }
+        const userData = snap.docs[0].data();
+        const userEmail = userData.email;
+        const cred = await signInWithEmailAndPassword(auth, userEmail, password);
+        const user = { uid: cred.user.uid, name: userData.name || "", phone: userData.phone || phone.trim(), email: userEmail };
         localStorage.setItem("convoy_user", JSON.stringify(user));
         onDone(user);
       }
     } catch (e) {
       const code = e.code || "";
-      if (code.includes("email-already-in-use")) setErr("This email is already registered. Try signing in.");
+      if (code.includes("email-already-in-use")) setErr("This mobile number is already registered. Try signing in.");
       else if (code.includes("wrong-password") || code.includes("invalid-credential")) setErr("Incorrect password. Please try again.");
-      else if (code.includes("user-not-found")) setErr("No account found with this email.");
-      else if (code.includes("invalid-email")) setErr("Invalid email address.");
+      else if (code.includes("user-not-found")) setErr("No account found. Please sign up.");
       else if (code.includes("weak-password")) setErr("Password is too weak. Use at least 6 characters.");
       else setErr(e.message || "Something went wrong. Please try again.");
     } finally {
@@ -3373,8 +3376,8 @@ const OnboardingScreen = ({ onDone }) => {
       <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
-          <Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>
-          {authTab==="signup"&&<Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>}
+          {authTab==="signup"&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
+          <Field label="Mobile Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
           <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 6 characters" type="password"/>
 
           {err&&<div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
