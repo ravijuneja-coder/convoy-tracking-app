@@ -2720,7 +2720,7 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null, convoys=[] }) => {
   const T = useT();
   const [profile,     setProfile]     = useState({...PROFILE_DEFAULT});
   const [editing,     setEditing]     = useState(false);
@@ -2955,7 +2955,11 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
             {/* Stats */}
             <div style={{display:"flex",gap:8,marginBottom:16}}>
-              {[{val:"4",lbl:"Convoys"},{val:"12",lbl:"Trips"},{val:"847",lbl:"KM"},{val:"3",lbl:"Friends"}].map(s=>(
+              {(()=>{
+                const totalKm = convoys.reduce((sum,c)=>sum+(c.distance||0),0);
+                const completed = convoys.filter(c=>c.status==="completed").length;
+                return [{val:convoys.length,lbl:"Convoys"},{val:completed,lbl:"Trips"},{val:totalKm,lbl:"KM"},{val:profileMembers.length,lbl:"Friends"}];
+              })().map(s=>(
                 <div key={s.lbl} style={{flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"10px 4px",textAlign:"center"}}>
                   <div style={{fontSize:17,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
                   <div style={{fontSize:9,color:T.muted,fontWeight:700,marginTop:3,letterSpacing:.4}}>{s.lbl.toUpperCase()}</div>
@@ -4117,7 +4121,7 @@ export default function App() {
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
