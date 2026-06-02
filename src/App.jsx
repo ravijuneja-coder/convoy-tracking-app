@@ -2738,6 +2738,8 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   const addProfileMember = () => {
     if(!pmName.trim()) return;
     if(pmPhone.trim().replace(/\D/g,"").length<10){ setPmPhoneErr(true); return; }
+    const myPhone=(authUser?.phone||profile.phone||"").replace(/\D/g,"");
+    if(myPhone&&pmPhone.trim().replace(/\D/g,"")===myPhone){ setPmPhoneErr(true); return; }
     setPmPhoneErr(false);
     if(pmEditId){
       const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
@@ -3140,7 +3142,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                   <input value={pmPhone} onChange={e=>{setPmPhone(e.target.value);setPmPhoneErr(false);}} placeholder="Mobile number" type="tel"
                     style={{width:"100%",background:T.surface,border:`1.5px solid ${pmPhoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                 </div>
-                {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
+                {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>{(authUser?.phone||profile.phone||"").replace(/\D/g,"")&&pmPhone.trim().replace(/\D/g,"")===(authUser?.phone||profile.phone||"").replace(/\D/g,"")?"You cannot add your own number":"Enter a valid 10-digit mobile number"}</div>}
                 <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
                   {pmEditId?"✓ Save Changes":"📲 Add & Send Invite on WhatsApp"}
                 </button>
@@ -3159,9 +3161,9 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 <div style={{width:42,height:42,borderRadius:13,background:`${m.color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:m.color,flexShrink:0}}>
                   {m.initials}
                 </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:700,color:T.text}}>{m.name}</div>
-                  <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.phone}</div>
+                <div style={{flex:1,minWidth:0,textAlign:"left"}}>
+                  <div style={{fontSize:14,fontWeight:700,color:T.text,textAlign:"left"}}>{m.name}</div>
+                  <div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>{m.phone}</div>
                 </div>
                 <button onClick={()=>openPmEdit(m)} style={{width:34,height:34,borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                   <Ic d={ICONS.edit} size={13} color={T.accent}/>
