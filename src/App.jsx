@@ -3008,51 +3008,63 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                     </div>
                   </div>
 
-                  {/* Referral code */}
-                  <div style={{background:T.isDark?"rgba(0,0,0,.25)":"rgba(255,255,255,.7)",borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between",border:`1px dashed ${T.accent}55`}}>
-                    <div>
-                      <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:3}}>Your Referral Code</div>
-                      <div style={{fontSize:18,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:2}}>ROHAN287</div>
-                    </div>
-                    <button onClick={()=>{
-                      navigator.clipboard?.writeText("ROHAN287").catch(()=>{});
-                      setSaved(true); setTimeout(()=>setSaved(false),2000);
-                    }} style={{padding:"7px 14px",borderRadius:10,background:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-                      <Ic d={ICONS.note} size={13} color={T.accent} sw={2}/>
-                      <span style={{fontSize:12,fontWeight:800,color:T.accent}}>Copy</span>
-                    </button>
-                  </div>
+                  {/* Referral code — generated from user name */}
+                  {(()=>{
+                    const base=(P.name||"USER").replace(/\s/g,"").toUpperCase().slice(0,5);
+                    const suffix=(() => {
+                      const stored=localStorage.getItem("convoy_ref_suffix");
+                      if(stored) return stored;
+                      const n=Math.floor(100+Math.random()*900).toString();
+                      localStorage.setItem("convoy_ref_suffix",n);
+                      return n;
+                    })();
+                    const refCode=`${base}${suffix}`;
+                    return (
+                      <>
+                        <div style={{background:T.isDark?"rgba(0,0,0,.25)":"rgba(255,255,255,.7)",borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between",border:`1px dashed ${T.accent}55`}}>
+                          <div>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:3}}>Your Referral Code</div>
+                            <div style={{fontSize:18,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:2}}>{refCode}</div>
+                          </div>
+                          <button onClick={()=>{
+                            navigator.clipboard?.writeText(refCode).catch(()=>{});
+                            setSaved(true); setTimeout(()=>setSaved(false),2000);
+                          }} style={{padding:"7px 14px",borderRadius:10,background:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                            <Ic d={ICONS.note} size={13} color={T.accent} sw={2}/>
+                            <span style={{fontSize:12,fontWeight:800,color:T.accent}}>Copy</span>
+                          </button>
+                        </div>
 
-                  {/* Share buttons */}
-                  <div style={{display:"flex",gap:8}}>
-                    {/* WhatsApp */}
-                    <button onClick={()=>{
-                      const msg=encodeURIComponent(`Hey! 👋 I use Convoy App to track road trips with friends. Join me using my referral code ROHAN287 and download the app here: https://convoy.app/download?ref=ROHAN287 🚗`);
-                      window.open(`https://wa.me/?text=${msg}`,"_blank");
-                    }} style={{flex:1,padding:"11px 0",borderRadius:12,background:"#25D36614",border:"1.5px solid #25D36633",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                      <span style={{fontSize:18}}>💬</span>
-                      <span style={{fontSize:12,fontWeight:800,color:"#25D366"}}>WhatsApp</span>
-                    </button>
+                        {/* Share buttons */}
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>{
+                            const msg=encodeURIComponent(`Hey! 👋 I use Convoy App to track road trips with friends. Join me using my referral code ${refCode} and download the app here: https://convoy.app/download?ref=${refCode} 🚗`);
+                            window.open(`https://wa.me/?text=${msg}`,"_blank");
+                          }} style={{flex:1,padding:"11px 0",borderRadius:12,background:"#25D36614",border:"1.5px solid #25D36633",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                            <span style={{fontSize:18}}>💬</span>
+                            <span style={{fontSize:12,fontWeight:800,color:"#25D366"}}>WhatsApp</span>
+                          </button>
+                          <button onClick={()=>{
+                            const shareData={title:"Join Convoy App",text:`Track road trips with your convoy! Use my code ${refCode}`,url:`https://convoy.app/download?ref=${refCode}`};
+                            if(navigator.share){navigator.share(shareData).catch(()=>{});}
+                            else{navigator.clipboard?.writeText(shareData.url).catch(()=>{});}
+                          }} style={{flex:1,padding:"11px 0",borderRadius:12,background:T.raised,border:`1.5px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                            <span style={{fontSize:18}}>🔗</span>
+                            <span style={{fontSize:12,fontWeight:800,color:T.sub}}>Share Link</span>
+                          </button>
+                        </div>
 
-                    {/* Native share / copy link */}
-                    <button onClick={()=>{
-                      const shareData={title:"Join Convoy App",text:"Track road trips with your convoy! Use my code ROHAN287",url:"https://convoy.app/download?ref=ROHAN287"};
-                      if(navigator.share){navigator.share(shareData).catch(()=>{});}
-                      else{navigator.clipboard?.writeText(shareData.url).catch(()=>{});}
-                    }} style={{flex:1,padding:"11px 0",borderRadius:12,background:T.raised,border:`1.5px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                      <span style={{fontSize:18}}>🔗</span>
-                      <span style={{fontSize:12,fontWeight:800,color:T.sub}}>Share Link</span>
-                    </button>
-                  </div>
-
-                  {/* SMS invite */}
-                  <button onClick={()=>{
-                    const msg=encodeURIComponent(`Join me on Convoy App! Use code ROHAN287 to download: https://convoy.app/download?ref=ROHAN287`);
-                    window.open(`sms:?body=${msg}`,"_blank");
-                  }} style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,background:T.raised,border:`1.5px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                    <span style={{fontSize:18}}>📱</span>
-                    <span style={{fontSize:12,fontWeight:800,color:T.sub}}>Invite via SMS</span>
-                  </button>
+                        {/* SMS invite */}
+                        <button onClick={()=>{
+                          const msg=encodeURIComponent(`Join me on Convoy App! Use code ${refCode} to download: https://convoy.app/download?ref=${refCode}`);
+                          window.open(`sms:?body=${msg}`,"_blank");
+                        }} style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,background:T.raised,border:`1.5px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                          <span style={{fontSize:18}}>📱</span>
+                          <span style={{fontSize:12,fontWeight:800,color:T.sub}}>Invite via SMS</span>
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}
