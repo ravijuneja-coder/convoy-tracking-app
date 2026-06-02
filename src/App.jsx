@@ -2883,12 +2883,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       <div style={{padding:"14px 18px 0",background:T.surface,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={{fontSize:18,fontWeight:800,color:T.text}}>My Profile</div>
-          {!editing ? (
-            <button onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:10,background:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer"}}>
-              <Ic d={ICONS.edit} size={13} color={T.accent} sw={2}/>
-              <span style={{fontSize:12,fontWeight:700,color:T.accent}}>Edit</span>
-            </button>
-          ) : (
+          {editing && (
             <div style={{display:"flex",gap:8}}>
               <button onClick={cancelEdit} style={{padding:"7px 14px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.sub}}>Cancel</button>
               <button onClick={saveEdit} style={{padding:"7px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:800,color:T.isDark?"#080B12":"#fff",display:"flex",alignItems:"center",gap:5}}>
