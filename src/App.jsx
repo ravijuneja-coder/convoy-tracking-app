@@ -2975,29 +2975,36 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
               ))}
             </div>
 
-            {/* Bio — always editable inline */}
-            <div style={{marginBottom:4,padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
-              <div style={{fontSize:10,fontWeight:700,color:activeField==="bio"?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:7,textAlign:"left"}}>About</div>
-              {activeField==="bio" ? (
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  <textarea value={fieldVal} onChange={e=>setFieldVal(e.target.value)} rows={3} placeholder="Tell your convoy friends about you…"
-                    style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}/>
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>{setProfile(p=>({...p,bio:fieldVal}));setActiveField(null);setSaved(true);setTimeout(()=>setSaved(false),2200);}}
-                      style={{flex:1,padding:"9px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:13,fontWeight:800,color:T.isDark?"#080B12":"#fff"}}>Save</button>
-                    <button onClick={cancelField}
-                      style={{padding:"9px 16px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:13,fontWeight:700,color:T.muted}}>Cancel</button>
-                  </div>
+            {/* Bio — same layout as Row fields */}
+            <div style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
+              <div style={{fontSize:10,fontWeight:700,color:activeField==="bio"?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:7,textAlign:"left",paddingLeft:48}}>About</div>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <div style={{width:36,height:36,borderRadius:10,background:activeField==="bio"?T.accentLo:T.raised,border:`1px solid ${activeField==="bio"?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+                  <Ic d={ICONS.note} size={15} color={activeField==="bio"?T.accent:T.muted}/>
                 </div>
-              ) : (
-                <div onClick={()=>{setActiveField("bio");setFieldVal(profile.bio||"");}}
-                  style={{fontSize:13,color:P.bio?T.sub:T.muted,lineHeight:1.55,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                  <span>{P.bio||"Tap to add bio…"}</span>
-                  <div style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <div style={{flex:1,minWidth:0}}>
+                  {activeField==="bio" ? (
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      <textarea value={fieldVal} onChange={e=>setFieldVal(e.target.value)} rows={3} placeholder="Tell your convoy friends about you…"
+                        style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}/>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>{setProfile(p=>({...p,bio:fieldVal}));setActiveField(null);setSaved(true);setTimeout(()=>setSaved(false),2200);}}
+                          style={{flex:1,padding:"9px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:13,fontWeight:800,color:T.isDark?"#080B12":"#fff"}}>Save</button>
+                        <button onClick={cancelField}
+                          style={{padding:"9px 16px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:13,fontWeight:700,color:T.muted}}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{fontSize:13,color:P.bio?T.text:T.muted,lineHeight:1.55,textAlign:"left"}}>{P.bio||"Not set"}</div>
+                  )}
+                </div>
+                {activeField!=="bio"&&(
+                  <button onClick={()=>{setActiveField("bio");setFieldVal(profile.bio||"");}}
+                    style={{width:30,height:30,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                     <Ic d={ICONS.edit} size={12} color={T.muted}/>
-                  </div>
-                </div>
-              )}
+                  </button>
+                )}
+              </div>
             </div>
 
             <Row icon={ICONS.phone}  label="Phone"             field="phone"     placeholder="+91 00000 00000" type="tel"/>
