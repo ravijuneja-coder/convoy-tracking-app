@@ -2841,7 +2841,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
           {/* Inline pencil (view mode only) */}
           {!editing&&(
             isActive ? (
-              <div style={{display:"flex",gap:6,flexShrink:0}}>
+              <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center",alignSelf:"center"}}>
                 <button onClick={saveField} style={{width:30,height:30,borderRadius:8,background:T.accentLo,border:`1px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <Ic d={ICONS.check} size={13} color={T.accent} sw={2.5}/>
                 </button>
