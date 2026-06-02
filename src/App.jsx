@@ -3304,6 +3304,11 @@ const OnboardingScreen = ({ onDone }) => {
     setLoading(true);
     try {
       if (authTab === "signup") {
+        // Check if mobile number already registered
+        const { getDocs, query: fsQuery, where: fsWhere, collection: fsCol } = await import("firebase/firestore");
+        const phoneCheck = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",phone.trim().replace(/\D/g,""))));
+        if(!phoneCheck.empty){ setErr("This mobile number is already registered. Please sign in."); setLoading(false); return; }
+
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(cred.user, { displayName: name.trim().replace(/\b\w/g,c=>c.toUpperCase()) });
         await setDoc(doc(db, "users", cred.user.uid), {
