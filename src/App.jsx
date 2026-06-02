@@ -4070,13 +4070,17 @@ export default function App() {
                 </div>
               </button>
               <span style={{fontSize:10,color:T.muted}}>9:41</span>
-              {/* Bell icon with unread badge */}
-              <button onClick={()=>{setNavTab("bell");setScreen("alerts");setActiveC(null);}}
-                style={{width:28,height:28,borderRadius:"50%",background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",flexShrink:0}}>
-                <Ic d={ICONS.bell} size={13} color={navTab==="bell"?T.accent:T.sub} sw={1.8}/>
-                {alertUnread>0&&<span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>}
-              </button>
-              <div style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:isDark?"#080B12":"#fff",border:`2px solid ${T.surface}`}}>RO</div>
+              {authed&&<>
+                {/* Bell icon with unread badge */}
+                <button onClick={()=>{setNavTab("bell");setScreen("alerts");setActiveC(null);}}
+                  style={{width:28,height:28,borderRadius:"50%",background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",flexShrink:0}}>
+                  <Ic d={ICONS.bell} size={13} color={navTab==="bell"?T.accent:T.sub} sw={1.8}/>
+                  {alertUnread>0&&<span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>}
+                </button>
+                <div style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:isDark?"#080B12":"#fff",border:`2px solid ${T.surface}`}}>
+                  {authUser?.name?.slice(0,2).toUpperCase()||"ME"}
+                </div>
+              </>}
             </div>
           </div>
 
