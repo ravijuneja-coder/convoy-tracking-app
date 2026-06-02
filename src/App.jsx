@@ -3325,11 +3325,13 @@ const OnboardingScreen = ({ onDone }) => {
       } else {
         // Sign in: find email by phone number from Firestore
         const { getDocs, query: fsQuery, where: fsWhere, collection: fsCol } = await import("firebase/firestore");
-        // Normalize: strip non-digits, remove leading country code (91), keep last 10 digits
+        // Normalize: strip non-digits, try multiple formats
         const rawPhone = phone.trim().replace(/\D/g,"");
-        const normalizedPhone = rawPhone.length > 10 ? rawPhone.slice(-10) : rawPhone;
-        // Try exact match first, then last-10-digits match
-        let snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",normalizedPhone)));
+        const last10 = rawPhone.slice(-10);
+        const with91 = "91" + last10;
+        // Try all possible stored formats
+        let snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",last10)));
+        if(snap.empty) snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",with91)));
         if(snap.empty) snap = await getDocs(fsQuery(fsCol(db,"users"), fsWhere("phone","==",rawPhone)));
         if (snap.empty) { setErr("No account found with this mobile number."); setLoading(false); return; }
         const userData = snap.docs[0].data();
