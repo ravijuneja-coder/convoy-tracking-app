@@ -3319,21 +3319,39 @@ const OnboardingScreen = ({ onDone }) => {
           email: email.trim(),
           createdAt: serverTimestamp()
         });
-        const user = { uid: cred.user.uid, name: name.trim().replace(/\b\w/g,c=>c.toUpperCase()), phone: phone.trim(), email: email.trim() };
+        const user = { uid: cred.user.uid, name: name.trim().replace(/\b\w/g,c=>c.toUpperCase()), phone: normSignupPhone, email: email.trim() };
         localStorage.setItem("convoy_user", JSON.stringify(user));
+        // Save phone→email mapping for reliable sign-in lookup
+        const phoneMap = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
+        phoneMap[normSignupPhone] = email.trim();
+        localStorage.setItem("convoy_phone_map", JSON.stringify(phoneMap));
         onDone(user);
       } else {
-        // Sign in: find email by phone number from Firestore
+        // Sign in: find email by phone number
         const rawPhone = phone.trim().replace(/\D/g,"");
         const last10 = rawPhone.slice(-10);
         const with91 = "91" + last10;
-        // Try all possible stored formats
-        let snap = await getDocs(query(collection(db,"users"), where("phone","==",last10)));
-        if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",with91)));
-        if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",rawPhone)));
-        if (snap.empty) { setErr("No account found with this mobile number."); setLoading(false); return; }
-        const userData = snap.docs[0].data();
-        const userEmail = userData.email;
+
+        // 1. Check localStorage phone map first (fastest, works offline)
+        const phoneMap = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
+        let userEmail = phoneMap[last10] || phoneMap[with91] || phoneMap[rawPhone];
+
+        // 2. If not in localStorage, try Firestore
+        if(!userEmail){
+          let snap = await getDocs(query(collection(db,"users"), where("phone","==",last10)));
+          if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",with91)));
+          if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==",rawPhone)));
+          if(!snap.empty){
+            const userData = snap.docs[0].data();
+            userEmail = userData.email;
+            // Save to localStorage for next time
+            const pm = JSON.parse(localStorage.getItem("convoy_phone_map")||"{}");
+            pm[last10] = userEmail;
+            localStorage.setItem("convoy_phone_map", JSON.stringify(pm));
+          }
+        }
+
+        if(!userEmail){ setErr("No account found with this mobile number."); setLoading(false); return; }
         const cred = await signInWithEmailAndPassword(auth, userEmail, password);
         const user = { uid: cred.user.uid, name: userData.name || "", phone: userData.phone || phone.trim(), email: userEmail };
         localStorage.setItem("convoy_user", JSON.stringify(user));
