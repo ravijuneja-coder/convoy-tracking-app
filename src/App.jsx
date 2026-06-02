@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { auth, db } from "./firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut as fbSignOut, updateProfile } from "firebase/auth";
+import { doc, setDoc, getDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "firebase/firestore";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // THEME SYSTEM
@@ -3244,24 +3247,55 @@ const OnboardingScreen = ({ onDone }) => {
   const [step,     setStep]     = useState(0); // 0-3 = slides, 4 = auth
   const [authTab,  setAuthTab]  = useState("signup");
   const [name,     setName]     = useState("");
+  const [email,    setEmail]    = useState("");
   const [phone,    setPhone]    = useState("");
   const [password, setPassword] = useState("");
   const [err,      setErr]      = useState("");
+  const [loading,  setLoading]  = useState(false);
 
   const isLastSlide = step === ONBOARD_SLIDES.length - 1;
   const slide       = ONBOARD_SLIDES[step] || {};
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (authTab==="signup" && !name.trim()) { setErr("Please enter your name."); return; }
-    if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit phone number."); return; }
-    if (!password.trim() || password.length < 4) { setErr("Password must be at least 4 characters."); return; }
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) { setErr("Enter a valid email address."); return; }
+    if (authTab==="signup" && (!phone.trim() || phone.replace(/\D/g,"").length < 10)) { setErr("Enter a valid 10-digit phone number."); return; }
+    if (!password.trim() || password.length < 6) { setErr("Password must be at least 6 characters."); return; }
     setErr("");
-    const storedName = JSON.parse(localStorage.getItem("convoy_user")||"null")?.name;
-    const rawName = authTab==="signup" ? name.trim() : (storedName||"");
-    const user = { name: rawName.replace(/\b\w/g,c=>c.toUpperCase()), phone: phone.trim() };
-    localStorage.setItem("convoy_user", JSON.stringify(user));
-    localStorage.setItem("convoy_authed","1");
-    onDone(user);
+    setLoading(true);
+    try {
+      if (authTab === "signup") {
+        const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        await updateProfile(cred.user, { displayName: name.trim().replace(/\b\w/g,c=>c.toUpperCase()) });
+        await setDoc(doc(db, "users", cred.user.uid), {
+          name: name.trim().replace(/\b\w/g,c=>c.toUpperCase()),
+          phone: phone.trim(),
+          email: email.trim(),
+          createdAt: serverTimestamp()
+        });
+        const user = { uid: cred.user.uid, name: name.trim().replace(/\b\w/g,c=>c.toUpperCase()), phone: phone.trim(), email: email.trim() };
+        localStorage.setItem("convoy_user", JSON.stringify(user));
+        onDone(user);
+      } else {
+        const storedEmail = JSON.parse(localStorage.getItem("convoy_user")||"null")?.email || email.trim();
+        const cred = await signInWithEmailAndPassword(auth, storedEmail, password);
+        const userDoc = await getDoc(doc(db, "users", cred.user.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const user = { uid: cred.user.uid, name: userData.name || cred.user.displayName || "", phone: userData.phone || phone.trim(), email: storedEmail };
+        localStorage.setItem("convoy_user", JSON.stringify(user));
+        onDone(user);
+      }
+    } catch (e) {
+      const code = e.code || "";
+      if (code.includes("email-already-in-use")) setErr("This email is already registered. Try signing in.");
+      else if (code.includes("wrong-password") || code.includes("invalid-credential")) setErr("Incorrect password. Please try again.");
+      else if (code.includes("user-not-found")) setErr("No account found with this email.");
+      else if (code.includes("invalid-email")) setErr("Invalid email address.");
+      else if (code.includes("weak-password")) setErr("Password is too weak. Use at least 6 characters.");
+      else setErr(e.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ── AUTH SCREEN ── */
@@ -3300,15 +3334,16 @@ const OnboardingScreen = ({ onDone }) => {
       <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
-          <Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>
-          <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 4 characters" type="password"/>
+          <Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>
+          {authTab==="signup"&&<Field label="Phone Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>}
+          <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 6 characters" type="password"/>
 
           {err&&<div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
 
-          <button onClick={handleSubmit}
-            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`}}>
+          <button onClick={handleSubmit} disabled={loading}
+            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`,opacity:loading?0.7:1}}>
             <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
-            {authTab==="signup"?"Create Account 🚗":"Sign In"}
+            {loading?"Please wait…":authTab==="signup"?"Create Account 🚗":"Sign In"}
           </button>
 
           <div style={{textAlign:"center",fontSize:12,color:T.muted}}>
@@ -4059,21 +4094,65 @@ export default function App() {
   const handleAuthDone = (user) => { setAuthUser(user); setAuthed(true); };
   const handleProfileUpdate = (updated) => { setAuthUser(updated); };
 
-  const handleSave=data=>{
-    if(convoys.find(c=>c.id===data.id)){
-      setConvoys(cs=>cs.map(c=>c.id===data.id?{...c,...data}:c));
-      if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
-      flash(`"${data.name}" updated`);
+  // Firebase auth listener
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", fbUser.uid));
+          const userData = userDoc.exists() ? userDoc.data() : {};
+          const user = { uid: fbUser.uid, name: userData.name || fbUser.displayName || "", phone: userData.phone || "", email: fbUser.email || "" };
+          setAuthUser(user);
+          setAuthed(true);
+          // Load convoys from Firestore
+          const q = query(collection(db, "convoys"), where("ownerUid", "==", fbUser.uid));
+          const unsubConvoys = onSnapshot(q, (snap) => {
+            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setConvoys(data);
+          });
+          return () => unsubConvoys();
+        } catch (_) {}
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const handleSave = async (data) => {
+    if (!authUser?.uid) return;
+    if (convoys.find(c=>c.id===data.id)) {
+      try {
+        await updateDoc(doc(db, "convoys", data.id), { ...data, updatedAt: serverTimestamp() });
+        if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
+        flash(`"${data.name}" updated`);
+      } catch (e) {
+        // fallback local update
+        setConvoys(cs=>cs.map(c=>c.id===data.id?{...c,...data}:c));
+        if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
+        flash(`"${data.name}" updated`);
+      }
     } else {
-      const newConvoy={...data,distance:data.distance||0,inviteCode:data.inviteCode||Math.floor(100000+Math.random()*900000).toString()};
-      setConvoys(cs=>[newConvoy,...cs]);
-      flash(`"${data.name}" created!`);
+      try {
+        const newData = { ...data, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+        await addDoc(collection(db, "convoys"), newData);
+        flash(`"${data.name}" created!`);
+      } catch (e) {
+        // fallback local create
+        const newConvoy={...data,distance:data.distance||0,inviteCode:data.inviteCode||Math.floor(100000+Math.random()*900000).toString()};
+        setConvoys(cs=>[newConvoy,...cs]);
+        flash(`"${data.name}" created!`);
+      }
     }
     setSheet(null);
   };
-  const handleDelete=()=>{
+  const handleDelete = async () => {
     const name=delTarget.name;
-    setConvoys(cs=>cs.filter(c=>c.id!==delTarget.id));
+    try {
+      if (authUser?.uid && delTarget.id) {
+        await deleteDoc(doc(db, "convoys", delTarget.id));
+      }
+    } catch (_) {
+      setConvoys(cs=>cs.filter(c=>c.id!==delTarget.id));
+    }
     setDelTarget(null);
     if(activeC?.id===delTarget.id){setScreen("home");setActiveC(null);}
     flash(`"${name}" deleted`,"warn");
@@ -4140,7 +4219,7 @@ export default function App() {
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={()=>{localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
