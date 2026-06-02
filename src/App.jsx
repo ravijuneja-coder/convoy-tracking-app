@@ -2820,7 +2820,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
           {/* Content */}
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5}}>{label}</div>
+            <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left"}}>{label}</div>
 
             {editing ? (
               /* Global edit mode — styled input */
