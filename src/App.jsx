@@ -2975,15 +2975,28 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
               ))}
             </div>
 
-            {/* Bio */}
-            <div style={{marginBottom:4}}>
-              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:7}}>About</div>
-              {editing ? (
-                <textarea value={P.bio} onChange={e=>set("bio",e.target.value)} rows={2} placeholder="Tell your convoy friends about you…"
-                  style={{width:"100%",background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}
-                  onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+            {/* Bio — always editable inline */}
+            <div style={{marginBottom:4,padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
+              <div style={{fontSize:10,fontWeight:700,color:activeField==="bio"?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:7,textAlign:"left"}}>About</div>
+              {activeField==="bio" ? (
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <textarea value={fieldVal} onChange={e=>setFieldVal(e.target.value)} rows={3} placeholder="Tell your convoy friends about you…"
+                    style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}/>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>{setProfile(p=>({...p,bio:fieldVal}));setActiveField(null);setSaved(true);setTimeout(()=>setSaved(false),2200);}}
+                      style={{flex:1,padding:"9px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:13,fontWeight:800,color:T.isDark?"#080B12":"#fff"}}>Save</button>
+                    <button onClick={cancelField}
+                      style={{padding:"9px 16px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:13,fontWeight:700,color:T.muted}}>Cancel</button>
+                  </div>
+                </div>
               ) : (
-                <div style={{fontSize:13,color:T.sub,lineHeight:1.55}}>{P.bio||<span style={{color:T.muted}}>No bio added yet</span>}</div>
+                <div onClick={()=>{setActiveField("bio");setFieldVal(profile.bio||"");}}
+                  style={{fontSize:13,color:P.bio?T.sub:T.muted,lineHeight:1.55,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                  <span>{P.bio||"Tap to add bio…"}</span>
+                  <div style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Ic d={ICONS.edit} size={12} color={T.muted}/>
+                  </div>
+                </div>
               )}
             </div>
 
