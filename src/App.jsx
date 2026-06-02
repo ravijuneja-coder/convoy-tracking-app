@@ -2833,7 +2833,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 onKeyDown={e=>{if(e.key==="Enter")saveField();if(e.key==="Escape")cancelField();}}
                 style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:9,padding:"9px 11px",fontSize:13,color:T.text,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
             ) : (
-              <div style={{fontSize:13,color:P[field]?T.text:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{P[field]||"Not set"}</div>
+              <div style={{fontSize:13,color:P[field]?T.text:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"left"}}>{P[field]||"Not set"}</div>
             )}
           </div>
 
