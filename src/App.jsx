@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { auth, db } from "./firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut as fbSignOut, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut as fbSignOut, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "firebase/firestore";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3284,14 +3284,18 @@ const ONBOARD_SLIDES = [
 const OnboardingScreen = ({ onDone }) => {
   const T = useT();
   const [step,     setStep]     = useState(0); // 0-3 = slides, 4 = auth
-  const [authTab,    setAuthTab]    = useState("signup");
-  const [useEmail,   setUseEmail]   = useState(false); // sign-in with email fallback
-  const [name,       setName]       = useState("");
-  const [email,      setEmail]      = useState("");
-  const [phone,      setPhone]      = useState("");
-  const [password,   setPassword]   = useState("");
-  const [err,        setErr]        = useState("");
-  const [loading,    setLoading]    = useState(false);
+  const [authTab,      setAuthTab]      = useState("signup");
+  const [useEmail,     setUseEmail]     = useState(false);
+  const [showForgot,   setShowForgot]   = useState(false);
+  const [resetEmail,   setResetEmail]   = useState("");
+  const [resetSent,    setResetSent]    = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [name,         setName]         = useState("");
+  const [email,        setEmail]        = useState("");
+  const [phone,        setPhone]        = useState("");
+  const [password,     setPassword]     = useState("");
+  const [err,          setErr]          = useState("");
+  const [loading,      setLoading]      = useState(false);
 
   const isLastSlide = step === ONBOARD_SLIDES.length - 1;
   const slide       = ONBOARD_SLIDES[step] || {};
@@ -3413,9 +3417,49 @@ const OnboardingScreen = ({ onDone }) => {
 
           {err&&<div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
           {authTab==="signin"&&(
-            <button onClick={()=>{setUseEmail(e=>!e);setErr("");}} style={{background:"none",border:"none",color:T.accent,fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",padding:0}}>
-              {useEmail?"Use mobile number instead":"Use email instead"}
-            </button>
+            <div style={{display:"flex",flexDirection:"column",gap:8,alignItems:"center"}}>
+              <button onClick={()=>{setUseEmail(e=>!e);setErr("");setShowForgot(false);}} style={{background:"none",border:"none",color:T.accent,fontSize:12,fontWeight:700,cursor:"pointer",padding:0}}>
+                {useEmail?"Use mobile number instead":"Use email instead"}
+              </button>
+              <button onClick={()=>{setShowForgot(f=>!f);setResetSent(false);setResetEmail(email||"");setErr("");}} style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0}}>
+                Forgot password?
+              </button>
+            </div>
+          )}
+
+          {/* Forgot Password panel */}
+          {authTab==="signin"&&showForgot&&(
+            <div style={{background:T.raised,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontSize:13,fontWeight:700,color:T.text}}>Reset Password</div>
+              <div style={{fontSize:11,color:T.muted}}>Enter your email to receive a reset link</div>
+              {!resetSent ? (
+                <>
+                  <input value={resetEmail} onChange={e=>setResetEmail(e.target.value)} placeholder="your@email.com" type="email"
+                    style={{width:"100%",background:T.card,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                  <button onClick={async()=>{
+                    if(!resetEmail.trim()){ return; }
+                    setResetLoading(true);
+                    try{
+                      await sendPasswordResetEmail(auth, resetEmail.trim());
+                      setResetSent(true);
+                    } catch(e){
+                      setErr("Could not send reset email. Check the address and try again.");
+                    } finally { setResetLoading(false); }
+                  }} disabled={resetLoading}
+                    style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
+                    {resetLoading?"Sending…":"Send Reset Link"}
+                  </button>
+                </>
+              ):(
+                <div style={{display:"flex",alignItems:"center",gap:8,background:T.accentLo,borderRadius:10,padding:"10px 12px"}}>
+                  <span style={{fontSize:16}}>✅</span>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:T.accent}}>Reset link sent!</div>
+                    <div style={{fontSize:11,color:T.muted}}>Check your email inbox</div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           <button onClick={handleSubmit} disabled={loading}
