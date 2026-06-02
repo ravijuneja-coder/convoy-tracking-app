@@ -3368,7 +3368,7 @@ const OnboardingScreen = ({ onDone }) => {
         </button>
 
         {step===0&&(
-          <button onClick={()=>setStep(ONBOARD_SLIDES.length)}
+          <button onClick={()=>{setStep(ONBOARD_SLIDES.length);setAuthTab("signin");}}
             style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,background:"none",border:`1px solid ${T.border}`,color:T.muted,fontSize:13,fontWeight:700,cursor:"pointer"}}>
             Already have an account? Sign In
           </button>
