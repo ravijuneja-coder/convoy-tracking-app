@@ -2812,15 +2812,18 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     const isActive = !editing && activeField===field;
     return (
       <div style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
-        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-          {/* Icon — push down to align with input (label ~18px + 5px gap) */}
-          <div style={{width:36,height:36,borderRadius:10,background:isActive||editing?T.accentLo:T.raised,border:`1px solid ${isActive||editing?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s",marginTop:(isActive||editing)?18:0}}>
+        {/* Label row */}
+        {(isActive||editing)&&<div style={{fontSize:10,fontWeight:700,color:T.accent,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left",paddingLeft:48}}>{label}</div>}
+
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          {/* Icon */}
+          <div style={{width:36,height:36,borderRadius:10,background:isActive||editing?T.accentLo:T.raised,border:`1px solid ${isActive||editing?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
             <Ic d={icon} size={15} color={isActive||editing?T.accent:T.muted}/>
           </div>
 
           {/* Content */}
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left"}}>{label}</div>
+            {!isActive&&!editing&&<div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left"}}>{label}</div>}
 
             {editing ? (
               <input value={P[field]||""} onChange={e=>set(field,e.target.value)} placeholder={placeholder} type={type}
@@ -2836,10 +2839,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             )}
           </div>
 
-          {/* Buttons — push down to align with input */}
+          {/* Action buttons */}
           {!editing&&(
             isActive ? (
-              <div style={{display:"flex",gap:6,flexShrink:0,marginTop:18}}>
+              <div style={{display:"flex",gap:6,flexShrink:0}}>
                 <button onClick={saveField} style={{width:30,height:30,borderRadius:8,background:T.accentLo,border:`1px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <Ic d={ICONS.check} size={13} color={T.accent} sw={2.5}/>
                 </button>
