@@ -3397,14 +3397,14 @@ const OnboardingScreen = ({ onDone }) => {
       </div>
 
       {/* Tabs */}
-      <div style={{display:"flex",margin:"0 20px",background:T.raised,borderRadius:14,padding:4,flexShrink:0,border:`1px solid ${T.border}`}}>
+      {!showForgot&&<div style={{display:"flex",margin:"0 20px",background:T.raised,borderRadius:14,padding:4,flexShrink:0,border:`1px solid ${T.border}`}}>
         {[["signup","Sign Up"],["signin","Sign In"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>{setAuthTab(id);setErr("");}}
             style={{flex:1,padding:"9px 0",borderRadius:11,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,background:authTab===id?T.surface:T.raised,color:authTab===id?T.text:T.muted,boxShadow:authTab===id?"0 2px 8px rgba(0,0,0,.1)":"none",transition:"all .2s"}}>
             {lbl}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* Form */}
       <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
