@@ -2547,7 +2547,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:17,fontWeight:800,color:T.text}}>Alerts</span>
               {unreadCount > 0 && (
-                <span style={{background:T.red,color:"#fff",fontSize:10,fontWeight:800,borderRadius:20,padding:"2px 8px",minWidth:20,textAlign:"center"}}>{unreadCount}</span>
+                <span style={{background:T.red,color:"#fff",fontSize:10,fontWeight:800,borderRadius:"50%",width:20,height:20,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{unreadCount}</span>
               )}
             </div>
             <div style={{fontSize:11,color:T.muted,marginTop:2}}>{alerts.length} notifications</div>
