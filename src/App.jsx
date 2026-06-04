@@ -3461,7 +3461,7 @@ const OnboardingScreen = ({ onDone }) => {
                 </div>
               )}
               <button onClick={()=>{setShowForgot(false);setResetSent(false);setResetEmail("");setErr("");}}
-                style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0,textAlign:"center"}}>← Back</button>
+                style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0,textAlign:"left",alignSelf:"flex-start"}}>← Back</button>
             </div>
           )}
 
