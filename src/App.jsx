@@ -3409,14 +3409,14 @@ const OnboardingScreen = ({ onDone }) => {
       {/* Form */}
       <div style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          {authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
-          {authTab==="signup"&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
-          {(authTab==="signup"||!useEmail)&&<Field label="Mobile Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>}
-          {authTab==="signin"&&useEmail&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
-          <Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 6 characters" type="password"/>
+          {!showForgot&&authTab==="signup"&&<Field label="Full Name" value={name} onChange={v=>{setName(v);setErr("");}} placeholder="Your full name"/>}
+          {!showForgot&&authTab==="signup"&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
+          {!showForgot&&(authTab==="signup"||!useEmail)&&<Field label="Mobile Number" value={phone} onChange={v=>{setPhone(v);setErr("");}} placeholder="+91 98765 43210" type="tel"/>}
+          {!showForgot&&authTab==="signin"&&useEmail&&<Field label="Email" value={email} onChange={v=>{setEmail(v);setErr("");}} placeholder="you@example.com" type="email"/>}
+          {!showForgot&&<Field label="Password" value={password} onChange={v=>{setPassword(v);setErr("");}} placeholder="At least 6 characters" type="password"/>}
 
           {err&&<div style={{fontSize:12,color:T.red,fontWeight:600,background:T.redLo,borderRadius:8,padding:"8px 12px",border:`1px solid ${T.red}44`}}>{err}</div>}
-          {authTab==="signin"&&(
+          {authTab==="signin"&&!showForgot&&(
             <div style={{display:"flex",flexDirection:"column",gap:8,alignItems:"center"}}>
               <button onClick={()=>{setUseEmail(e=>!e);setErr("");setShowForgot(false);}} style={{background:"none",border:"none",color:T.accent,fontSize:12,fontWeight:700,cursor:"pointer",padding:0}}>
                 {useEmail?"Use mobile number instead":"Use email instead"}
@@ -3430,7 +3430,10 @@ const OnboardingScreen = ({ onDone }) => {
           {/* Forgot Password panel */}
           {authTab==="signin"&&showForgot&&(
             <div style={{background:T.raised,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",gap:10}}>
-              <div style={{fontSize:13,fontWeight:700,color:T.text}}>Reset Password</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <button onClick={()=>{setShowForgot(false);setResetSent(false);setErr("");}} style={{background:"none",border:"none",color:T.accent,fontSize:12,fontWeight:700,cursor:"pointer",padding:0}}>← Back</button>
+                <div style={{fontSize:13,fontWeight:700,color:T.text}}>Reset Password</div>
+              </div>
               <div style={{fontSize:11,color:T.muted}}>Enter your email to receive a reset link</div>
               {!resetSent ? (
                 <>
@@ -3462,19 +3465,19 @@ const OnboardingScreen = ({ onDone }) => {
             </div>
           )}
 
-          <button onClick={handleSubmit} disabled={loading}
+          {!showForgot&&<button onClick={handleSubmit} disabled={loading}
             style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`,opacity:loading?0.7:1}}>
             <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
             {loading?"Please wait…":authTab==="signup"?"Create Account 🚗":"Sign In"}
-          </button>
+          </button>}
 
-          <div style={{textAlign:"center",fontSize:12,color:T.muted}}>
+          {!showForgot&&<div style={{textAlign:"center",fontSize:12,color:T.muted}}>
             {authTab==="signup"?"Already have an account? ":"Don't have an account? "}
             <button onClick={()=>{setAuthTab(authTab==="signup"?"signin":"signup");setErr("");}}
               style={{background:"none",border:"none",color:T.accent,fontWeight:700,cursor:"pointer",fontSize:12,padding:0}}>
               {authTab==="signup"?"Sign In":"Sign Up"}
             </button>
-          </div>
+          </div>}
 
           <div style={{textAlign:"center",fontSize:11,color:T.muted,marginTop:4,lineHeight:1.5}}>
             By continuing you agree to our Terms of Service & Privacy Policy
