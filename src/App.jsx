@@ -55,13 +55,13 @@ const CAR_POS = [
   {x:.30,y:.52},{x:.38,y:.42},{x:.22,y:.64},{x:.13,y:.36},
 ];
 const SEED = [
-  { id:1,name:"Delhi Road Trip",   destination:"New Delhi",  date:"2025-06-22",time:"08:00",status:"live",     distance:287,alertKm:5,  notes:"Depart Sector 18. Fuel before highway.",   color:"#3DD68C",
+  { id:1,name:"Delhi Road Trip",   destination:"New Delhi",  date:"2026-06-04",time:"20:00",status:"live",     distance:287,alertKm:5,  startingPoint:"Noida, Sector 18",notes:"Depart Sector 18. Fuel before highway.",   color:"#3DD68C",
     members:[{id:1,name:"Rohan",initials:"RO",color:"#3DD68C",car:"Swift · DL4C 1234",   role:"admin", avatar:"https://i.pravatar.cc/150?img=11"  },{id:2,name:"Rahul",initials:"RA",color:"#4A9EFF",car:"Innova · UP32 5567",  role:"member",avatar:"https://i.pravatar.cc/150?img=52"  },{id:3,name:"Priya",initials:"PR",color:"#F5A623",car:"Creta · HR26 8890",   role:"member",avatar:"https://i.pravatar.cc/150?img=47"},{id:4,name:"Aman", initials:"AM",color:"#C36EFF",car:"Fortuner · PB10 4412",role:"member",avatar:"https://i.pravatar.cc/150?img=68"}]},
-  { id:2,name:"Goa Beach Weekend", destination:"Goa",        date:"2025-07-04",time:"06:30",status:"upcoming", distance:593,alertKm:10, notes:"Book toll tags. Leave early.",              color:"#4A9EFF",
+  { id:2,name:"Goa Beach Weekend", destination:"Goa",        date:"2026-07-04",time:"06:30",status:"upcoming", distance:593,alertKm:10, notes:"Book toll tags. Leave early.",              color:"#4A9EFF",
     members:[{id:5,name:"Sneha", initials:"SN",color:"#4A9EFF",car:"Nexon · MH02 3310",  role:"admin" },{id:6,name:"Vikram",initials:"VI",color:"#9B6EFF",car:"Scorpio · KA01 8821",role:"member"}]},
-  { id:3,name:"Manali Expedition", destination:"Manali, HP", date:"2025-08-15",time:"04:00",status:"upcoming", distance:536,alertKm:5,  notes:"Spare tyre. Rohtang permit required.",      color:"#9B6EFF",
+  { id:3,name:"Manali Expedition", destination:"Manali, HP", date:"2026-08-15",time:"04:00",status:"upcoming", distance:536,alertKm:5,  notes:"Spare tyre. Rohtang permit required.",      color:"#9B6EFF",
     members:[{id:7,name:"Arjun", initials:"AR",color:"#9B6EFF",car:"Thar · HP07 7744",   role:"admin" },{id:8,name:"Meera", initials:"ME",color:"#F5A623",car:"XUV700 · DL8C 5511",role:"member"},{id:9,name:"Dev",  initials:"DE",color:"#3DD68C",car:"Bolero · PB08 2293", role:"member"},{id:10,name:"Anjali",initials:"AN",color:"#4A9EFF",car:"Creta · HP09 6612",  role:"member"},{id:11,name:"Kartik",initials:"KA",color:"#FF4F4F",car:"Swift · HR12 0021",  role:"member"}]},
-  { id:4,name:"Jaipur Day Trip",   destination:"Jaipur, RJ", date:"2025-05-10",time:"07:00",status:"completed",distance:282,alertKm:2,  notes:"Completed. Total time: 5h 20m.",           color:"#F5A623",
+  { id:4,name:"Jaipur Day Trip",   destination:"Jaipur, RJ", date:"2026-05-10",time:"07:00",status:"completed",distance:282,alertKm:2,  notes:"Completed. Total time: 5h 20m.",           color:"#F5A623",
     members:[{id:12,name:"Pooja", initials:"PO",color:"#F5A623",car:"Verna · RJ14 4432", role:"admin" },{id:13,name:"Saurav",initials:"SA",color:"#3DD68C",car:"Brezza · DL6C 9981",role:"member"},{id:14,name:"Nisha", initials:"NI",color:"#4A9EFF",car:"Baleno · UP16 7732",role:"member"}]},
 ];
 
@@ -851,25 +851,55 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
         {/* ── drag handle + trip meta ── */}
         <div style={{padding:"10px 16px 6px",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}} onClick={()=>setDrawerOpen(d=>!d)}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:0,overflowX:"auto",scrollbarWidth:"none",gap:16}}>
-            {[
-              {label:"REMAINING",  val:`${convoy.distance}km`, c:convoy.color},
-              {label:"ETA",        val:"4h 32m",               c:T.violet    },
-              {label:"AVG SPEED",  val:"60 km/h",              c:T.blue      },
-              {label:"ALERT GAP",  val:`${convoy.alertKm}km`,  c:T.amber     },
-            ].map(s=>(
-              <div key={s.label} style={{flexShrink:0,textAlign:"center"}}>
-                <div style={{fontSize:13,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
-                <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.6,marginTop:2}}>{s.label}</div>
-              </div>
-            ))}
+            {(()=>{
+              const totalKm = convoy.distance || 0;
+              const movingSpeeds = convoy.members.map(m=>LIVE_DATA[m.id]).filter(s=>s?.memberStatus==="moving"&&s.speed>0).map(s=>s.speed);
+              const avgSpeed = movingSpeeds.length ? Math.round(movingSpeeds.reduce((a,b)=>a+b,0)/movingSpeeds.length) : 60;
+              let kmDone = 0;
+              if (convoy.date && convoy.time) {
+                const dep = new Date(`${convoy.date}T${convoy.time}:00`);
+                const elapsedHrs = Math.max(0, (Date.now() - dep.getTime()) / 3600000);
+                kmDone = Math.min(totalKm, Math.round(elapsedHrs * avgSpeed));
+              }
+              const kmLeft = Math.max(0, totalKm - kmDone);
+              const pct = totalKm > 0 ? Math.round((kmDone / totalKm) * 100) : 0;
+              const etaHrs = avgSpeed > 0 ? kmLeft / avgSpeed : 0;
+              const etaH = Math.floor(etaHrs), etaM = Math.round((etaHrs - etaH) * 60);
+              const etaStr = etaH > 0 ? `${etaH}h ${etaM}m` : `${etaM}m`;
+              return [
+                {label:"REMAINING",  val:`${kmLeft}km`,        c:convoy.color},
+                {label:"ETA",        val:etaStr,                c:T.violet    },
+                {label:"AVG SPEED",  val:`${avgSpeed} km/h`,   c:T.blue      },
+                {label:"ALERT GAP",  val:`${convoy.alertKm}km`,c:T.amber     },
+              ].map(s=>(
+                <div key={s.label} style={{flexShrink:0,textAlign:"center"}}>
+                  <div style={{fontSize:13,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
+                  <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.6,marginTop:2}}>{s.label}</div>
+                </div>
+              ));
+            })()}
           </div>
           {/* progress mini */}
-          <div style={{width:60,flexShrink:0}}>
-            <div style={{height:4,background:T.raised,borderRadius:4,overflow:"hidden"}}>
-              <div style={{height:"100%",width:"38%",background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:4}}/>
-            </div>
-            <div style={{fontSize:8,color:T.muted,marginTop:3,textAlign:"right",fontWeight:700}}>38% DONE</div>
-          </div>
+          {(()=>{
+            const totalKm = convoy.distance || 0;
+            const movingSpeeds = convoy.members.map(m=>LIVE_DATA[m.id]).filter(s=>s?.memberStatus==="moving"&&s.speed>0).map(s=>s.speed);
+            const avgSpeed = movingSpeeds.length ? Math.round(movingSpeeds.reduce((a,b)=>a+b,0)/movingSpeeds.length) : 60;
+            let kmDone = 0;
+            if (convoy.date && convoy.time) {
+              const dep = new Date(`${convoy.date}T${convoy.time}:00`);
+              const elapsedHrs = Math.max(0, (Date.now() - dep.getTime()) / 3600000);
+              kmDone = Math.min(totalKm, Math.round(elapsedHrs * avgSpeed));
+            }
+            const pct = totalKm > 0 ? Math.round((kmDone / totalKm) * 100) : 0;
+            return (
+              <div style={{width:60,flexShrink:0}}>
+                <div style={{height:4,background:T.raised,borderRadius:4,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:4}}/>
+                </div>
+                <div style={{fontSize:8,color:T.muted,marginTop:3,textAlign:"right",fontWeight:700}}>{pct}% DONE</div>
+              </div>
+            );
+          })()}
           <Ic d={drawerOpen?ICONS.chevron:ICONS.back} size={14} color={T.muted} sw={2}/>
         </div>
 
@@ -1025,22 +1055,43 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
       </div>
 
       {/* progress */}
-      <div style={{padding:"10px 16px",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-          <span style={{fontSize:11,color:T.muted}}>Noida</span>
-          <span style={{fontSize:11,fontWeight:700,color:T.accent}}>{convoy.distance} km left</span>
-          <span style={{fontSize:11,color:T.muted}}>{convoy.destination}</span>
-        </div>
-        <div style={{height:5,background:T.raised,borderRadius:5,overflow:"hidden"}}>
-          <div style={{height:"100%",width:"38%",background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:5,position:"relative"}}>
-            <div style={{position:"absolute",right:0,top:-2,width:9,height:9,borderRadius:"50%",background:convoy.color,boxShadow:`0 0 8px ${convoy.color}`}}/>
+      {(()=>{
+        const totalKm = convoy.distance || 0;
+        const movingSpeeds = convoy.members.map(m=>liveStats[m.id]).filter(s=>s?.memberStatus==="moving"&&s.speed>0).map(s=>s.speed);
+        const avgSpeed = movingSpeeds.length ? Math.round(movingSpeeds.reduce((a,b)=>a+b,0)/movingSpeeds.length) : 60;
+        // estimate km done from departure time
+        let kmDone = 0;
+        if (convoy.date && convoy.time) {
+          const dep = new Date(`${convoy.date}T${convoy.time}:00`);
+          const elapsedHrs = Math.max(0, (Date.now() - dep.getTime()) / 3600000);
+          kmDone = Math.min(totalKm, Math.round(elapsedHrs * avgSpeed));
+        }
+        const kmLeft = Math.max(0, totalKm - kmDone);
+        const pct = totalKm > 0 ? Math.round((kmDone / totalKm) * 100) : 0;
+        const etaHrs = avgSpeed > 0 ? kmLeft / avgSpeed : 0;
+        const etaH = Math.floor(etaHrs), etaM = Math.round((etaHrs - etaH) * 60);
+        const etaStr = etaH > 0 ? `${etaH}h ${etaM}m` : `${etaM}m`;
+        const originLabel = convoy.startingPoint ? convoy.startingPoint.split(",")[0] : "Start";
+        const destLabel = convoy.destination ? convoy.destination.split(",")[0] : "Destination";
+        return (
+          <div style={{padding:"10px 16px",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+              <span style={{fontSize:11,color:T.muted}}>{originLabel}</span>
+              <span style={{fontSize:11,fontWeight:700,color:T.accent}}>{kmLeft} km left</span>
+              <span style={{fontSize:11,color:T.muted,textAlign:"right",maxWidth:"45%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{destLabel}</span>
+            </div>
+            <div style={{height:5,background:T.raised,borderRadius:5,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:5,position:"relative"}}>
+                <div style={{position:"absolute",right:0,top:-2,width:9,height:9,borderRadius:"50%",background:convoy.color,boxShadow:`0 0 8px ${convoy.color}`}}/>
+              </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+              <span style={{fontSize:10,color:T.muted}}>{kmDone} km done</span>
+              <span style={{fontSize:10,color:T.muted}}>ETA {etaStr}</span>
+            </div>
           </div>
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-          <span style={{fontSize:10,color:T.muted}}>168 km done</span>
-          <span style={{fontSize:10,color:T.muted}}>ETA 4h 32m</span>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* sub-tabs */}
       <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
