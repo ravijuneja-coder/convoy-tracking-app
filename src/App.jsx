@@ -1053,7 +1053,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
       {mapTab==="map"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           {/* ── Map canvas ── */}
-          <div style={{height:230,position:"relative",overflow:"hidden",background:T.mapBg}}>
+          <div style={{flex:1,position:"relative",overflow:"hidden",background:T.mapBg,minHeight:0}}>
             <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId}/>
 
             {/* LIVE TRACKING chip — display only, not clickable */}
@@ -1068,22 +1068,25 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
               <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:1}}>KM/H</div>
             </div>
 
-            {/* tap hint */}
-            {!selId&&(
-              <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",background:T.isDark?"rgba(8,11,18,.8)":"rgba(255,255,255,.85)",borderRadius:20,padding:"5px 14px",border:`1px solid ${T.border}`,backdropFilter:"blur(4px)",whiteSpace:"nowrap"}}>
-                <span style={{fontSize:10,color:T.sub}}>Tap a car to see distance gaps</span>
-              </div>
-            )}
+            {/* participants strip overlay */}
+            <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 100%)",padding:"10px 10px 8px",display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none"}}>
+              {convoy.members.map(m=>{
+                const ld=liveStats[m.id], active=selId===m.id, stopped=ld?.memberStatus==="stopped";
+                return (
+                  <button key={m.id} onClick={()=>setSelId(active?null:m.id)}
+                    style={{flexShrink:0,background:active?"rgba(61,214,140,.25)":"rgba(0,0,0,.45)",border:`1.5px solid ${active?m.color:"rgba(255,255,255,.2)"}`,borderRadius:14,padding:"6px 12px 6px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:7,backdropFilter:"blur(8px)"}}>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff",flexShrink:0}}>
+                      {m.initials}
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:1}}>
+                      <span style={{fontSize:11,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{m.name}</span>
+                      <span style={{fontSize:9,fontWeight:600,color:stopped?"#FFBC42":"#3dd68c",whiteSpace:"nowrap"}}>{stopped?"⏸ Stopped":`${ld?.speed??0} km/h`}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-
-          {/* ── Full Screen button ── */}
-          <button onClick={()=>{ setFSelId(selId); setFullMap(true); }}
-            style={{margin:"10px 14px 0",padding:"11px 0",borderRadius:14,background:T.isDark?"rgba(61,214,140,.08)":"rgba(29,184,112,.07)",border:`1.5px solid ${T.accent}44`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"calc(100% - 28px)",transition:"background .15s"}}
-            onMouseEnter={e=>e.currentTarget.style.background=T.accentLo}
-            onMouseLeave={e=>e.currentTarget.style.background=T.isDark?"rgba(61,214,140,.08)":"rgba(29,184,112,.07)"}>
-            <Ic d={ICONS.expand} size={15} color={T.accent} sw={2}/>
-            <span style={{fontSize:13,fontWeight:700,color:T.accent,letterSpacing:.3}}>View Full Screen Map</span>
-          </button>
 
           {/* gap panel */}
           {selMember&&selLive&&(
@@ -1115,36 +1118,6 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
             </div>
           )}
 
-          {/* member strip */}
-          <div style={{padding:"10px 14px",display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",borderBottom:`1px solid ${T.border}`}}>
-            {convoy.members.map(m=>{
-              const ld=liveStats[m.id], active=selId===m.id, stopped=ld?.memberStatus==="stopped";
-              return (
-                <button key={m.id} onClick={()=>setSelId(active?null:m.id)}
-                  style={{flexShrink:0,background:active?T.accentLo:T.card,border:`1.5px solid ${active?m.color:T.border}`,borderRadius:14,padding:"8px 14px 8px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:9,transition:"all .15s",minWidth:0}}>
-                  {/* avatar */}
-                  <div style={{width:32,height:32,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#fff",flexShrink:0,letterSpacing:-.5}}>
-                    {m.initials}
-                  </div>
-                  {/* text */}
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2,minWidth:0}}>
-                    <span style={{fontSize:12,fontWeight:700,color:T.text,whiteSpace:"nowrap"}}>{m.name}</span>
-                    <span style={{fontSize:10,fontWeight:600,color:stopped?T.amber:T.accent,whiteSpace:"nowrap"}}>{stopped?"⏸ Stopped":`${ld?.speed} km/h`}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* stats */}
-          <div style={{display:"flex",padding:"10px 14px",gap:8}}>
-            {[{label:"DISTANCE",val:`${convoy.distance}km`,c:convoy.color},{label:"AVG SPEED",val:`${Math.round(Object.values(liveStats).filter(d=>d.memberStatus==="moving").reduce((s,d)=>s+d.speed,0)/Math.max(1,Object.values(liveStats).filter(d=>d.memberStatus==="moving").length))} km/h`,c:T.blue},{label:"ALERT GAP",val:`${convoy.alertKm}km`,c:T.amber},{label:"ETA",val:"4h 32m",c:T.violet}].map(s=>(
-              <div key={s.label} style={{flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"9px 6px",textAlign:"center"}}>
-                <div style={{fontSize:12,fontWeight:800,color:s.c,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{s.val}</div>
-                <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:.5,marginTop:3}}>{s.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
