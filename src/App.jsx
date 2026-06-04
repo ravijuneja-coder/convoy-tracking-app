@@ -3452,9 +3452,9 @@ const OnboardingScreen = ({ onDone }) => {
                   </button>
                 </>
               ):(
-                <div style={{display:"flex",alignItems:"center",gap:8,background:T.accentLo,borderRadius:10,padding:"10px 12px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,background:T.accentLo,borderRadius:10,padding:"10px 12px",justifyContent:"flex-start"}}>
                   <span style={{fontSize:16}}>✅</span>
-                  <div>
+                  <div style={{textAlign:"left"}}>
                     <div style={{fontSize:12,fontWeight:700,color:T.accent}}>Reset link sent!</div>
                     <div style={{fontSize:11,color:T.muted}}>Check your email inbox</div>
                   </div>
