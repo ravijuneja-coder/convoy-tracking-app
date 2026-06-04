@@ -755,7 +755,7 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
   }, []);
 
   return (
-    <div style={{position:"absolute",inset:0,zIndex:70,display:"flex",flexDirection:"column",background:"#080B12",animation:"fsIn .3s cubic-bezier(.2,.8,.4,1)"}}>
+    <div style={{position:"fixed",inset:0,zIndex:70,display:"flex",flexDirection:"column",background:"#080B12",animation:"fsIn .3s cubic-bezier(.2,.8,.4,1)"}}>
 
       {/* ════════════════════  MAP LAYER  ════════════════════ */}
       <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:0}}>
