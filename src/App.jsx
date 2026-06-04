@@ -3430,8 +3430,10 @@ const OnboardingScreen = ({ onDone }) => {
           {/* Forgot Password panel */}
           {authTab==="signin"&&showForgot&&(
             <div style={{background:T.raised,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",gap:10}}>
-              <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"left"}}>Reset Password</div>
-              <div style={{fontSize:11,color:T.muted,textAlign:"left"}}>Enter your email to receive a reset link</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"left"}}>Reset Password</div>
+                <div style={{fontSize:11,color:T.muted,textAlign:"left"}}>Enter your email to receive a reset link</div>
+              </div>
               {!resetSent ? (
                 <>
                   <input value={resetEmail} onChange={e=>setResetEmail(e.target.value)} placeholder="your@email.com" type="email"
