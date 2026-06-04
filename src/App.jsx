@@ -3453,8 +3453,9 @@ const OnboardingScreen = ({ onDone }) => {
                   <input value={resetPhone} onChange={e=>setResetPhone(e.target.value)} placeholder="+91 98765 43210" type="tel"
                     style={{width:"100%",background:T.card,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                   <button onClick={async()=>{
-                    const num = resetPhone.trim();
+                    let num = resetPhone.trim().replace(/\s/g,"");
                     if(!num){ setErr("Enter a mobile number."); return; }
+                    if(!num.startsWith("+")) num = "+91" + num;
                     setResetLoading(true);
                     try{
                       const verifier = getRecaptchaVerifier("reset-recaptcha-container");
@@ -3463,7 +3464,8 @@ const OnboardingScreen = ({ onDone }) => {
                       setOtpSent(true);
                       setErr("");
                     } catch(e){
-                      setErr("Could not send OTP. Check the number and try again.");
+                      console.error("OTP error:", e.code, e.message);
+                      setErr(e.message||"Could not send OTP. Check the number and try again.");
                     } finally { setResetLoading(false); }
                   }} disabled={resetLoading}
                     style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
