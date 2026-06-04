@@ -3430,8 +3430,8 @@ const OnboardingScreen = ({ onDone }) => {
           {/* Forgot Password panel */}
           {authTab==="signin"&&showForgot&&(
             <div style={{background:T.raised,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",gap:10}}>
-              <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"center"}}>Reset Password</div>
-              <div style={{fontSize:11,color:T.muted,textAlign:"center"}}>Enter your email to receive a reset link</div>
+              <div style={{fontSize:13,fontWeight:700,color:T.text}}>Reset Password</div>
+              <div style={{fontSize:11,color:T.muted}}>Enter your email to receive a reset link</div>
               {!resetSent ? (
                 <>
                   <input value={resetEmail} onChange={e=>setResetEmail(e.target.value)} placeholder="your@email.com" type="email"
@@ -3449,7 +3449,7 @@ const OnboardingScreen = ({ onDone }) => {
                     style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
                     {resetLoading?"Sending…":"Send Reset Link"}
                   </button>
-                  <button onClick={()=>{setShowForgot(false);setResetSent(false);setErr("");}} style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0,textAlign:"center"}}>← Back</button>
+                  <button onClick={()=>{setShowForgot(false);setResetSent(false);setErr("");}} style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0,textAlign:"left"}}>← Back</button>
                 </>
               ):(
                 <div style={{display:"flex",alignItems:"center",gap:8,background:T.accentLo,borderRadius:10,padding:"10px 12px"}}>
