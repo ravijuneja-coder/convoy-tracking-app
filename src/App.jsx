@@ -2612,7 +2612,7 @@ const ALERT_META = {
   invite:   { icon:"🚗", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Invite"   },
 };
 
-const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin, authUser }) => {
+const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin, authUser, onViewInvite }) => {
   const T = useT();
   const [alerts, setAlerts] = useState(ALERT_SEED);
   const [filter, setFilter] = useState("all"); // all | unread | sos | gap
@@ -2769,7 +2769,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
         ) : filtered.map((a, idx) => {
           const meta = ALERT_META[a.type] || ALERT_META.live;
           return (
-            <div key={a.id} onClick={()=>markRead(a.id)}
+            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId) { getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } }}
               style={{background:a.unread?T.raised:T.card,border:`1px solid ${a.unread?T.borderHi:T.border}`,borderRadius:16,padding:"13px 13px",marginBottom:10,cursor:"pointer",position:"relative",transition:"background .2s",animation:`slideDown .25s ease ${idx*.04}s both`}}>
 
               {/* Unread dot */}
@@ -2829,10 +2829,13 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                             e.stopPropagation();
                             updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
                             markRead(a.id);
-                            const c = convoys.find(cv => cv.id === a.convoyId);
-                            if (c) onTapConvoy(c);
+                            if (a.convoyId) {
+                              getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{
+                                if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a);
+                              }).catch(()=>{});
+                            }
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
-                            Accept
+                            View & Accept
                           </button>
                           <button onClick={e=>{
                             e.stopPropagation();
@@ -4433,6 +4436,7 @@ export default function App() {
   const [screen,     setScreen]    = useState("home");
   const [activeC,    setActiveC]   = useState(null);
   const [sheet,      setSheet]     = useState(null);
+  const [pendingInvite, setPendingInvite] = useState(null); // { convoy, notif }
   const [delTarget,  setDelTarget] = useState(null);
   const [toast,      setToast]     = useState(null);
   const [navTab,     setNavTab]    = useState("home");
@@ -4610,16 +4614,26 @@ export default function App() {
                     :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser} onStartConvoy={c=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"live"}:cv)); setActiveC(prev=>({...prev,status:"live"})); flash("Convoy started! 🚀"); }}/>
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
-                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser}/>}
+                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser} onViewInvite={(convoy,notif)=>{setPendingInvite({convoy,notif});setScreen("join");setNavTab("bell");}}/>}
                 {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
                 {screen==="join"&&<JoinConvoyScreen convoys={convoys} authUser={authUser}
-                  onJoin={(newConvoy)=>{ setConvoys(cs=>[newConvoy,...cs]); flash(`Joined "${newConvoy.name}"! 🎉`); }}
-                  onAccept={()=>{setScreen("home");setNavTab("home");setActiveC(null);}}
-                  onDecline={()=>{setScreen("alerts");setNavTab("bell");}}
-                  onBack={()=>{setScreen("alerts");setNavTab("bell");}}/>}
+                  invite={pendingInvite ? {
+                    convoyName: pendingInvite.convoy.name,
+                    invitedBy: pendingInvite.notif?.invitedBy || pendingInvite.convoy.members?.[0]?.name || "Admin",
+                    destination: pendingInvite.convoy.destination || "TBD",
+                    date: pendingInvite.convoy.date || "",
+                    endDate: pendingInvite.convoy.endDate || pendingInvite.convoy.date || "",
+                    color: pendingInvite.convoy.color || "#4A9EFF",
+                    members: pendingInvite.convoy.members || [],
+                    id: pendingInvite.convoy.id,
+                  } : undefined}
+                  onJoin={(newConvoy)=>{ setConvoys(cs=>cs.find(c=>c.id===newConvoy.id)?cs:[newConvoy,...cs]); flash(`Joined "${newConvoy.name}"! 🎉`); setPendingInvite(null); }}
+                  onAccept={()=>{setScreen("home");setNavTab("home");setActiveC(null);setPendingInvite(null);}}
+                  onDecline={()=>{setScreen("alerts");setNavTab("bell");setPendingInvite(null);}}
+                  onBack={()=>{setScreen("alerts");setNavTab("bell");setPendingInvite(null);}}/>}
               </>
             )}
           </div>
