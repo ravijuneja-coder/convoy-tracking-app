@@ -4562,14 +4562,29 @@ export default function App() {
             ? query(collection(db, "convoys"), where("memberPhones", "array-contains", phone))
             : null;
 
-          const mergedConvoys = {};
-          const applySnap = (snap) => {
-            snap.docs.forEach(d => { mergedConvoys[d.id] = { id: d.id, ...d.data() }; });
-            setConvoys(Object.values(mergedConvoys));
+          // Use refs to hold each bucket so merging doesn't race
+          const ownedMap = {};
+          const memberMap = {};
+          const merge = () => {
+            const combined = { ...memberMap, ...ownedMap }; // owned takes precedence
+            setConvoys(Object.values(combined));
           };
 
-          const unsubOwned = onSnapshot(ownedQ, applySnap);
-          const unsubMember = memberQ ? onSnapshot(memberQ, applySnap) : null;
+          const unsubOwned = onSnapshot(ownedQ, snap => {
+            snap.docs.forEach(d => { ownedMap[d.id] = { id: d.id, ...d.data() }; });
+            // Remove docs no longer in owned query
+            Object.keys(ownedMap).forEach(id => {
+              if (!snap.docs.find(d => d.id === id)) delete ownedMap[id];
+            });
+            merge();
+          });
+          const unsubMember = memberQ ? onSnapshot(memberQ, snap => {
+            snap.docs.forEach(d => { memberMap[d.id] = { id: d.id, ...d.data() }; });
+            Object.keys(memberMap).forEach(id => {
+              if (!snap.docs.find(d => d.id === id)) delete memberMap[id];
+            });
+            merge();
+          }) : null;
           return () => { unsubOwned(); unsubMember?.(); };
         } catch (_) {}
       }
