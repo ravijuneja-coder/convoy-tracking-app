@@ -2231,9 +2231,12 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
   const [showMembers,setShowMembers]=useState(false);
   const filtered=convoys.filter(c=>(filter==="all"||c.status===filter)&&(c.name.toLowerCase().includes(search.toLowerCase())||c.destination.toLowerCase().includes(search.toLowerCase())));
   const live=convoys.filter(c=>c.status==="live");
-  const allMembers=Object.values(convoys.flatMap(c=>c.members).reduce((acc,m)=>{
-    if(!acc[m.name]){acc[m.name]={...m,convoys:[]};}
-    acc[m.name].convoys.push(convoys.find(c=>c.members.some(mm=>mm.name===m.name))?.name||"");
+  const allMembers=Object.values(convoys.reduce((acc,c)=>{
+    c.members.forEach(m=>{
+      const key=m.phone?.replace(/\D/g,"").slice(-10)||m.name;
+      if(!acc[key]){acc[key]={...m,convoys:[]};}
+      if(c.name&&!acc[key].convoys.includes(c.name)) acc[key].convoys.push(c.name);
+    });
     return acc;
   },{}))
   return (
@@ -2279,7 +2282,7 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
       <div style={{display:"flex",gap:10,padding:"0 18px 14px",overflowX:"auto",scrollbarWidth:"none"}}>
         {(()=>{
           const scope = filter==="all" ? convoys : convoys.filter(c=>c.status===filter);
-          const scopeMembers = Object.values(scope.flatMap(c=>c.members).reduce((acc,m)=>{acc[m.name]=m;return acc},{}));
+          const scopeMembers = Object.values(scope.reduce((acc,c)=>{c.members.forEach(m=>{const k=m.phone?.replace(/\D/g,"").slice(-10)||m.name;if(!acc[k])acc[k]=m;});return acc},{}));
           return [
             {label:"Total",   val:scope.length,                                       color:T.accent, onClick:null},
             {label:"Live",    val:scope.filter(c=>c.status==="live").length,           color:T.red,    onClick:null},
