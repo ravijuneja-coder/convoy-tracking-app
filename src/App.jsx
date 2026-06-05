@@ -2599,18 +2599,7 @@ const MapScreen = ({ convoys, onTapConvoy }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // ALERTS SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
-const ALERT_SEED = [
-  { id:1,  type:"sos",      convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Rohan",   avatar:"https://i.pravatar.cc/150?img=11", title:"SOS Alert",              body:"Rohan triggered an SOS on Delhi Road Trip.",          time:"2m ago",   unread:true  },
-  { id:2,  type:"gap",      convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Aman",    avatar:"https://i.pravatar.cc/150?img=68", title:"Member Too Far",         body:"Aman is 5.4 km behind — beyond the 5 km alert limit.", time:"8m ago",   unread:true  },
-  { id:3,  type:"stopped",  convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Priya",   avatar:"https://i.pravatar.cc/150?img=47", title:"Member Stopped",         body:"Priya has stopped moving for more than 3 minutes.",    time:"12m ago",  unread:true  },
-  { id:4,  type:"live",     convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Rohan",   avatar:"https://i.pravatar.cc/150?img=11", title:"Convoy Started",         body:"Delhi Road Trip is now live. 4 members tracking.",     time:"1h ago",   unread:false },
-  { id:5,  type:"joined",   convoy:"Goa Beach Weekend",convoyColor:"#4A9EFF", member:"Vikram",  avatar:null,                               title:"New Member Joined",      body:"Vikram joined Goa Beach Weekend convoy.",              time:"2h ago",   unread:false },
-  { id:6,  type:"gap",      convoy:"Delhi Road Trip",  convoyColor:"#3DD68C", member:"Rahul",   avatar:"https://i.pravatar.cc/150?img=52", title:"Member Too Far",         body:"Rahul was 3.2 km behind the convoy leader.",          time:"3h ago",   unread:false },
-  { id:7,  type:"upcoming", convoy:"Goa Beach Weekend",convoyColor:"#4A9EFF", member:null,      avatar:null,                               title:"Trip Tomorrow",          body:"Goa Beach Weekend departs tomorrow at 06:30 AM.",      time:"1d ago",   unread:false },
-  { id:8,  type:"upcoming", convoy:"Manali Expedition",convoyColor:"#9B6EFF", member:null,      avatar:null,                               title:"Trip in 3 Weeks",        body:"Manali Expedition on 15 Aug — time to prepare!",       time:"2d ago",   unread:false },
-  { id:9,  type:"done",     convoy:"Jaipur Day Trip",  convoyColor:"#F5A623", member:null,      avatar:null,                               title:"Convoy Completed",       body:"Jaipur Day Trip completed. Total time: 5h 20m.",       time:"3w ago",   unread:false },
-  { id:10, type:"joined",   convoy:"Manali Expedition",convoyColor:"#9B6EFF", member:"Anjali",  avatar:null,                               title:"New Member Joined",      body:"Anjali joined the Manali Expedition convoy.",          time:"3w ago",   unread:false },
-];
+const ALERT_SEED = [];
 
 const ALERT_META = {
   sos:      { icon:"🆘", iconBg:"#FF4F4F22", iconColor:"#FF4F4F", label:"SOS"      },
@@ -2687,19 +2676,6 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
             </button>
           ))}
         </div>
-      </div>
-
-      {/* ── Simulate Join Invite button ── */}
-      <div style={{padding:"10px 14px 0",flexShrink:0}}>
-        <button onClick={onGoJoin}
-          style={{width:"100%",padding:"11px 14px",borderRadius:12,background:T.blueLo,border:`1.5px solid ${T.blue}44`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:32,height:32,borderRadius:10,background:T.blueLo,border:`1px solid ${T.blue}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🚗</div>
-          <div style={{flex:1,textAlign:"left"}}>
-            <div style={{fontSize:12,fontWeight:800,color:T.blue}}>Convoy Invite — Goa Beach Weekend</div>
-            <div style={{fontSize:10,color:T.muted,marginTop:1}}>Sneha invited you · Tap to view invite</div>
-          </div>
-          <button onClick={e=>{e.stopPropagation();onGoJoin();}} style={{padding:"5px 12px",borderRadius:20,background:T.blue,border:"none",color:"#fff",fontSize:11,fontWeight:800,cursor:"pointer",flexShrink:0}}>View Invite</button>
-        </button>
       </div>
 
       {/* ── Alert list ── */}
