@@ -2836,10 +2836,16 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.sub}}>
                             View
                           </button>
-                          <button onClick={e=>{
+                          <button onClick={async e=>{
                             e.stopPropagation();
                             updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
                             markRead(a.id);
+                            if (a.convoyId && onViewInvite) {
+                              try {
+                                const snap = await getDoc(doc(db,"convoys",a.convoyId));
+                                if (snap.exists()) onViewInvite({...snap.data(),id:snap.id}, a);
+                              } catch(_) {}
+                            }
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
                             Accept
                           </button>
@@ -4384,27 +4390,34 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
 
             {/* Actions */}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <button onClick={()=>{
-                  // Add the invited convoy to the convoys list
-                  const newConvoy = {
-                    id: Date.now(),
-                    name: invite.convoyName,
-                    destination: invite.destination,
-                    date: invite.date,
-                    endDate: invite.endDate||invite.date,
-                    time: "",
-                    status: "upcoming",
-                    distance: 0,
-                    alertKm: 5,
-                    color: invite.color||"#4A9EFF",
-                    notes: "",
-                    members: [
-                      ...invite.members,
-                      authUser?{id:Date.now()+1,name:authUser.name,initials:(authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),color:"#3DD68C",role:"member"}:null
-                    ].filter(Boolean),
-                  };
-                  onJoin?.(newConvoy);
-                  onAccept?.();
+              <button onClick={async ()=>{
+                  if (!invite.id || !authUser) { onAccept?.(); return; }
+                  try {
+                    const convoySnap = await getDoc(doc(db, "convoys", invite.id));
+                    if (!convoySnap.exists()) { onAccept?.(); return; }
+                    const convoyData = convoySnap.data();
+                    const alreadyMember = (convoyData.members||[]).some(m =>
+                      m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone?.replace(/\D/g,"").slice(-10)
+                    );
+                    if (!alreadyMember) {
+                      const newMember = {
+                        id: Date.now(),
+                        name: authUser.name,
+                        initials: (authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),
+                        color: "#3DD68C",
+                        role: "member",
+                        phone: authUser.phone || "",
+                      };
+                      const updatedMembers = [...(convoyData.members||[]), newMember];
+                      await updateDoc(doc(db, "convoys", invite.id), { members: updatedMembers });
+                      convoyData.members = updatedMembers;
+                    }
+                    const joinedConvoy = { ...convoyData, id: invite.id };
+                    onJoin?.(joinedConvoy);
+                    onAccept?.();
+                  } catch(e) {
+                    onAccept?.();
+                  }
                 }}
                 style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
