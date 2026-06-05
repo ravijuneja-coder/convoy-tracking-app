@@ -2627,8 +2627,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
       if (!phone) return;
       const q = query(
         collection(db, "notifications"),
-        where("toPhone", "==", phone),
-        orderBy("createdAt", "desc")
+        where("toPhone", "==", phone)
       );
       unsub = onSnapshot(q, snap => {
         const notifs = snap.docs.map(d => {
@@ -2645,8 +2644,9 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
             time,
             unread: data.unread !== false,
             _firestoreNotif: true,
+            _ts: ts ? ts.getTime() : 0,
           };
-        });
+        }).sort((a, b) => b._ts - a._ts);
         setAlerts(prev => {
           const localAlerts = prev.filter(a => !a._firestoreNotif);
           return [...notifs, ...localAlerts];
@@ -2655,6 +2655,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
     };
 
     const phone = authUser.phone?.replace(/\D/g,"").slice(-10);
+    console.log("[Notif] Listener starting for uid:", authUser.uid, "phone:", phone);
     if (phone) {
       startListener(phone);
     } else {
@@ -2662,9 +2663,10 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
       getDoc(doc(db, "users", authUser.uid)).then(snap => {
         if (snap.exists()) {
           const p = snap.data().phone?.replace(/\D/g,"").slice(-10);
+          console.log("[Notif] Fetched phone from Firestore:", p);
           startListener(p);
         }
-      }).catch(()=>{});
+      }).catch(e => console.error("[Notif] Fetch phone failed:", e));
     }
 
     return () => unsub();
@@ -4416,6 +4418,7 @@ export default function App() {
     });
     for (const m of newMembers) {
       const phone = m.phone.replace(/\D/g,"").slice(-10);
+      console.log("[Notif] Writing notification for phone:", phone);
       await addDoc(collection(db, "notifications"), {
         toPhone: phone,
         type: "invite",
@@ -4423,7 +4426,8 @@ export default function App() {
         msg: `${adminName} added you as a member of the convoy "${convoyName}".`,
         unread: true,
         createdAt: serverTimestamp(),
-      }).catch(()=>{});
+      }).then(ref => console.log("[Notif] Written doc:", ref.id))
+        .catch(e => console.error("[Notif] Write failed:", e));
     }
   };
 
