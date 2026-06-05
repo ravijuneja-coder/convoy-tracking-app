@@ -4490,9 +4490,23 @@ export default function App() {
       const phone = m.phone?.replace(/\D/g,"").slice(-10);
       return phone && !existingPhones.has(phone);
     });
+
+    // Update memberCount on all existing pending notifications for this convoy
+    if (convoyId && existingMembers.length > 0) {
+      const existingNotifQ = query(
+        collection(db, "notifications"),
+        where("convoyId", "==", convoyId),
+        where("status", "==", "pending")
+      );
+      getDocs(existingNotifQ).then(snap => {
+        snap.docs.forEach(d => {
+          updateDoc(doc(db, "notifications", d.id), { memberCount: members.length }).catch(()=>{});
+        });
+      }).catch(()=>{});
+    }
+
     for (const m of newMembers) {
       const phone = m.phone.replace(/\D/g,"").slice(-10);
-      console.log("[Notif] Writing notification for phone:", phone);
       await addDoc(collection(db, "notifications"), {
         toPhone: phone,
         type: "invite",
@@ -4504,8 +4518,7 @@ export default function App() {
         status: "pending",
         unread: true,
         createdAt: serverTimestamp(),
-      }).then(ref => console.log("[Notif] Written doc:", ref.id))
-        .catch(e => console.error("[Notif] Write failed:", e));
+      }).catch(()=>{});
     }
   };
 
