@@ -2619,37 +2619,56 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
 
   // Listen for invite notifications from Firestore for this user's phone
   useEffect(() => {
-    if (!authUser?.phone) return;
-    const phone = authUser.phone.replace(/\D/g,"").slice(-10);
-    const q = query(
-      collection(db, "notifications"),
-      where("toPhone", "==", phone),
-      orderBy("createdAt", "desc")
-    );
-    const unsub = onSnapshot(q, snap => {
-      const notifs = snap.docs.map(d => {
-        const data = d.data();
-        const ts = data.createdAt?.toDate?.();
-        const time = ts
-          ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}`
-          : "";
-        return {
-          id: d.id,
-          type: data.type || "invite",
-          title: data.title || "You've been added to a convoy",
-          msg: data.msg || "",
-          time,
-          unread: data.unread !== false,
-          _firestoreNotif: true,
-        };
+    if (!authUser?.uid) return;
+
+    let unsub = () => {};
+
+    const startListener = (phone) => {
+      if (!phone) return;
+      const q = query(
+        collection(db, "notifications"),
+        where("toPhone", "==", phone),
+        orderBy("createdAt", "desc")
+      );
+      unsub = onSnapshot(q, snap => {
+        const notifs = snap.docs.map(d => {
+          const data = d.data();
+          const ts = data.createdAt?.toDate?.();
+          const time = ts
+            ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}`
+            : "";
+          return {
+            id: d.id,
+            type: data.type || "invite",
+            title: data.title || "You've been added to a convoy",
+            msg: data.msg || "",
+            time,
+            unread: data.unread !== false,
+            _firestoreNotif: true,
+          };
+        });
+        setAlerts(prev => {
+          const localAlerts = prev.filter(a => !a._firestoreNotif);
+          return [...notifs, ...localAlerts];
+        });
       });
-      setAlerts(prev => {
-        const localAlerts = prev.filter(a => !a._firestoreNotif);
-        return [...notifs, ...localAlerts];
-      });
-    });
+    };
+
+    const phone = authUser.phone?.replace(/\D/g,"").slice(-10);
+    if (phone) {
+      startListener(phone);
+    } else {
+      // phone missing from authUser — fetch from Firestore
+      getDoc(doc(db, "users", authUser.uid)).then(snap => {
+        if (snap.exists()) {
+          const p = snap.data().phone?.replace(/\D/g,"").slice(-10);
+          startListener(p);
+        }
+      }).catch(()=>{});
+    }
+
     return () => unsub();
-  }, [authUser?.phone]);
+  }, [authUser?.uid]);
 
   const filtered = alerts.filter(a => {
     if (filter === "unread") return a.unread;
@@ -3495,7 +3514,8 @@ const OnboardingScreen = ({ onDone }) => {
         const cred = await signInWithEmailAndPassword(auth, signInEmail, password);
         const userDoc = await getDoc(doc(db,"users",cred.user.uid));
         const userData = userDoc.exists()?userDoc.data():{};
-        const user = { uid: cred.user.uid, name: userData.name||cred.user.displayName||"", phone: userData.phone||phone.trim(), email: signInEmail };
+        const resolvedPhone = (userData.phone||phone.trim()).replace(/\D/g,"").slice(-10);
+        const user = { uid: cred.user.uid, name: userData.name||cred.user.displayName||"", phone: resolvedPhone, email: signInEmail };
         localStorage.setItem("convoy_user", JSON.stringify(user));
         onDone(user);
       }
