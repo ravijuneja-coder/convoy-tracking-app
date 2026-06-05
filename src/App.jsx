@@ -4358,15 +4358,15 @@ export default function App() {
   };
   const handleDelete = async () => {
     const name=delTarget.name;
-    try {
-      if (authUser?.uid && delTarget.id) {
-        await deleteDoc(doc(db, "convoys", delTarget.id));
-      }
-    } catch (_) {
-      setConvoys(cs=>cs.filter(c=>c.id!==delTarget.id));
-    }
+    const id=delTarget.id;
     setDelTarget(null);
-    if(activeC?.id===delTarget.id){setScreen("home");setActiveC(null);}
+    if(activeC?.id===id){setScreen("home");setActiveC(null);}
+    setConvoys(cs=>cs.filter(c=>c.id!==id));
+    try {
+      if (authUser?.uid && id) {
+        await deleteDoc(doc(db, "convoys", String(id)));
+      }
+    } catch (_) {}
     flash(`"${name}" deleted`,"warn");
   };
 
