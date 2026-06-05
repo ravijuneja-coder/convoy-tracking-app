@@ -4284,8 +4284,12 @@ export default function App() {
   const T = isDark ? DARK : LIGHT;
 
   // ── Auth state ──
-  const [authed, setAuthed] = useState(false); // always show onboarding first
-  const [authUser, setAuthUser] = useState(null); // set only after onboarding completes
+  const [authed, setAuthed] = useState(() => {
+    try { return !!JSON.parse(localStorage.getItem("convoy_user"))?.uid; } catch { return false; }
+  });
+  const [authUser, setAuthUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("convoy_user")) || null; } catch { return null; }
+  });
 
   const [convoys,    setConvoys]   = useState([]);
   const [screen,     setScreen]    = useState("home");
@@ -4365,9 +4369,14 @@ export default function App() {
     try {
       if (authUser?.uid && id) {
         await deleteDoc(doc(db, "convoys", String(id)));
+        flash(`"${name}" deleted`,"warn");
+      } else {
+        flash(`"${name}" deleted`,"warn");
       }
-    } catch (_) {}
-    flash(`"${name}" deleted`,"warn");
+    } catch (e) {
+      // Restore convoy if delete failed
+      flash(`Failed to delete "${name}" — please try again`,"warn");
+    }
   };
 
   return (
