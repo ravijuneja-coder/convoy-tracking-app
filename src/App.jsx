@@ -2609,13 +2609,39 @@ const ALERT_META = {
   joined:   { icon:"👤", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Joined"   },
   upcoming: { icon:"📅", iconBg:"#9B6EFF22", iconColor:"#9B6EFF", label:"Upcoming" },
   done:     { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Done"     },
-  invite:   { icon:"🚗", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Invite"   },
+  invite:           { icon:"🚗", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Invite"   },
+  invite_accepted:  { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Accepted" },
+  invite_declined:  { icon:"❌", iconBg:"#FF4F4F22", iconColor:"#FF4F4F", label:"Declined" },
 };
 
 const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin, authUser, onViewInvite }) => {
   const T = useT();
   const [alerts, setAlerts] = useState(ALERT_SEED);
   const [filter, setFilter] = useState("all"); // all | unread | sos | gap
+
+  const notifyAdminOfResponse = async (notif, accepted) => {
+    if (!notif.convoyId) return;
+    try {
+      const convoySnap = await getDoc(doc(db, "convoys", notif.convoyId));
+      if (!convoySnap.exists()) return;
+      const adminPhone = convoySnap.data().members?.[0]?.phone?.replace(/\D/g,"").slice(-10);
+      if (!adminPhone) return;
+      const responderName = authUser?.name || "Someone";
+      await addDoc(collection(db, "notifications"), {
+        toPhone: adminPhone,
+        type: accepted ? "invite_accepted" : "invite_declined",
+        title: accepted
+          ? `${responderName} accepted your convoy invite`
+          : `${responderName} declined your convoy invite`,
+        convoyName: notif.convoyName || "",
+        convoyId: notif.convoyId,
+        invitedBy: responderName,
+        status: "info",
+        unread: true,
+        createdAt: serverTimestamp(),
+      });
+    } catch(_) {}
+  };
 
   // Listen for invite notifications from Firestore for this user's phone
   useEffect(() => {
@@ -2852,6 +2878,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                           <button onClick={e=>{
                             e.stopPropagation();
                             updateDoc(doc(db,"notifications",a.id),{status:"declined",unread:false}).catch(()=>{});
+                            notifyAdminOfResponse(a, false);
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:`${T.red}12`,border:`1px solid ${T.red}44`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.red}}>
                             Decline
                           </button>
@@ -4265,7 +4292,7 @@ const SAMPLE_INVITE = {
   ],
 };
 
-const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, convoys=[], authUser=null, onJoin }) => {
+const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, convoys=[], authUser=null, onJoin, onNotifyAdmin }) => {
   const T = useT();
   const [joined, setJoined] = useState(false);
   const [codeInput, setCodeInput] = useState("");
@@ -4413,6 +4440,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                       convoyData.members = updatedMembers;
                     }
                     const joinedConvoy = { ...convoyData, id: invite.id };
+                    onNotifyAdmin?.(true);
                     onJoin?.(joinedConvoy);
                     onAccept?.();
                   } catch(e) {
@@ -4423,7 +4451,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                 <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
                 Accept & Join
               </button>
-              <button onClick={onDecline}
+              <button onClick={()=>{ onNotifyAdmin?.(false); onDecline?.(); }}
                 style={{width:"100%",padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}44`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 <Ic d={ICONS.close} size={15} color={T.red} sw={2}/>
                 Decline
@@ -4665,7 +4693,28 @@ export default function App() {
                   onJoin={(newConvoy)=>{ setConvoys(cs=>cs.find(c=>c.id===newConvoy.id)?cs:[newConvoy,...cs]); flash(`Joined "${newConvoy.name}"! 🎉`); setPendingInvite(null); }}
                   onAccept={()=>{setScreen("home");setNavTab("home");setActiveC(null);setPendingInvite(null);}}
                   onDecline={()=>{setScreen("alerts");setNavTab("bell");setPendingInvite(null);}}
-                  onBack={()=>{setScreen("alerts");setNavTab("bell");setPendingInvite(null);}}/>}
+                  onBack={()=>{setScreen("alerts");setNavTab("bell");setPendingInvite(null);}}
+                  onNotifyAdmin={async (accepted)=>{
+                    if (!pendingInvite) return;
+                    const notif = pendingInvite.notif;
+                    const convoy = pendingInvite.convoy;
+                    const adminPhone = convoy.members?.[0]?.phone?.replace(/\D/g,"").slice(-10);
+                    if (!adminPhone) return;
+                    const responderName = authUser?.name || "Someone";
+                    addDoc(collection(db,"notifications"),{
+                      toPhone: adminPhone,
+                      type: accepted ? "invite_accepted" : "invite_declined",
+                      title: accepted
+                        ? `${responderName} accepted your convoy invite`
+                        : `${responderName} declined your convoy invite`,
+                      convoyName: convoy.name || notif?.convoyName || "",
+                      convoyId: convoy.id || null,
+                      invitedBy: responderName,
+                      status: "info",
+                      unread: true,
+                      createdAt: serverTimestamp(),
+                    }).catch(()=>{});
+                  }}/>}
               </>
             )}
           </div>
