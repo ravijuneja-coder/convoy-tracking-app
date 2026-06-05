@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut as fbSignOut, updateProfile, sendPasswordResetEmail } from "firebase/auth";
-import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // THEME SYSTEM
@@ -1085,6 +1085,24 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
     return () => unsub();
   }, [convoy.id]);
 
+  // 3. Subscribe to announcements from Firestore
+  useEffect(() => {
+    if (!convoy.id) return;
+    const annCol = collection(db, "convoys", String(convoy.id), "announcements");
+    const q = query(annCol, orderBy("createdAt", "asc"));
+    const unsub = onSnapshot(q, snap => {
+      setAnnouncements(snap.docs.map(d => {
+        const data = d.data();
+        const ts = data.createdAt?.toDate?.();
+        const time = ts
+          ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}`
+          : data.time || "";
+        return { id: d.id, sender: data.sender, message: data.message, time };
+      }));
+    });
+    return () => unsub();
+  }, [convoy.id]);
+
   const selMember = selId!=null?convoy.members.find(m=>m.id===selId):null;
   const selLive   = selId!=null?liveStats[selId]:null;
   const sender    = convoy.members[0]; // "You"
@@ -1442,12 +1460,16 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
                   placeholder="Type an announcement…"
                   style={{flex:1,background:T.raised,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"9px 12px",fontSize:12,color:T.text,outline:"none",fontFamily:"inherit"}}
                   onFocus={e=>e.target.style.borderColor=T.accent} onBlur={e=>e.target.style.borderColor=T.border}/>
-                <button onClick={()=>{
+                <button onClick={async ()=>{
                   if(!announcementInput.trim()) return;
-                  const now = new Date();
-                  const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
-                  setAnnouncements(as=>[...as,{sender:authUser?.name||convoy.members[0]?.name||"Admin",message:announcementInput.trim(),time}]);
+                  const msg = announcementInput.trim();
                   setAnnouncementInput("");
+                  const annCol = collection(db, "convoys", String(convoy.id), "announcements");
+                  await addDoc(annCol, {
+                    sender: authUser?.name||convoy.members[0]?.name||"Admin",
+                    message: msg,
+                    createdAt: serverTimestamp(),
+                  }).catch(()=>{});
                 }} style={{padding:"9px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:T.isDark?"#080B12":"#fff",flexShrink:0}}>
                   📢 Send
                 </button>
