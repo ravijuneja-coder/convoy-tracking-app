@@ -2867,14 +2867,33 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                           </button>
                           <button onClick={async e=>{
                             e.stopPropagation();
-                            updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
-                            markRead(a.id);
-                            if (a.convoyId && onViewInvite) {
-                              try {
-                                const snap = await getDoc(doc(db,"convoys",a.convoyId));
-                                if (snap.exists()) onViewInvite({...snap.data(),id:snap.id}, a);
-                              } catch(_) {}
-                            }
+                            if (!a.convoyId || !authUser) return;
+                            try {
+                              const snap = await getDoc(doc(db,"convoys",a.convoyId));
+                              if (!snap.exists()) return;
+                              const convoyData = snap.data();
+                              const alreadyMember = (convoyData.members||[]).some(m =>
+                                m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone?.replace(/\D/g,"").slice(-10)
+                              );
+                              if (!alreadyMember) {
+                                const newMember = {
+                                  id: Date.now(),
+                                  name: authUser.name,
+                                  initials: (authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),
+                                  color: "#3DD68C",
+                                  role: "member",
+                                  phone: authUser.phone || "",
+                                };
+                                const updatedMembers = [...(convoyData.members||[]), newMember];
+                                await updateDoc(doc(db,"convoys",a.convoyId), { members: updatedMembers });
+                                convoyData.members = updatedMembers;
+                              }
+                              updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                              markRead(a.id);
+                              notifyAdminOfResponse(a, true);
+                              const joinedConvoy = {...convoyData, id: a.convoyId};
+                              onViewInvite?.(joinedConvoy, {...a, _justAccepted: true});
+                            } catch(_) {}
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
                             Accept
                           </button>
@@ -4677,7 +4696,14 @@ export default function App() {
                     :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser} onStartConvoy={c=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"live"}:cv)); setActiveC(prev=>({...prev,status:"live"})); flash("Convoy started! 🚀"); }}/>
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
-                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser} onViewInvite={(convoy,notif)=>{setPendingInvite({convoy,notif});setScreen("join");setNavTab("bell");}}/>}
+                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser} onViewInvite={(convoy,notif)=>{
+                    if (notif?._justAccepted) {
+                      setConvoys(cs=>cs.find(c=>c.id===convoy.id)?cs:[convoy,...cs]);
+                      flash(`Joined "${convoy.name}"! 🎉`);
+                      return;
+                    }
+                    setPendingInvite({convoy,notif});setScreen("join");setNavTab("bell");
+                  }}/>}
                 {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
