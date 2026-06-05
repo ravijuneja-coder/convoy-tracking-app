@@ -2641,6 +2641,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
             type: data.type || "invite",
             title: data.title || "You've been added to a convoy",
             msg: data.msg || "",
+            convoyId: data.convoyId || null,
             time,
             unread: data.unread !== false,
             _firestoreNotif: true,
@@ -2795,12 +2796,12 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                     <span style={{fontSize:13,fontWeight:800,color:a.unread?T.text:T.sub}}>{a.title}</span>
                     <span style={{fontSize:10,color:T.muted,marginLeft:8,flexShrink:0}}>{a.time}</span>
                   </div>
-                  <div style={{fontSize:12,color:T.muted,lineHeight:1.45,marginBottom:7}}>{a.body}</div>
+                  <div style={{fontSize:12,color:T.muted,lineHeight:1.45,marginBottom:7}}>{a.msg || a.body}</div>
 
                   {/* Convoy tag */}
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     <div style={{display:"flex",alignItems:"center",gap:5,background:T.bg,borderRadius:20,padding:"3px 9px 3px 6px",border:`1px solid ${T.border}`}}>
-                      <span style={{width:6,height:6,borderRadius:"50%",background:a.convoyColor,flexShrink:0,...(a.type==="live"||a.type==="sos"||a.type==="gap"||a.type==="stopped"?{animation:"pulse 1.4s infinite"}:{})}}/>
+                      <span style={{width:6,height:6,borderRadius:"50%",background:a.convoyColor||T.accent,flexShrink:0,...(a.type==="live"||a.type==="sos"||a.type==="gap"||a.type==="stopped"?{animation:"pulse 1.4s infinite"}:{})}}/>
                       <span style={{fontSize:10,fontWeight:700,color:T.sub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120}}>{a.convoy}</span>
                     </div>
                     <button onClick={e=>{e.stopPropagation();dismiss(a.id);}}
@@ -2808,6 +2809,18 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                       <Ic d={ICONS.close} size={12} color={T.muted}/>
                     </button>
                   </div>
+
+                  {/* View Convoy button for invite notifications */}
+                  {a.type === "invite" && a.convoyId && (
+                    <button onClick={e=>{
+                      e.stopPropagation();
+                      markRead(a.id);
+                      const c = convoys.find(cv => cv.id === a.convoyId);
+                      if (c) onTapConvoy(c);
+                    }} style={{marginTop:10,width:"100%",padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
+                      View Convoy
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -4407,7 +4420,7 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  const sendMemberNotifications = async (convoyName, members, existingMembers = []) => {
+  const sendMemberNotifications = async (convoyName, members, existingMembers = [], convoyId = null) => {
     const adminName = authUser?.name || "Admin";
     const existingPhones = new Set(
       existingMembers.slice(1).map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean)
@@ -4424,6 +4437,7 @@ export default function App() {
         type: "invite",
         title: `Added to "${convoyName}"`,
         msg: `${adminName} added you as a member of the convoy "${convoyName}".`,
+        convoyId: convoyId || null,
         unread: true,
         createdAt: serverTimestamp(),
       }).then(ref => console.log("[Notif] Written doc:", ref.id))
@@ -4445,11 +4459,13 @@ export default function App() {
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
         flash(`"${data.name}" updated`);
       }
-      await sendMemberNotifications(data.name, data.members, existing.members);
+      await sendMemberNotifications(data.name, data.members, existing.members, data.id);
     } else {
+      let newConvoyId = null;
       try {
         const newData = { ...data, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
-        await addDoc(collection(db, "convoys"), newData);
+        const ref = await addDoc(collection(db, "convoys"), newData);
+        newConvoyId = ref.id;
         flash(`"${data.name}" created!`);
       } catch (e) {
         // fallback local create
@@ -4457,7 +4473,7 @@ export default function App() {
         setConvoys(cs=>[newConvoy,...cs]);
         flash(`"${data.name}" created!`);
       }
-      await sendMemberNotifications(data.name, data.members, []);
+      await sendMemberNotifications(data.name, data.members, [], newConvoyId);
     }
     setSheet(null);
   };
