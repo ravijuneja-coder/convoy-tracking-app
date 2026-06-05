@@ -2885,7 +2885,8 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                   phone: authUser.phone || "",
                                 };
                                 const updatedMembers = [...(convoyData.members||[]), newMember];
-                                await updateDoc(doc(db,"convoys",a.convoyId), { members: updatedMembers });
+                                const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
+                                await updateDoc(doc(db,"convoys",a.convoyId), { members: updatedMembers, memberPhones: updatedPhones });
                                 convoyData.members = updatedMembers;
                               }
                               updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
@@ -4480,7 +4481,8 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                         phone: authUser.phone || "",
                       };
                       const updatedMembers = [...(convoyData.members||[]), newMember];
-                      await updateDoc(doc(db, "convoys", invite.id), { members: updatedMembers });
+                      const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
+                      await updateDoc(doc(db, "convoys", invite.id), { members: updatedMembers, memberPhones: updatedPhones });
                       convoyData.members = updatedMembers;
                     }
                     const joinedConvoy = { ...convoyData, id: invite.id };
@@ -4553,13 +4555,22 @@ export default function App() {
           const user = { uid: fbUser.uid, name: userData.name || fbUser.displayName || "", phone: userData.phone || "", email: fbUser.email || "" };
           setAuthUser(user);
           setAuthed(true);
-          // Load convoys from Firestore
-          const q = query(collection(db, "convoys"), where("ownerUid", "==", fbUser.uid));
-          const unsubConvoys = onSnapshot(q, (snap) => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            setConvoys(data);
-          });
-          return () => unsubConvoys();
+          // Load convoys from Firestore — own convoys + convoys where user is a member
+          const ownedQ = query(collection(db, "convoys"), where("ownerUid", "==", fbUser.uid));
+          const phone = userData.phone?.replace(/\D/g,"").slice(-10);
+          const memberQ = phone
+            ? query(collection(db, "convoys"), where("memberPhones", "array-contains", phone))
+            : null;
+
+          const mergedConvoys = {};
+          const applySnap = (snap) => {
+            snap.docs.forEach(d => { mergedConvoys[d.id] = { id: d.id, ...d.data() }; });
+            setConvoys(Object.values(mergedConvoys));
+          };
+
+          const unsubOwned = onSnapshot(ownedQ, applySnap);
+          const unsubMember = memberQ ? onSnapshot(memberQ, applySnap) : null;
+          return () => { unsubOwned(); unsubMember?.(); };
         } catch (_) {}
       }
     });
@@ -4607,16 +4618,19 @@ export default function App() {
     }
   };
 
+  const memberPhones = (members) =>
+    [...new Set(members.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
+
   const handleSave = async (data) => {
     if (!authUser?.uid) return;
     const existing = convoys.find(c=>c.id===data.id);
+    const phones = memberPhones(data.members || []);
     if (existing) {
       try {
-        await updateDoc(doc(db, "convoys", data.id), { ...data, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, "convoys", data.id), { ...data, memberPhones: phones, updatedAt: serverTimestamp() });
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
         flash(`"${data.name}" updated`);
       } catch (e) {
-        // fallback local update
         setConvoys(cs=>cs.map(c=>c.id===data.id?{...c,...data}:c));
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
         flash(`"${data.name}" updated`);
@@ -4625,12 +4639,11 @@ export default function App() {
     } else {
       let newConvoyId = null;
       try {
-        const newData = { ...data, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+        const newData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
         const ref = await addDoc(collection(db, "convoys"), newData);
         newConvoyId = ref.id;
         flash(`"${data.name}" created!`);
       } catch (e) {
-        // fallback local create
         const newConvoy={...data,distance:data.distance||0,inviteCode:data.inviteCode||Math.floor(100000+Math.random()*900000).toString()};
         setConvoys(cs=>[newConvoy,...cs]);
         flash(`"${data.name}" created!`);
