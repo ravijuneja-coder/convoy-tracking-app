@@ -2642,6 +2642,10 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
             title: data.title || "You've been added to a convoy",
             msg: data.msg || "",
             convoyId: data.convoyId || null,
+            convoyName: data.convoyName || "",
+            memberCount: data.memberCount || null,
+            invitedBy: data.invitedBy || "",
+            status: data.status || "pending",
             time,
             unread: data.unread !== false,
             _firestoreNotif: true,
@@ -2796,30 +2800,77 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                     <span style={{fontSize:13,fontWeight:800,color:a.unread?T.text:T.sub}}>{a.title}</span>
                     <span style={{fontSize:10,color:T.muted,marginLeft:8,flexShrink:0}}>{a.time}</span>
                   </div>
-                  <div style={{fontSize:12,color:T.muted,lineHeight:1.45,marginBottom:7}}>{a.msg || a.body}</div>
+                  {a.type === "invite" ? (
+                    <>
+                      {/* Invite details */}
+                      <div style={{display:"flex",gap:8,marginBottom:10,marginTop:2}}>
+                        <div style={{flex:1,background:T.bg,borderRadius:10,padding:"7px 10px",border:`1px solid ${T.border}`}}>
+                          <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2}}>Invited by</div>
+                          <div style={{fontSize:12,fontWeight:800,color:T.text}}>{a.invitedBy || "Admin"}</div>
+                        </div>
+                        {a.memberCount && (
+                          <div style={{flex:1,background:T.bg,borderRadius:10,padding:"7px 10px",border:`1px solid ${T.border}`}}>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2}}>Members</div>
+                            <div style={{fontSize:12,fontWeight:800,color:T.text}}>{a.memberCount} going</div>
+                          </div>
+                        )}
+                        {a.convoyName && (
+                          <div style={{flex:2,background:T.bg,borderRadius:10,padding:"7px 10px",border:`1px solid ${T.border}`}}>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2}}>Convoy</div>
+                            <div style={{fontSize:12,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.convoyName}</div>
+                          </div>
+                        )}
+                      </div>
 
-                  {/* Convoy tag */}
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:5,background:T.bg,borderRadius:20,padding:"3px 9px 3px 6px",border:`1px solid ${T.border}`}}>
-                      <span style={{width:6,height:6,borderRadius:"50%",background:a.convoyColor||T.accent,flexShrink:0,...(a.type==="live"||a.type==="sos"||a.type==="gap"||a.type==="stopped"?{animation:"pulse 1.4s infinite"}:{})}}/>
-                      <span style={{fontSize:10,fontWeight:700,color:T.sub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120}}>{a.convoy}</span>
-                    </div>
-                    <button onClick={e=>{e.stopPropagation();dismiss(a.id);}}
-                      style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:T.muted,fontSize:11,fontWeight:700}}>
-                      <Ic d={ICONS.close} size={12} color={T.muted}/>
-                    </button>
-                  </div>
+                      {/* Accept / Decline — only show if pending */}
+                      {a.status === "pending" && (
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={e=>{
+                            e.stopPropagation();
+                            updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                            markRead(a.id);
+                            const c = convoys.find(cv => cv.id === a.convoyId);
+                            if (c) onTapConvoy(c);
+                          }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
+                            Accept
+                          </button>
+                          <button onClick={e=>{
+                            e.stopPropagation();
+                            updateDoc(doc(db,"notifications",a.id),{status:"declined",unread:false}).catch(()=>{});
+                          }} style={{flex:1,padding:"9px 0",borderRadius:10,background:`${T.red}12`,border:`1px solid ${T.red}44`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.red}}>
+                            Decline
+                          </button>
+                        </div>
+                      )}
+                      {a.status === "accepted" && (
+                        <div style={{padding:"8px 0",textAlign:"center",fontSize:12,fontWeight:700,color:T.accent}}>Accepted</div>
+                      )}
+                      {a.status === "declined" && (
+                        <div style={{padding:"8px 0",textAlign:"center",fontSize:12,fontWeight:700,color:T.red}}>Declined</div>
+                      )}
 
-                  {/* View Convoy button for invite notifications */}
-                  {a.type === "invite" && a.convoyId && (
-                    <button onClick={e=>{
-                      e.stopPropagation();
-                      markRead(a.id);
-                      const c = convoys.find(cv => cv.id === a.convoyId);
-                      if (c) onTapConvoy(c);
-                    }} style={{marginTop:10,width:"100%",padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
-                      View Convoy
-                    </button>
+                      {/* Dismiss */}
+                      <div style={{display:"flex",justifyContent:"flex-end",marginTop:6}}>
+                        <button onClick={e=>{e.stopPropagation();dismiss(a.id);}}
+                          style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:T.muted,fontSize:11}}>
+                          <Ic d={ICONS.close} size={12} color={T.muted}/>
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{fontSize:12,color:T.muted,lineHeight:1.45,marginBottom:7}}>{a.msg || a.body}</div>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:5,background:T.bg,borderRadius:20,padding:"3px 9px 3px 6px",border:`1px solid ${T.border}`}}>
+                          <span style={{width:6,height:6,borderRadius:"50%",background:a.convoyColor||T.accent,flexShrink:0,...(a.type==="live"||a.type==="sos"||a.type==="gap"||a.type==="stopped"?{animation:"pulse 1.4s infinite"}:{})}}/>
+                          <span style={{fontSize:10,fontWeight:700,color:T.sub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120}}>{a.convoy}</span>
+                        </div>
+                        <button onClick={e=>{e.stopPropagation();dismiss(a.id);}}
+                          style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:T.muted,fontSize:11,fontWeight:700}}>
+                          <Ic d={ICONS.close} size={12} color={T.muted}/>
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -4435,9 +4486,12 @@ export default function App() {
       await addDoc(collection(db, "notifications"), {
         toPhone: phone,
         type: "invite",
-        title: `Added to "${convoyName}"`,
-        msg: `${adminName} added you as a member of the convoy "${convoyName}".`,
+        title: `${adminName} added you to a convoy`,
+        convoyName,
         convoyId: convoyId || null,
+        memberCount: members.length,
+        invitedBy: adminName,
+        status: "pending",
         unread: true,
         createdAt: serverTimestamp(),
       }).then(ref => console.log("[Notif] Written doc:", ref.id))
