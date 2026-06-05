@@ -2798,7 +2798,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
         ) : filtered.map((a, idx) => {
           const meta = ALERT_META[a.type] || ALERT_META.live;
           return (
-            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId) { getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } }}
+            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId&&a.status==="pending") { getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } }}
               style={{background:a.unread?T.raised:T.card,border:`1px solid ${a.unread?T.borderHi:T.border}`,borderRadius:16,padding:"13px 13px",marginBottom:10,cursor:"pointer",position:"relative",transition:"background .2s",animation:`slideDown .25s ease ${idx*.04}s both`}}>
 
               {/* Unread dot */}
@@ -4333,6 +4333,28 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
     setJoined(true);
   };
 
+  if (invite.notifStatus === "accepted") {
+    return (
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px",gap:16,background:T.bg}}>
+        <div style={{fontSize:56}}>✅</div>
+        <div style={{fontSize:20,fontWeight:900,color:T.text}}>Already Joined</div>
+        <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You are part of <strong style={{color:T.text}}>{invite.convoyName}</strong>. Check your convoy list.</div>
+        <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>Go to Convoys</button>
+      </div>
+    );
+  }
+
+  if (invite.notifStatus === "declined") {
+    return (
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px",gap:16,background:T.bg}}>
+        <div style={{fontSize:56}}>❌</div>
+        <div style={{fontSize:20,fontWeight:900,color:T.text}}>Invite Declined</div>
+        <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You declined the invite to <strong style={{color:T.text}}>{invite.convoyName}</strong>.</div>
+        <button onClick={onBack} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.raised,border:`1px solid ${T.border}`,color:T.sub,fontSize:14,fontWeight:800,cursor:"pointer"}}>Go Back</button>
+      </div>
+    );
+  }
+
   if (joined) {
     const nm = foundConvoy || invite;
     return (
@@ -4718,6 +4740,7 @@ export default function App() {
                     color: pendingInvite.convoy.color || "#4A9EFF",
                     members: pendingInvite.convoy.members || [],
                     id: pendingInvite.convoy.id,
+                    notifStatus: pendingInvite.notif?.status || "pending",
                   } : undefined}
                   onJoin={(newConvoy)=>{ setConvoys(cs=>cs.find(c=>c.id===newConvoy.id)?cs:[newConvoy,...cs]); flash(`Joined "${newConvoy.name}"! 🎉`); setPendingInvite(null); }}
                   onAccept={()=>{setScreen("home");setNavTab("home");setActiveC(null);setPendingInvite(null);}}
