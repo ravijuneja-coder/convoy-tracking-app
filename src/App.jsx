@@ -414,13 +414,16 @@ function loadLeaflet() {
   });
 }
 
-const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
+// positions: { [memberId]: { lat, lng } } — passed from parent, updated in real-time
+const LiveMap = ({ members, selectedId, onSelect, outerMapRef, positions }) => {
   const T       = useT();
   const wrapRef = useRef(null);
   const mapRef  = useRef(null);
   const markersRef = useRef({});
-  const pulseRef   = useRef({});
   const [ready, setReady] = useState(false);
+
+  // Resolve coord for a member: prefer live positions prop, fall back to LIVE_COORDS seed
+  const coordFor = (m) => positions?.[m.id] ?? LIVE_COORDS[m.id] ?? { lat: 28.57, lng: 77.32 };
 
   // Build marker HTML for a member
   const markerHtml = (m, isMe, isSel) => {
@@ -435,10 +438,8 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
       ? `<div style="position:absolute;inset:-8px;border-radius:50%;background:${m.color}30;animation:lf-pulse 2s ease-in-out infinite;pointer-events:none;"></div>
          <div style="position:absolute;inset:-4px;border-radius:50%;background:${m.color}20;animation:lf-pulse 2s ease-in-out infinite .6s;pointer-events:none;"></div>`
       : "";
-    const crown = isMe
-      ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:12px;line-height:1;">★</div>` : "";
-    const label = isMe ? "★ You"  : m.name;
-    const lbgc  = isMe ? m.color  : (T.isDark ? "rgba(10,13,22,.9)" : "rgba(255,255,255,.95)");
+    const label = isMe ? "★ You" : m.name;
+    const lbgc  = isMe ? m.color : (T.isDark ? "rgba(10,13,22,.9)" : "rgba(255,255,255,.95)");
     const ltxtc = isMe ? (T.isDark ? "#080B12" : "#fff") : m.color;
     return `<div style="position:relative;width:${R}px;height:${R}px;${bdr};border-radius:50%;cursor:pointer;">
       ${pulse}${img}
@@ -451,7 +452,6 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
     loadLeaflet().then(L => {
       if (mapRef.current || !wrapRef.current) return;
 
-      // Inject pulse keyframes once
       if (!document.getElementById("lf-kf")) {
         const s = document.createElement("style");
         s.id = "lf-kf";
@@ -465,20 +465,14 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
       });
       mapRef.current = map;
 
-      // OpenStreetMap tiles
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
 
-      // Fit map to all member positions
-      const latlngs = members.map(m => [LIVE_COORDS[m.id]?.lat ?? 28.57, LIVE_COORDS[m.id]?.lng ?? 77.32]);
+      // Fit to initial positions
+      const latlngs = members.map(m => { const c = coordFor(m); return [c.lat, c.lng]; });
       map.fitBounds(L.latLngBounds(latlngs).pad(0.25));
 
       // Road-following route via OSRM (Noida Sector 18 → New Delhi)
-      const routeWaypoints = [
-        [28.5672, 77.3211], // Noida start
-        [28.6448, 77.2167], // New Delhi destination
-      ];
+      const routeWaypoints = [[28.5672, 77.3211], [28.6448, 77.2167]];
       fetchOSRMRoute(routeWaypoints).then(coords => {
         if (!mapRef.current) return;
         L.polyline(coords, { color: "#1DB870", weight: 5, opacity: .8 }).addTo(map);
@@ -492,12 +486,10 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
       L.marker([28.6448, 77.2167], { icon: destIcon }).addTo(map)
        .bindPopup("<b>New Delhi</b><br>Destination");
 
-      // Member markers
+      // Member markers at initial positions
       members.forEach((m, idx) => {
-        const coord = LIVE_COORDS[m.id];
-        if (!coord) return;
-        const isMe = idx === 0;
-        const isSel = m.id === selectedId;
+        const coord = coordFor(m);
+        const isMe = idx === 0, isSel = m.id === selectedId;
         const icon = L.divIcon({
           className: "", iconSize: [isMe ? 44 : 38], iconAnchor: [isMe ? 22 : 19, isMe ? 22 : 19],
           html: markerHtml(m, isMe, isSel),
@@ -507,9 +499,7 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
         markersRef.current[m.id] = mk;
       });
 
-      // Share map ref with parent if requested
       if (outerMapRef) outerMapRef.current = map;
-      // Force Leaflet to recalculate container size after flex layout settles
       setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 120);
       setReady(true);
     });
@@ -518,7 +508,24 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef }) => {
     };
   }, []);
 
-  // Update marker icons when selection changes
+  // Smoothly move markers when real positions arrive
+  useEffect(() => {
+    if (!mapRef.current || !window.L || !positions) return;
+    const L = window.L;
+    members.forEach((m, idx) => {
+      const mk = markersRef.current[m.id];
+      const coord = positions[m.id];
+      if (!mk || !coord) return;
+      mk.setLatLng([coord.lat, coord.lng]);
+      const isMe = idx === 0, isSel = m.id === selectedId;
+      mk.setIcon(L.divIcon({
+        className: "", iconSize: [isMe ? 44 : 38], iconAnchor: [isMe ? 22 : 19, isMe ? 22 : 19],
+        html: markerHtml(m, isMe, isSel),
+      }));
+    });
+  }, [positions]);
+
+  // Update marker icons when selection or theme changes
   useEffect(() => {
     if (!mapRef.current || !window.L) return;
     const L = window.L;
@@ -732,7 +739,7 @@ const SosNotifFeed = ({ convoy, sender, onClose }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // FULLSCREEN MAP OVERLAY
 // ══════════════════════════════════════════════════════════════════════════════
-const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
+const FullscreenMap = ({ convoy, initialSelId, onClose, positions }) => {
   const T = useT();
   const [selId,      setSelId]      = useState(initialSelId);
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -759,7 +766,7 @@ const FullscreenMap = ({ convoy, initialSelId, onClose }) => {
 
       {/* ════════════════════  MAP LAYER  ════════════════════ */}
       <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:0}}>
-        <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId} outerMapRef={innerMapRef}/>
+        <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId} outerMapRef={innerMapRef} positions={positions}/>
 
         {/* gradient overlays */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:110,background:"linear-gradient(to bottom,rgba(8,11,18,.78) 0%,transparent 100%)",pointerEvents:"none"}}/>
@@ -989,38 +996,94 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
     role: m.id === id ? "admin" : m.role === "admin" ? "member" : m.role,
   })));
 
-  // ── Simulate live GPS movement ──
+  // ── Real GPS tracking via Firestore ──
+  // livePositions: { [memberId]: { lat, lng } }
+  // liveStats:     { [memberId]: { speed, dist, eta, memberStatus, lastSeen } }
   const [livePositions, setLivePositions] = useState({...LIVE_COORDS});
-  const [liveStats, setLiveStats] = useState({...LIVE_DATA});
+  const [liveStats,     setLiveStats]     = useState({...LIVE_DATA});
+  const prevPositions = useRef({...LIVE_COORDS});
+  const prevTimestamps = useRef({});
 
+  // Identify which convoy member is "me"
+  const myMember = authUser
+    ? members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase())
+    : members[0];
+  const myMemberId = myMember?.id;
+
+  // 1. Publish my real GPS position to Firestore
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (!myMemberId || !convoy.id || !navigator.geolocation) return;
+    const locRef = doc(db, "convoys", String(convoy.id), "locations", String(myMemberId));
+    const watchId = navigator.geolocation.watchPosition(
+      pos => {
+        const { latitude: lat, longitude: lng, speed } = pos.coords;
+        setDoc(locRef, {
+          lat, lng,
+          speed: speed != null ? Math.round(speed * 3.6) : null, // m/s → km/h
+          memberStatus: "moving",
+          updatedAt: serverTimestamp(),
+        }, { merge: true }).catch(() => {});
+      },
+      () => {
+        // On error fall back to last known position silently
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [myMemberId, convoy.id]);
+
+  // 2. Subscribe to all members' positions from Firestore
+  useEffect(() => {
+    if (!convoy.id) return;
+    const locCol = collection(db, "convoys", String(convoy.id), "locations");
+    const unsub = onSnapshot(locCol, snap => {
+      const now = Date.now();
       setLivePositions(prev => {
-        const next = {};
-        Object.keys(prev).forEach(id => {
-          next[id] = {
-            lat: prev[id].lat + (Math.random() - 0.48) * 0.0003,
-            lng: prev[id].lng + (Math.random() - 0.45) * 0.0003,
-          };
-        });
-        return next;
-      });
-      setLiveStats(prev => {
-        const next = {...prev};
-        Object.keys(next).forEach(id => {
-          if (next[id].memberStatus === "moving") {
-            next[id] = {
-              ...next[id],
-              speed: Math.max(30, Math.min(100, next[id].speed + Math.round((Math.random()-0.5)*6))),
-              dist: Math.max(0, parseFloat((next[id].dist + (Math.random()-0.4)*0.05).toFixed(1))),
-            };
+        const next = { ...prev };
+        snap.docs.forEach(d => {
+          const memberId = Number(d.id);
+          const data = d.data();
+          if (data.lat != null && data.lng != null) {
+            next[memberId] = { lat: data.lat, lng: data.lng };
           }
         });
         return next;
       });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+      setLiveStats(prev => {
+        const next = { ...prev };
+        snap.docs.forEach(d => {
+          const memberId = Number(d.id);
+          const data = d.data();
+          if (data.lat == null) return;
+          const prevPos = prevPositions.current[memberId];
+          const prevTs  = prevTimestamps.current[memberId] || now;
+          const dtHrs   = Math.max((now - prevTs) / 3600000, 0.0001);
+          // Compute speed from position delta if device didn't provide it
+          let speed = data.speed;
+          if (speed == null && prevPos) {
+            const distKm = haversineKm(prevPos.lat, prevPos.lng, data.lat, data.lng);
+            speed = Math.round(distKm / dtHrs);
+          }
+          speed = speed ?? 0;
+          // Distance gap from lead member (member index 0)
+          const lead = next[members[0]?.id];
+          const dist = lead
+            ? parseFloat(haversineKm(data.lat, data.lng, lead.lat ?? data.lat, lead.lng ?? data.lng).toFixed(1))
+            : 0;
+          const memberStatus = data.memberStatus ?? (speed > 2 ? "moving" : "stopped");
+          const lastSeen = data.updatedAt
+            ? "now"
+            : (prev[memberId]?.lastSeen ?? "now");
+          next[memberId] = { ...prev[memberId], speed, dist, memberStatus, lastSeen,
+            eta: dist > 0 && speed > 0 ? `${Math.round(dist / speed * 60)} min` : "0 min" };
+          prevPositions.current[memberId] = { lat: data.lat, lng: data.lng };
+          prevTimestamps.current[memberId] = now;
+        });
+        return next;
+      });
+    });
+    return () => unsub();
+  }, [convoy.id]);
 
   const selMember = selId!=null?convoy.members.find(m=>m.id===selId):null;
   const selLive   = selId!=null?liveStats[selId]:null;
@@ -1105,7 +1168,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           {/* ── Map canvas ── */}
           <div style={{flex:1,position:"relative",overflow:"hidden",background:T.mapBg,minHeight:0}}>
-            <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId}/>
+            <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId} positions={livePositions}/>
 
             {/* LIVE TRACKING chip — display only, not clickable */}
             <div style={{position:"absolute",top:10,left:10,background:T.isDark?"rgba(8,11,18,.88)":"rgba(255,255,255,.93)",borderRadius:10,padding:"5px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.accent}44`,display:"flex",alignItems:"center",gap:6,pointerEvents:"none"}}>
@@ -1427,7 +1490,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
       )}
 
       {/* Fullscreen Map */}
-      {fullMap && <FullscreenMap convoy={convoy} initialSelId={fSelId} onClose={()=>setFullMap(false)}/>}
+      {fullMap && <FullscreenMap convoy={convoy} initialSelId={fSelId} onClose={()=>setFullMap(false)} positions={livePositions}/>}
 
       {/* Stop Report Modal */}
       {stopModalOpen&&(
