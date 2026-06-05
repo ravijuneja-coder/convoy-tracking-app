@@ -3388,7 +3388,7 @@ const OnboardingScreen = ({ onDone }) => {
   const handleSubmit = async () => {
     if (authTab==="signup" && !name.trim()) { setErr("Please enter your name."); return; }
     if (authTab==="signup" && (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim()))) { setErr("Enter a valid email address."); return; }
-    if (!phone.trim() || phone.replace(/\D/g,"").length < 10) { setErr("Enter a valid 10-digit mobile number."); return; }
+    if (!(authTab==="signin" && useEmail) && (!phone.trim() || phone.replace(/\D/g,"").length < 10)) { setErr("Enter a valid 10-digit mobile number."); return; }
     if (!password.trim() || password.length < 6) { setErr("Password must be at least 6 characters."); return; }
     setErr("");
     setLoading(true);
