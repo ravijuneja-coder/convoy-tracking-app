@@ -2609,12 +2609,47 @@ const ALERT_META = {
   joined:   { icon:"👤", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Joined"   },
   upcoming: { icon:"📅", iconBg:"#9B6EFF22", iconColor:"#9B6EFF", label:"Upcoming" },
   done:     { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Done"     },
+  invite:   { icon:"🚗", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Invite"   },
 };
 
-const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin }) => {
+const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin, authUser }) => {
   const T = useT();
   const [alerts, setAlerts] = useState(ALERT_SEED);
   const [filter, setFilter] = useState("all"); // all | unread | sos | gap
+
+  // Listen for invite notifications from Firestore for this user's phone
+  useEffect(() => {
+    if (!authUser?.phone) return;
+    const phone = authUser.phone.replace(/\D/g,"").slice(-10);
+    const q = query(
+      collection(db, "notifications"),
+      where("toPhone", "==", phone),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(q, snap => {
+      const notifs = snap.docs.map(d => {
+        const data = d.data();
+        const ts = data.createdAt?.toDate?.();
+        const time = ts
+          ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}`
+          : "";
+        return {
+          id: d.id,
+          type: data.type || "invite",
+          title: data.title || "You've been added to a convoy",
+          msg: data.msg || "",
+          time,
+          unread: data.unread !== false,
+          _firestoreNotif: true,
+        };
+      });
+      setAlerts(prev => {
+        const localAlerts = prev.filter(a => !a._firestoreNotif);
+        return [...notifs, ...localAlerts];
+      });
+    });
+    return () => unsub();
+  }, [authUser?.phone]);
 
   const filtered = alerts.filter(a => {
     if (filter === "unread") return a.unread;
@@ -2630,10 +2665,27 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
     if (onAlertUnreadChange) onAlertUnreadChange(unreadCount);
   }, [unreadCount]);
 
-  const markRead   = id  => setAlerts(as => as.map(a => a.id === id ? {...a, unread:false} : a));
-  const dismiss    = id  => setAlerts(as => as.filter(a => a.id !== id));
-  const markAllRead = () => setAlerts(as => as.map(a => ({...a, unread:false})));
-  const clearAll    = () => setAlerts([]);
+  const markRead = id => {
+    setAlerts(as => as.map(a => a.id === id ? {...a, unread:false} : a));
+    updateDoc(doc(db, "notifications", id), { unread: false }).catch(()=>{});
+  };
+  const dismiss = id => {
+    const a = alerts.find(a => a.id === id);
+    setAlerts(as => as.filter(a => a.id !== id));
+    if (a?._firestoreNotif) deleteDoc(doc(db, "notifications", id)).catch(()=>{});
+  };
+  const markAllRead = () => {
+    setAlerts(as => as.map(a => ({...a, unread:false})));
+    alerts.filter(a => a._firestoreNotif && a.unread).forEach(a =>
+      updateDoc(doc(db, "notifications", a.id), { unread: false }).catch(()=>{})
+    );
+  };
+  const clearAll = () => {
+    alerts.filter(a => a._firestoreNotif).forEach(a =>
+      deleteDoc(doc(db, "notifications", a.id)).catch(()=>{})
+    );
+    setAlerts([]);
+  };
 
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
@@ -4333,9 +4385,32 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  const sendMemberNotifications = async (convoyName, members, existingMembers = []) => {
+    const adminName = authUser?.name || "Admin";
+    const existingPhones = new Set(
+      existingMembers.slice(1).map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean)
+    );
+    const newMembers = members.slice(1).filter(m => {
+      const phone = m.phone?.replace(/\D/g,"").slice(-10);
+      return phone && !existingPhones.has(phone);
+    });
+    for (const m of newMembers) {
+      const phone = m.phone.replace(/\D/g,"").slice(-10);
+      await addDoc(collection(db, "notifications"), {
+        toPhone: phone,
+        type: "invite",
+        title: `Added to "${convoyName}"`,
+        msg: `${adminName} added you as a member of the convoy "${convoyName}".`,
+        unread: true,
+        createdAt: serverTimestamp(),
+      }).catch(()=>{});
+    }
+  };
+
   const handleSave = async (data) => {
     if (!authUser?.uid) return;
-    if (convoys.find(c=>c.id===data.id)) {
+    const existing = convoys.find(c=>c.id===data.id);
+    if (existing) {
       try {
         await updateDoc(doc(db, "convoys", data.id), { ...data, updatedAt: serverTimestamp() });
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
@@ -4346,6 +4421,7 @@ export default function App() {
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
         flash(`"${data.name}" updated`);
       }
+      await sendMemberNotifications(data.name, data.members, existing.members);
     } else {
       try {
         const newData = { ...data, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
@@ -4357,6 +4433,7 @@ export default function App() {
         setConvoys(cs=>[newConvoy,...cs]);
         flash(`"${data.name}" created!`);
       }
+      await sendMemberNotifications(data.name, data.members, []);
     }
     setSheet(null);
   };
@@ -4439,7 +4516,7 @@ export default function App() {
                     :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser} onStartConvoy={c=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"live"}:cv)); setActiveC(prev=>({...prev,status:"live"})); flash("Convoy started! 🚀"); }}/>
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
-                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")}/>}
+                {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser}/>}
                 {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
