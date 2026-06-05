@@ -2827,15 +2827,21 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                         <div style={{display:"flex",gap:8}}>
                           <button onClick={e=>{
                             e.stopPropagation();
-                            updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
                             markRead(a.id);
                             if (a.convoyId) {
                               getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{
                                 if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a);
                               }).catch(()=>{});
                             }
+                          }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.sub}}>
+                            View
+                          </button>
+                          <button onClick={e=>{
+                            e.stopPropagation();
+                            updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                            markRead(a.id);
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
-                            View & Accept
+                            Accept
                           </button>
                           <button onClick={e=>{
                             e.stopPropagation();
