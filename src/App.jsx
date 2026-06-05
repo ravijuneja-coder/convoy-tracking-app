@@ -2803,20 +2803,20 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                   {a.type === "invite" ? (
                     <>
                       {/* Invite details */}
-                      <div style={{display:"flex",gap:8,marginBottom:10,marginTop:2}}>
-                        <div style={{flex:1,background:T.bg,borderRadius:10,padding:"7px 10px",border:`1px solid ${T.border}`}}>
-                          <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2}}>Invited by</div>
-                          <div style={{fontSize:12,fontWeight:800,color:T.text}}>{a.invitedBy || "Admin"}</div>
+                      <div style={{display:"flex",gap:6,marginBottom:10,marginTop:2,flexWrap:"wrap"}}>
+                        <div style={{background:T.bg,borderRadius:10,padding:"5px 10px",border:`1px solid ${T.border}`,minWidth:0,flexShrink:0}}>
+                          <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2,whiteSpace:"nowrap"}}>Invited by</div>
+                          <div style={{fontSize:12,fontWeight:800,color:T.text,whiteSpace:"nowrap"}}>{a.invitedBy || "Admin"}</div>
                         </div>
                         {a.memberCount && (
-                          <div style={{flex:1,background:T.bg,borderRadius:10,padding:"7px 10px",border:`1px solid ${T.border}`}}>
-                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2}}>Members</div>
-                            <div style={{fontSize:12,fontWeight:800,color:T.text}}>{a.memberCount} going</div>
+                          <div style={{background:T.bg,borderRadius:10,padding:"5px 10px",border:`1px solid ${T.border}`,flexShrink:0}}>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2,whiteSpace:"nowrap"}}>Members</div>
+                            <div style={{fontSize:12,fontWeight:800,color:T.text,whiteSpace:"nowrap"}}>{a.memberCount} going</div>
                           </div>
                         )}
                         {a.convoyName && (
-                          <div style={{flex:2,background:T.bg,borderRadius:10,padding:"7px 10px",border:`1px solid ${T.border}`}}>
-                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2}}>Convoy</div>
+                          <div style={{background:T.bg,borderRadius:10,padding:"5px 10px",border:`1px solid ${T.border}`,flex:1,minWidth:80}}>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:2,whiteSpace:"nowrap"}}>Convoy</div>
                             <div style={{fontSize:12,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.convoyName}</div>
                           </div>
                         )}
