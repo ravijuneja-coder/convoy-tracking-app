@@ -4459,7 +4459,7 @@ export default function App() {
   const [delTarget,  setDelTarget] = useState(null);
   const [toast,      setToast]     = useState(null);
   const [navTab,     setNavTab]    = useState("home");
-  const [isPremium,  setIsPremium] = useState(false); // default free plan
+  const [isPremium,  setIsPremium] = useState(true);
   const [showPaywall,setShowPaywall]=useState(false);
   const [profileMembers, setProfileMembers] = useState([]);
 
