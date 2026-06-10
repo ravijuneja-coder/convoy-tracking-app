@@ -3007,18 +3007,41 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                             markRead(a.id);
                             if (a.convoyId) {
                               getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{
-                                if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a);
-                              }).catch(()=>{});
+                                if (snap.exists()) {
+                                  onViewInvite?.({...snap.data(),id:snap.id}, a);
+                                } else {
+                                  // Convoy deleted — still open join screen with notif data
+                                  onViewInvite?.({id:a.convoyId,name:a.convoyName,members:[],destination:"",date:""}, a);
+                                }
+                              }).catch(()=>{
+                                onViewInvite?.({id:a.convoyId,name:a.convoyName,members:[],destination:"",date:""}, a);
+                              });
+                            } else {
+                              // No convoyId — open join screen with whatever we have
+                              onViewInvite?.({id:"",name:a.convoyName||"Convoy",members:[],destination:"",date:""}, a);
                             }
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.sub}}>
                             View
                           </button>
                           <button onClick={async e=>{
                             e.stopPropagation();
-                            if (!a.convoyId || !authUser) return;
+                            if (!authUser) {
+                              // Not logged in — just navigate to join screen
+                              onViewInvite?.({id:a.convoyId||"",name:a.convoyName||"Convoy",members:[],destination:"",date:""}, a);
+                              return;
+                            }
+                            if (!a.convoyId) {
+                              updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                              markRead(a.id);
+                              return;
+                            }
                             try {
                               const snap = await getDoc(doc(db,"convoys",a.convoyId));
-                              if (!snap.exists()) return;
+                              if (!snap.exists()) {
+                                updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                                markRead(a.id);
+                                return;
+                              }
                               const convoyData = snap.data();
                               const alreadyMember = (convoyData.members||[]).some(m =>
                                 m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone?.replace(/\D/g,"").slice(-10)
@@ -3037,7 +3060,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 await updateDoc(doc(db,"convoys",a.convoyId), { members: updatedMembers, memberPhones: updatedPhones });
                                 convoyData.members = updatedMembers;
                               }
-                              updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                              await updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
                               markRead(a.id);
                               notifyAdminOfResponse(a, true);
                               const joinedConvoy = {...convoyData, id: a.convoyId};
@@ -3049,6 +3072,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                           <button onClick={e=>{
                             e.stopPropagation();
                             updateDoc(doc(db,"notifications",a.id),{status:"declined",unread:false}).catch(()=>{});
+                            markRead(a.id);
                             notifyAdminOfResponse(a, false);
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:`${T.red}12`,border:`1px solid ${T.red}44`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.red}}>
                             Decline
@@ -4896,8 +4920,12 @@ export default function App() {
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser} onViewInvite={(convoy,notif)=>{
                     if (notif?._justAccepted) {
-                      setConvoys(cs=>cs.find(c=>c.id===convoy.id)?cs:[convoy,...cs]);
-                      flash(`Joined "${convoy.name}"! 🎉`);
+                      const merged = {...convoy};
+                      setConvoys(cs=>cs.find(c=>c.id===merged.id)?cs.map(c=>c.id===merged.id?merged:c):[merged,...cs]);
+                      flash(`Joined "${merged.name}"! 🎉`);
+                      setActiveC(merged);
+                      setScreen("detail");
+                      setNavTab("home");
                       return;
                     }
                     setPendingInvite({convoy,notif});setScreen("join");setNavTab("bell");
