@@ -4701,7 +4701,7 @@ export default function App() {
   });
 
   const [convoys,    setConvoys]   = useState([]);
-  const deletedIds = useRef(new Set(JSON.parse(localStorage.getItem("convoy_deleted_ids")||"[]")));
+  const deletedIds = useRef(new Set());
   const [screen,     setScreen]    = useState("home");
   const [activeC,    setActiveC]   = useState(null);
   const [sheet,      setSheet]     = useState(null);
@@ -4748,14 +4748,20 @@ export default function App() {
           };
 
           const unsubOwned = onSnapshot(ownedQ, snap => {
-            snap.docs.forEach(d => { if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...d.data() }; });
+            snap.docs.forEach(d => {
+              if (!deletedIds.current.has(d.id) && !d.data().deleted) ownedMap[d.id] = { id: d.id, ...d.data() };
+              else delete ownedMap[d.id];
+            });
             Object.keys(ownedMap).forEach(id => {
               if (!snap.docs.find(d => d.id === id)) delete ownedMap[id];
             });
             merge();
           });
           const unsubMember = memberQ ? onSnapshot(memberQ, snap => {
-            snap.docs.forEach(d => { if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...d.data() }; });
+            snap.docs.forEach(d => {
+              if (!deletedIds.current.has(d.id) && !d.data().deleted) memberMap[d.id] = { id: d.id, ...d.data() };
+              else delete memberMap[d.id];
+            });
             Object.keys(memberMap).forEach(id => {
               if (!snap.docs.find(d => d.id === id)) delete memberMap[id];
             });
@@ -4843,20 +4849,16 @@ export default function App() {
     }
     setSheet(null);
   };
-  const persistDeletedIds = () => {
-    localStorage.setItem("convoy_deleted_ids", JSON.stringify([...deletedIds.current]));
-  };
   const handleDelete = async () => {
     const name=delTarget.name;
     const id=String(delTarget.id);
     setDelTarget(null);
     deletedIds.current.add(id);
-    persistDeletedIds();
     if(activeC?.id===id){setScreen("home");setActiveC(null);}
     setConvoys(cs=>cs.filter(c=>String(c.id)!==id));
     try {
       if (authUser?.uid && id) {
-        await deleteDoc(doc(db, "convoys", id));
+        await updateDoc(doc(db, "convoys", id), { deleted: true, deletedAt: serverTimestamp() });
         flash(`"${name}" deleted`,"warn");
       } else {
         flash(`"${name}" deleted`,"warn");
