@@ -1579,10 +1579,15 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
       map.setView([22.5, 78.9], 5);
 
-      // Clamp all Leaflet pane z-indexes so they don't bleed over sibling DOM elements
-      Object.values(map.getPanes()).forEach(pane => {
-        if (pane) pane.style.zIndex = Math.min(parseInt(pane.style.zIndex || 0), 400);
-      });
+      // Clamp all Leaflet pane z-indexes so they don't bleed over sibling DOM elements.
+      // Must run after every zoom because Leaflet resets pane z-indexes on zoom events.
+      const clampPanes = () => {
+        Object.values(map.getPanes()).forEach(pane => {
+          if (pane) pane.style.zIndex = Math.min(parseInt(pane.style.zIndex || 0), 400);
+        });
+      };
+      clampPanes();
+      map.on("zoom zoomstart zoomend", clampPanes);
 
       let startPt = convoy.startCoords ? [convoy.startCoords.lat, convoy.startCoords.lng] : null;
       let endPt   = convoy.destCoords   ? [convoy.destCoords.lat,  convoy.destCoords.lng]  : null;
