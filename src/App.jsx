@@ -4701,6 +4701,7 @@ export default function App() {
   });
 
   const [convoys,    setConvoys]   = useState([]);
+  const deletedIds = useRef(new Set());
   const [screen,     setScreen]    = useState("home");
   const [activeC,    setActiveC]   = useState(null);
   const [sheet,      setSheet]     = useState(null);
@@ -4742,19 +4743,19 @@ export default function App() {
           const memberMap = {};
           const merge = () => {
             const combined = { ...memberMap, ...ownedMap }; // owned takes precedence
+            deletedIds.current.forEach(id => { delete combined[id]; });
             setConvoys(Object.values(combined));
           };
 
           const unsubOwned = onSnapshot(ownedQ, snap => {
-            snap.docs.forEach(d => { ownedMap[d.id] = { id: d.id, ...d.data() }; });
-            // Remove docs no longer in owned query
+            snap.docs.forEach(d => { if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...d.data() }; });
             Object.keys(ownedMap).forEach(id => {
               if (!snap.docs.find(d => d.id === id)) delete ownedMap[id];
             });
             merge();
           });
           const unsubMember = memberQ ? onSnapshot(memberQ, snap => {
-            snap.docs.forEach(d => { memberMap[d.id] = { id: d.id, ...d.data() }; });
+            snap.docs.forEach(d => { if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...d.data() }; });
             Object.keys(memberMap).forEach(id => {
               if (!snap.docs.find(d => d.id === id)) delete memberMap[id];
             });
@@ -4846,8 +4847,9 @@ export default function App() {
     const name=delTarget.name;
     const id=delTarget.id;
     setDelTarget(null);
+    deletedIds.current.add(String(id));
     if(activeC?.id===id){setScreen("home");setActiveC(null);}
-    setConvoys(cs=>cs.filter(c=>c.id!==id));
+    setConvoys(cs=>cs.filter(c=>String(c.id)!==String(id)));
     try {
       if (authUser?.uid && id) {
         await deleteDoc(doc(db, "convoys", String(id)));
@@ -4856,7 +4858,7 @@ export default function App() {
         flash(`"${name}" deleted`,"warn");
       }
     } catch (e) {
-      // Restore convoy if delete failed
+      deletedIds.current.delete(String(id));
       flash(`Failed to delete "${name}" — please try again`,"warn");
     }
   };
