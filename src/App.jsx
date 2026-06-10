@@ -1716,9 +1716,6 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             </div>
           </div>
 
-          {/* Route map */}
-          <div ref={mapWrapRef} style={{height:160,borderRadius:12,overflow:"hidden",marginBottom:12,background:T.raised}}/>
-
           {/* Date / time row */}
           <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"center",gap:5}}>
@@ -1731,6 +1728,10 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             </div>}
           </div>
         </div>
+
+        {/* Route map — outside the clipping card so zoom controls are visible */}
+        <div ref={mapWrapRef} style={{height:200,borderRadius:14,overflow:"hidden",marginBottom:14,border:`1px solid ${T.border}`}}/>
+
         {convoy.notes&&<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",gap:10}}>
           <Ic d={ICONS.note} size={15}/><span style={{fontSize:12,color:T.sub,lineHeight:1.5}}>{convoy.notes}</span>
         </div>}
