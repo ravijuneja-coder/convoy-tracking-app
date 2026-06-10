@@ -4701,7 +4701,7 @@ export default function App() {
   });
 
   const [convoys,    setConvoys]   = useState([]);
-  const deletedIds = useRef(new Set());
+  const deletedIds = useRef(new Set(JSON.parse(localStorage.getItem("convoy_deleted_ids")||"[]")));
   const [screen,     setScreen]    = useState("home");
   const [activeC,    setActiveC]   = useState(null);
   const [sheet,      setSheet]     = useState(null);
@@ -4843,27 +4843,28 @@ export default function App() {
     }
     setSheet(null);
   };
+  const persistDeletedIds = () => {
+    localStorage.setItem("convoy_deleted_ids", JSON.stringify([...deletedIds.current]));
+  };
   const handleDelete = async () => {
     const name=delTarget.name;
-    const id=delTarget.id;
+    const id=String(delTarget.id);
     setDelTarget(null);
-    deletedIds.current.add(String(id));
+    deletedIds.current.add(id);
+    persistDeletedIds();
     if(activeC?.id===id){setScreen("home");setActiveC(null);}
-    setConvoys(cs=>cs.filter(c=>String(c.id)!==String(id)));
+    setConvoys(cs=>cs.filter(c=>String(c.id)!==id));
     try {
       if (authUser?.uid && id) {
-        console.log("[Delete] attempting deleteDoc for id:", String(id), "type:", typeof id, "authUser.uid:", authUser.uid);
-        await deleteDoc(doc(db, "convoys", String(id)));
-        console.log("[Delete] success for id:", String(id));
+        await deleteDoc(doc(db, "convoys", id));
+        deletedIds.current.delete(id);
+        persistDeletedIds();
         flash(`"${name}" deleted`,"warn");
       } else {
-        console.log("[Delete] skipped Firestore — authUser:", authUser?.uid, "id:", id);
         flash(`"${name}" deleted`,"warn");
       }
     } catch (e) {
-      console.error("[Delete] FAILED for id:", String(id), "error:", e.code, e.message);
-      deletedIds.current.delete(String(id));
-      flash(`Failed to delete "${name}" — please try again`,"warn");
+      flash(`Failed to delete "${name}" — check permissions`,"warn");
     }
   };
 
