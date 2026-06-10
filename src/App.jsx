@@ -4857,8 +4857,6 @@ export default function App() {
     try {
       if (authUser?.uid && id) {
         await deleteDoc(doc(db, "convoys", id));
-        deletedIds.current.delete(id);
-        persistDeletedIds();
         flash(`"${name}" deleted`,"warn");
       } else {
         flash(`"${name}" deleted`,"warn");
