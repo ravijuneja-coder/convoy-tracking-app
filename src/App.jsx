@@ -1659,22 +1659,19 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
         } catch(_) {}
       }
 
-      // Place all member markers — use saved GPS if available, else spread near start
+      // Place all member markers — use saved GPS if available, else spread near start/end/default
       const members = convoy.members || [];
       const memberBounds = [];
+      const anchorPt = startPt || endPt || [22.5, 78.9];
       members.forEach((m, idx) => {
         let lat, lng;
         const saved = savedPositions[String(m.id)];
         if (saved) {
           lat = saved.lat; lng = saved.lng;
-        } else if (startPt) {
-          lat = startPt[0] + (idx * 0.002);
-          lng = startPt[1] + (idx * 0.001);
-        } else if (endPt) {
-          lat = endPt[0] + (idx * 0.002);
-          lng = endPt[1] + (idx * 0.001);
         } else {
-          return;
+          // Spread markers in a small cluster around the anchor point
+          lat = anchorPt[0] + (idx * 0.003);
+          lng = anchorPt[1] + (idx * 0.002);
         }
         memberBounds.push([lat, lng]);
         const initials = (m.initials || (m.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2)).toUpperCase();
