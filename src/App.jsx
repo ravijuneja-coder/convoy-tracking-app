@@ -2947,7 +2947,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
         ) : filtered.map((a, idx) => {
           const meta = ALERT_META[a.type] || ALERT_META.live;
           return (
-            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId&&a.status==="pending") { getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } }}
+            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId&&a.status==="pending") { getDoc(doc(db,"convoys",String(a.convoyId))).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } }}
               style={{background:a.unread?T.raised:T.card,border:`1px solid ${a.unread?T.borderHi:T.border}`,borderRadius:16,padding:"13px 13px",marginBottom:10,cursor:"pointer",position:"relative",transition:"background .2s",animation:`slideDown .25s ease ${idx*.04}s both`}}>
 
               {/* Unread dot */}
@@ -3008,7 +3008,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                             console.log("[View] tapped, a=", a);
                             markRead(a.id);
                             if (a.convoyId) {
-                              getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{
+                              getDoc(doc(db,"convoys",String(a.convoyId))).then(snap=>{
                                 if (snap.exists()) {
                                   onViewInvite?.({...snap.data(),id:snap.id}, a);
                                 } else {
@@ -3034,14 +3034,14 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                               return;
                             }
                             if (!a.convoyId) {
-                              updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                              updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                               markRead(a.id);
                               return;
                             }
                             try {
-                              const snap = await getDoc(doc(db,"convoys",a.convoyId));
+                              const snap = await getDoc(doc(db,"convoys",String(a.convoyId)));
                               if (!snap.exists()) {
-                                updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                                updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                                 markRead(a.id);
                                 return;
                               }
@@ -3060,10 +3060,10 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 };
                                 const updatedMembers = [...(convoyData.members||[]), newMember];
                                 const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
-                                await updateDoc(doc(db,"convoys",a.convoyId), { members: updatedMembers, memberPhones: updatedPhones });
+                                await updateDoc(doc(db,"convoys",String(a.convoyId)), { members: updatedMembers, memberPhones: updatedPhones });
                                 convoyData.members = updatedMembers;
                               }
-                              await updateDoc(doc(db,"notifications",a.id),{status:"accepted",unread:false}).catch(()=>{});
+                              await updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                               markRead(a.id);
                               notifyAdminOfResponse(a, true);
                               const joinedConvoy = {...convoyData, id: a.convoyId};
@@ -3074,7 +3074,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                           </button>
                           <button onClick={e=>{
                             e.stopPropagation();
-                            updateDoc(doc(db,"notifications",a.id),{status:"declined",unread:false}).catch(()=>{});
+                            updateDoc(doc(db,"notifications",String(a.id)),{status:"declined",unread:false}).catch(()=>{});
                             markRead(a.id);
                             notifyAdminOfResponse(a, false);
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:`${T.red}12`,border:`1px solid ${T.red}44`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.red}}>
