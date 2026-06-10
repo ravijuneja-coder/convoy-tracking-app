@@ -1677,11 +1677,13 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
         const initials = (m.initials || (m.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2)).toUpperCase();
         const color = m.color || "#3DD68C";
         const R = 32;
-        const html = `<div style="position:relative;width:${R}px;height:${R}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 0 0 2px ${color},0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;">
-          <span style="font-size:11px;font-weight:800;color:#fff;font-family:DM Sans,sans-serif;">${initials}</span>
-          <div style="position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);color:${color};font-size:9px;font-weight:800;white-space:nowrap;padding:2px 7px;border-radius:20px;font-family:DM Sans,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18);">${m.name||initials}</div>
+        const html = `<div style="position:relative;width:${R}px;height:${R+20}px;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:${R}px;height:${R}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 0 0 2px ${color},0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:800;color:#fff;font-family:DM Sans,sans-serif;">${initials}</span>
+          </div>
+          <div style="margin-top:3px;background:rgba(255,255,255,.95);color:${color};font-size:9px;font-weight:800;white-space:nowrap;padding:2px 7px;border-radius:20px;font-family:DM Sans,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18);">${m.name||initials}</div>
         </div>`;
-        L.marker([lat, lng], { icon: L.divIcon({ className:"", iconSize:[R,R], iconAnchor:[R/2,R/2], html }) }).addTo(map);
+        L.marker([lat, lng], { icon: L.divIcon({ className:"", iconSize:[R, R+20], iconAnchor:[R/2, R/2], html }) }).addTo(map);
       });
 
       // Fit bounds to show route + markers
@@ -1695,7 +1697,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
       setTimeout(() => { if (mapObjRef.current) mapObjRef.current.invalidateSize(); }, 100);
     });
     return () => { if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; } };
-  }, [convoy.id]);
+  }, [convoy.id, convoy.members.length]);
 
   const STATUS_OPTS = [
     { key:"ready",    label:"✅ Ready",        color:"#3DD68C" },
@@ -1764,7 +1766,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
         </div>
 
         {/* Route map */}
-        <div style={{position:"relative",isolation:"isolate",height:200,borderRadius:14,overflow:"hidden",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{position:"relative",isolation:"isolate",height:260,borderRadius:14,overflow:"hidden",marginBottom:14,border:`1px solid ${T.border}`}}>
           <div ref={mapWrapRef} style={{position:"absolute",inset:0}}/>
         </div>
 
