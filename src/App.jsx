@@ -1183,25 +1183,32 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
 
       {/* ── MAP TAB ── */}
       {mapTab==="map"&&(
-        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          {/* ── Map canvas ── */}
-          <div style={{flex:1,position:"relative",overflow:"hidden",background:T.mapBg,minHeight:0}}>
+        <div style={{flex:1,overflowY:"auto"}}>
+          {/* ── Map canvas — fixed height, scrollable page continues below ── */}
+          <div style={{position:"relative",height:340,background:T.mapBg,flexShrink:0}}>
             <LiveMap members={convoy.members} selectedId={selId} onSelect={setSelId} positions={livePositions}/>
 
-            {/* LIVE TRACKING chip — display only, not clickable */}
-            <div style={{position:"absolute",top:10,left:10,background:T.isDark?"rgba(8,11,18,.88)":"rgba(255,255,255,.93)",borderRadius:10,padding:"5px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.accent}44`,display:"flex",alignItems:"center",gap:6,pointerEvents:"none"}}>
+            {/* LIVE TRACKING chip */}
+            <div style={{position:"absolute",top:10,left:10,background:T.isDark?"rgba(8,11,18,.88)":"rgba(255,255,255,.93)",borderRadius:10,padding:"5px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.accent}44`,display:"flex",alignItems:"center",gap:6,pointerEvents:"none",zIndex:1000}}>
               <span style={{width:7,height:7,borderRadius:"50%",background:T.accent,animation:"pulse 1.4s infinite",display:"inline-block"}}/>
               <span style={{fontSize:10,fontWeight:700,color:T.accent}}>LIVE TRACKING</span>
             </div>
 
             {/* speed chip */}
-            <div style={{position:"absolute",top:10,right:10,background:T.isDark?"rgba(8,11,18,.85)":"rgba(255,255,255,.9)",borderRadius:10,padding:"6px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.border}`,textAlign:"right"}}>
+            <div style={{position:"absolute",top:10,right:46,background:T.isDark?"rgba(8,11,18,.85)":"rgba(255,255,255,.9)",borderRadius:10,padding:"6px 10px",backdropFilter:"blur(6px)",border:`1px solid ${T.border}`,textAlign:"right",zIndex:1000}}>
               <div style={{fontSize:18,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",lineHeight:1}}>{liveStats[1]?.speed||62}</div>
               <div style={{fontSize:8,color:T.muted,fontWeight:700,letterSpacing:1}}>KM/H</div>
             </div>
 
+            {/* fullscreen button */}
+            <button onClick={()=>setFullMap(true)} style={{position:"absolute",top:10,right:10,zIndex:1000,width:32,height:32,borderRadius:8,background:T.isDark?"rgba(8,11,18,.85)":"rgba(255,255,255,.9)",border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(6px)"}}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
             {/* participants strip overlay */}
-            <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 100%)",padding:"10px 10px 8px",display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none"}}>
+            <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 100%)",padding:"10px 10px 8px",display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",zIndex:1000}}>
               {convoy.members.map(m=>{
                 const ld=liveStats[m.id], active=selId===m.id, stopped=ld?.memberStatus==="stopped";
                 return (
@@ -1220,7 +1227,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
             </div>
           </div>
 
-          {/* gap panel */}
+          {/* gap panel — now below the map, not overlapping */}
           {selMember&&selLive&&(
             <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"10px 14px",animation:"slideDown .25s ease"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
