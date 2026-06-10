@@ -2773,7 +2773,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
   const notifyAdminOfResponse = async (notif, accepted) => {
     if (!notif.convoyId) return;
     try {
-      const convoySnap = await getDoc(doc(db, "convoys", notif.convoyId));
+      const convoySnap = await getDoc(doc(db, "convoys", String(notif.convoyId)));
       if (!convoySnap.exists()) return;
       const adminPhone = convoySnap.data().members?.[0]?.phone?.replace(/\D/g,"").slice(-10);
       if (!adminPhone) return;
@@ -3066,7 +3066,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                               await updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                               markRead(a.id);
                               notifyAdminOfResponse(a, true);
-                              const joinedConvoy = {...convoyData, id: a.convoyId};
+                              const joinedConvoy = {...convoyData, id: String(a.convoyId)};
                               onViewInvite?.(joinedConvoy, {...a, _justAccepted: true});
                             } catch(_) {}
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
@@ -4640,7 +4640,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
               <button onClick={async ()=>{
                   if (!invite.id || !authUser) { onAccept?.(); return; }
                   try {
-                    const convoySnap = await getDoc(doc(db, "convoys", invite.id));
+                    const convoySnap = await getDoc(doc(db, "convoys", String(invite.id)));
                     if (!convoySnap.exists()) { onAccept?.(); return; }
                     const convoyData = convoySnap.data();
                     const alreadyMember = (convoyData.members||[]).some(m =>
@@ -4657,7 +4657,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                       };
                       const updatedMembers = [...(convoyData.members||[]), newMember];
                       const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
-                      await updateDoc(doc(db, "convoys", invite.id), { members: updatedMembers, memberPhones: updatedPhones });
+                      await updateDoc(doc(db, "convoys", String(invite.id)), { members: updatedMembers, memberPhones: updatedPhones });
                       convoyData.members = updatedMembers;
                     }
                     const joinedConvoy = { ...convoyData, id: invite.id };
@@ -4817,7 +4817,7 @@ export default function App() {
     const phones = memberPhones(data.members || []);
     if (existing) {
       try {
-        await updateDoc(doc(db, "convoys", data.id), { ...data, memberPhones: phones, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, "convoys", String(data.id)), { ...data, memberPhones: phones, updatedAt: serverTimestamp() });
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
         flash(`"${data.name}" updated`);
       } catch (e) {
