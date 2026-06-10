@@ -746,6 +746,16 @@ const FullscreenMap = ({ convoy, initialSelId, onClose, positions }) => {
   const [showGaps,   setShowGaps]   = useState(false);
   const innerMapRef = useRef(null); // shared from LiveMap
 
+  const defaultKey = `convoy_fullmap_default_${convoy.id}`;
+  const [isDefault, setIsDefault] = useState(() => localStorage.getItem(defaultKey) === "1");
+
+  const toggleDefault = () => {
+    const next = !isDefault;
+    setIsDefault(next);
+    if (next) localStorage.setItem(defaultKey, "1");
+    else localStorage.removeItem(defaultKey);
+  };
+
   const selMember  = selId   != null ? convoy.members.find(m => m.id === selId)   : null;
   const glassLight = "rgba(255,255,255,.94)";
   const glassDark  = "rgba(8,11,18,.91)";
@@ -788,6 +798,16 @@ const FullscreenMap = ({ convoy, initialSelId, onClose, positions }) => {
             </div>
             <div style={{fontSize:9,color:T.muted,paddingLeft:11}}>{convoy.members.length} cars · {convoy.destination}</div>
           </div>
+
+          {/* set-as-default toggle */}
+          <button onClick={toggleDefault}
+            title={isDefault ? "Remove as default view" : "Set fullscreen map as default view"}
+            style={{flexShrink:0,height:36,borderRadius:10,background:isDefault?T.accentLo:glass,border:`1px solid ${isDefault?T.accent:T.border}`,backdropFilter:"blur(10px)",cursor:"pointer",display:"flex",alignItems:"center",gap:5,padding:"0 10px",boxShadow:shadow}}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M6.5 1L7.9 4.7H12L8.8 7L10.1 11L6.5 8.7L2.9 11L4.2 7L1 4.7H5.1L6.5 1Z" fill={isDefault?T.accent:"none"} stroke={isDefault?T.accent:T.sub} strokeWidth="1.3" strokeLinejoin="round"/>
+            </svg>
+            <span style={{fontSize:10,fontWeight:700,color:isDefault?T.accent:T.sub,whiteSpace:"nowrap"}}>{isDefault?"Default":"Set Default"}</span>
+          </button>
 
           {/* speed */}
           <div style={{flexShrink:0,width:50,background:glass,borderRadius:10,padding:"5px 0",backdropFilter:"blur(10px)",border:`1px solid ${T.border}`,textAlign:"center",boxShadow:shadow}}>
@@ -975,7 +995,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
   const [mapTab,   setMapTab]   = useState("map");
   const [sosOpen,   setSosOpen]  = useState(false);
   const [sosSent,   setSosSent]  = useState(false);
-  const [fullMap,   setFullMap]  = useState(false);
+  const [fullMap,   setFullMap]  = useState(() => localStorage.getItem(`convoy_fullmap_default_${convoy.id}`) === "1");
   const [fSelId,    setFSelId]   = useState(null);
   const [members,   setMembers]  = useState(convoy.members);
   const [endConfirm,setEndConfirm]=useState(false);
