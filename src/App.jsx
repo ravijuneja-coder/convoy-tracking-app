@@ -1729,8 +1729,10 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
           </div>
         </div>
 
-        {/* Route map — outside the clipping card so zoom controls are visible */}
-        <div ref={mapWrapRef} style={{height:200,borderRadius:14,overflow:"hidden",marginBottom:14,border:`1px solid ${T.border}`}}/>
+        {/* Route map */}
+        <div style={{position:"relative",zIndex:0,height:200,borderRadius:14,overflow:"hidden",marginBottom:14,border:`1px solid ${T.border}`}}>
+          <div ref={mapWrapRef} style={{position:"absolute",inset:0}}/>
+        </div>
 
         {convoy.notes&&<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"12px 14px",marginBottom:14,display:"flex",gap:10}}>
           <Ic d={ICONS.note} size={15}/><span style={{fontSize:12,color:T.sub,lineHeight:1.5}}>{convoy.notes}</span>
