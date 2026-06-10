@@ -2813,6 +2813,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
           const time = ts
             ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}`
             : "";
+          console.log("[Notif] doc:", d.id, "type:", data.type, "status:", data.status, "convoyId:", data.convoyId);
           return {
             id: d.id,
             type: data.type || "invite",
@@ -3004,6 +3005,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                         <div style={{display:"flex",gap:8}}>
                           <button onClick={e=>{
                             e.stopPropagation();
+                            console.log("[View] tapped, a=", a);
                             markRead(a.id);
                             if (a.convoyId) {
                               getDoc(doc(db,"convoys",a.convoyId)).then(snap=>{
@@ -3025,6 +3027,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                           </button>
                           <button onClick={async e=>{
                             e.stopPropagation();
+                            console.log("[Accept] tapped, a=", a, "authUser=", authUser);
                             if (!authUser) {
                               // Not logged in — just navigate to join screen
                               onViewInvite?.({id:a.convoyId||"",name:a.convoyName||"Convoy",members:[],destination:"",date:""}, a);
