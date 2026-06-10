@@ -1563,6 +1563,14 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
   useEffect(() => {
     loadLeaflet().then(async L => {
       if (mapObjRef.current || !mapWrapRef.current) return;
+
+      if (!document.getElementById("lf-kf")) {
+        const s = document.createElement("style");
+        s.id = "lf-kf";
+        s.textContent = `@keyframes lf-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.3);opacity:.2}}`;
+        document.head.appendChild(s);
+      }
+
       const map = L.map(mapWrapRef.current, {
         zoomControl: false, attributionControl: false,
         dragging: true, scrollWheelZoom: false,
@@ -1574,7 +1582,6 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
       let startPt = convoy.startCoords ? [convoy.startCoords.lat, convoy.startCoords.lng] : null;
       let endPt   = convoy.destCoords   ? [convoy.destCoords.lat,  convoy.destCoords.lng]  : null;
 
-      // Geocode missing coords from label text
       if (!startPt && convoy.startingPoint) {
         try {
           const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(convoy.startingPoint)}&format=json&limit=1`);
@@ -1592,21 +1599,66 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
 
       if (!mapObjRef.current) return;
 
+      // Draw route line + endpoint markers
       if (startPt && endPt) {
         const coords = await fetchOSRMRoute([startPt, endPt]).catch(() => [startPt, endPt]);
         if (!mapObjRef.current) return;
-        L.polyline(coords, { color: convoy.color || "#3DD68C", weight: 4, opacity: .85 }).addTo(map);
-        L.marker(startPt, { icon: L.divIcon({ className:"", iconSize:[22,22], iconAnchor:[11,11],
-          html:`<div style="width:22px;height:22px;background:#4A9EFF;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>` }) }).addTo(map);
-        L.marker(endPt, { icon: L.divIcon({ className:"", iconSize:[26,26], iconAnchor:[13,13],
-          html:`<div style="width:26px;height:26px;background:${convoy.color||"#3DD68C"};border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.3);">🏁</div>` }) }).addTo(map);
-        map.fitBounds(L.latLngBounds([startPt, endPt]).pad(0.25));
-      } else if (startPt || endPt) {
-        const pt = startPt || endPt;
-        map.setView(pt, 12);
-        L.marker(pt, { icon: L.divIcon({ className:"", iconSize:[22,22], iconAnchor:[11,11],
-          html:`<div style="width:22px;height:22px;background:${convoy.color||"#3DD68C"};border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>` }) }).addTo(map);
+        L.polyline(coords, { color: convoy.color || "#3DD68C", weight: 4, opacity: .6 }).addTo(map);
+        L.marker(startPt, { icon: L.divIcon({ className:"", iconSize:[18,18], iconAnchor:[9,9],
+          html:`<div style="width:18px;height:18px;background:#4A9EFF;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>` }) }).addTo(map);
+        L.marker(endPt, { icon: L.divIcon({ className:"", iconSize:[24,24], iconAnchor:[12,12],
+          html:`<div style="width:24px;height:24px;background:${convoy.color||"#3DD68C"};border-radius:50%;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.3);">🏁</div>` }) }).addTo(map);
       }
+
+      // Fetch last-known GPS positions from Firestore locations subcollection
+      let savedPositions = {};
+      if (convoy.id) {
+        try {
+          const locSnap = await getDocs(collection(db, "convoys", String(convoy.id), "locations"));
+          locSnap.docs.forEach(d => {
+            const data = d.data();
+            if (data.lat != null && data.lng != null) savedPositions[d.id] = { lat: data.lat, lng: data.lng };
+          });
+        } catch(_) {}
+      }
+
+      // Place all member markers — use saved GPS if available, else spread near start
+      const members = convoy.members || [];
+      const memberBounds = [];
+      members.forEach((m, idx) => {
+        let lat, lng;
+        const saved = savedPositions[String(m.id)];
+        if (saved) {
+          lat = saved.lat; lng = saved.lng;
+        } else if (startPt) {
+          lat = startPt[0] + (idx * 0.002);
+          lng = startPt[1] + (idx * 0.001);
+        } else if (endPt) {
+          lat = endPt[0] + (idx * 0.002);
+          lng = endPt[1] + (idx * 0.001);
+        } else {
+          return;
+        }
+        memberBounds.push([lat, lng]);
+        const initials = (m.initials || (m.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2)).toUpperCase();
+        const color = m.color || "#3DD68C";
+        const R = 32;
+        const html = `<div style="position:relative;width:${R}px;height:${R}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 0 0 2px ${color},0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <span style="font-size:11px;font-weight:800;color:#fff;font-family:DM Sans,sans-serif;">${initials}</span>
+          <div style="position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);color:${color};font-size:9px;font-weight:800;white-space:nowrap;padding:2px 7px;border-radius:20px;font-family:DM Sans,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18);">${m.name||initials}</div>
+        </div>`;
+        L.marker([lat, lng], { icon: L.divIcon({ className:"", iconSize:[R,R], iconAnchor:[R/2,R/2], html }) }).addTo(map);
+      });
+
+      // Fit bounds to show route + markers
+      const allPts = [...(startPt ? [startPt] : []), ...(endPt ? [endPt] : []), ...memberBounds];
+      if (allPts.length >= 2) {
+        map.fitBounds(L.latLngBounds(allPts).pad(0.25));
+      } else if (allPts.length === 1) {
+        map.setView(allPts[0], 12);
+      }
+
+      setTimeout(() => { if (mapObjRef.current) mapObjRef.current.invalidateSize(); }, 100);
     });
     return () => { if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; } };
   }, [convoy.id]);
