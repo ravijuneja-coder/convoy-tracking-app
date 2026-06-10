@@ -1557,6 +1557,60 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
   const myMember = authUser ? convoy.members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase()) : null;
   const isMe = (m) => authUser ? m.name.toLowerCase() === authUser.name?.toLowerCase() : false;
 
+  const mapWrapRef = useRef(null);
+  const mapObjRef  = useRef(null);
+
+  useEffect(() => {
+    loadLeaflet().then(async L => {
+      if (mapObjRef.current || !mapWrapRef.current) return;
+      const map = L.map(mapWrapRef.current, {
+        zoomControl: false, attributionControl: false,
+        dragging: true, scrollWheelZoom: false,
+      });
+      mapObjRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      map.setView([22.5, 78.9], 5);
+
+      let startPt = convoy.startCoords ? [convoy.startCoords.lat, convoy.startCoords.lng] : null;
+      let endPt   = convoy.destCoords   ? [convoy.destCoords.lat,  convoy.destCoords.lng]  : null;
+
+      // Geocode missing coords from label text
+      if (!startPt && convoy.startingPoint) {
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(convoy.startingPoint)}&format=json&limit=1`);
+          const d = await r.json();
+          if (d[0]) startPt = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+        } catch(_) {}
+      }
+      if (!endPt && convoy.destination) {
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(convoy.destination)}&format=json&limit=1`);
+          const d = await r.json();
+          if (d[0]) endPt = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+        } catch(_) {}
+      }
+
+      if (!mapObjRef.current) return;
+
+      if (startPt && endPt) {
+        const coords = await fetchOSRMRoute([startPt, endPt]).catch(() => [startPt, endPt]);
+        if (!mapObjRef.current) return;
+        L.polyline(coords, { color: convoy.color || "#3DD68C", weight: 4, opacity: .85 }).addTo(map);
+        L.marker(startPt, { icon: L.divIcon({ className:"", iconSize:[22,22], iconAnchor:[11,11],
+          html:`<div style="width:22px;height:22px;background:#4A9EFF;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>` }) }).addTo(map);
+        L.marker(endPt, { icon: L.divIcon({ className:"", iconSize:[26,26], iconAnchor:[13,13],
+          html:`<div style="width:26px;height:26px;background:${convoy.color||"#3DD68C"};border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.3);">🏁</div>` }) }).addTo(map);
+        map.fitBounds(L.latLngBounds([startPt, endPt]).pad(0.25));
+      } else if (startPt || endPt) {
+        const pt = startPt || endPt;
+        map.setView(pt, 12);
+        L.marker(pt, { icon: L.divIcon({ className:"", iconSize:[22,22], iconAnchor:[11,11],
+          html:`<div style="width:22px;height:22px;background:${convoy.color||"#3DD68C"};border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>` }) }).addTo(map);
+      }
+    });
+    return () => { if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; } };
+  }, [convoy.id]);
+
   const STATUS_OPTS = [
     { key:"ready",    label:"✅ Ready",        color:"#3DD68C" },
     { key:"late",     label:"🕐 Running Late", color:"#F5A623" },
@@ -1609,6 +1663,9 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
               </div>
             </div>
           </div>
+
+          {/* Route map */}
+          <div ref={mapWrapRef} style={{height:160,borderRadius:12,overflow:"hidden",marginBottom:12,background:T.raised}}/>
 
           {/* Date / time row */}
           <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
