@@ -4852,12 +4852,16 @@ export default function App() {
     setConvoys(cs=>cs.filter(c=>String(c.id)!==String(id)));
     try {
       if (authUser?.uid && id) {
+        console.log("[Delete] attempting deleteDoc for id:", String(id), "type:", typeof id, "authUser.uid:", authUser.uid);
         await deleteDoc(doc(db, "convoys", String(id)));
+        console.log("[Delete] success for id:", String(id));
         flash(`"${name}" deleted`,"warn");
       } else {
+        console.log("[Delete] skipped Firestore — authUser:", authUser?.uid, "id:", id);
         flash(`"${name}" deleted`,"warn");
       }
     } catch (e) {
+      console.error("[Delete] FAILED for id:", String(id), "error:", e.code, e.message);
       deletedIds.current.delete(String(id));
       flash(`Failed to delete "${name}" — please try again`,"warn");
     }
