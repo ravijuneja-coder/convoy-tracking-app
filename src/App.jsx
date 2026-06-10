@@ -1572,8 +1572,8 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
       }
 
       const map = L.map(mapWrapRef.current, {
-        zoomControl: false, attributionControl: false,
-        dragging: true, scrollWheelZoom: false,
+        attributionControl: false,
+        dragging: true, scrollWheelZoom: true, touchZoom: true, zoomControl: true,
       });
       mapObjRef.current = map;
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
