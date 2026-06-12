@@ -5046,10 +5046,18 @@ export default function App() {
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser} onViewInvite={(convoy,notif)=>{
                     if (notif?._justAccepted) {
-                      const merged = {...convoy};
-                      setConvoys(cs=>cs.find(c=>c.id===merged.id)?cs.map(c=>c.id===merged.id?merged:c):[merged,...cs]);
-                      flash(`Joined "${merged.name}"! 🎉`);
-                      setActiveC(merged);
+                      // Don't overwrite existing convoy state — snapshot listener already has fresh data.
+                      // Only add if genuinely not in state yet (e.g. memberPhones listener not fired yet).
+                      setConvoys(cs => {
+                        const exists = cs.find(c => c.id === convoy.id);
+                        if (exists) {
+                          setActiveC(exists); // use the already-fresh snapshot version
+                          return cs;
+                        }
+                        setActiveC(convoy);
+                        return [convoy, ...cs];
+                      });
+                      flash(`Joined "${convoy.name}"! 🎉`);
                       setScreen("detail");
                       setNavTab("home");
                       return;
