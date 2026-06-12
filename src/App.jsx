@@ -2794,65 +2794,80 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
     } catch(_) {}
   };
 
-  // Listen for invite notifications from Firestore for this user's phone
+  // Listen for invite notifications from Firestore for this user
   useEffect(() => {
     if (!authUser?.uid) return;
 
-    let unsub = () => {};
+    let unsubPhone = () => {};
+    let unsubUid = () => {};
 
-    const startListener = (phone) => {
+    const parseNotif = (d) => {
+      const data = d.data();
+      const ts = data.createdAt?.toDate?.();
+      const time = ts ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}` : "";
+      return {
+        id: d.id,
+        type: data.type || "invite",
+        title: data.title || "You've been added to a convoy",
+        msg: data.msg || "",
+        convoyId: data.convoyId || null,
+        convoyName: data.convoyName || "",
+        memberCount: data.memberCount || null,
+        invitedBy: data.invitedBy || "",
+        status: data.status || "pending",
+        time,
+        unread: data.unread !== false,
+        _firestoreNotif: true,
+        _ts: ts ? ts.getTime() : 0,
+      };
+    };
+
+    const mergeNotifs = (phoneNotifs, uidNotifs) => {
+      const seen = new Set();
+      const merged = [];
+      [...phoneNotifs, ...uidNotifs].forEach(n => {
+        if (!seen.has(n.id)) { seen.add(n.id); merged.push(n); }
+      });
+      return merged.sort((a, b) => b._ts - a._ts);
+    };
+
+    let latestPhone = [];
+    let latestUid = [];
+
+    const applyMerge = () => {
+      const notifs = mergeNotifs(latestPhone, latestUid);
+      setAlerts(prev => [...notifs, ...prev.filter(a => !a._firestoreNotif)]);
+    };
+
+    const startPhoneListener = (phone) => {
       if (!phone) return;
-      const q = query(
-        collection(db, "notifications"),
-        where("toPhone", "==", phone)
-      );
-      unsub = onSnapshot(q, snap => {
-        const notifs = snap.docs.map(d => {
-          const data = d.data();
-          const ts = data.createdAt?.toDate?.();
-          const time = ts
-            ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")}`
-            : "";
-          console.log("[Notif] doc:", d.id, "type:", data.type, "status:", data.status, "convoyId:", data.convoyId);
-          return {
-            id: d.id,
-            type: data.type || "invite",
-            title: data.title || "You've been added to a convoy",
-            msg: data.msg || "",
-            convoyId: data.convoyId || null,
-            convoyName: data.convoyName || "",
-            memberCount: data.memberCount || null,
-            invitedBy: data.invitedBy || "",
-            status: data.status || "pending",
-            time,
-            unread: data.unread !== false,
-            _firestoreNotif: true,
-            _ts: ts ? ts.getTime() : 0,
-          };
-        }).sort((a, b) => b._ts - a._ts);
-        setAlerts(prev => {
-          const localAlerts = prev.filter(a => !a._firestoreNotif);
-          return [...notifs, ...localAlerts];
-        });
+      const q = query(collection(db, "notifications"), where("toPhone", "==", phone));
+      unsubPhone = onSnapshot(q, snap => {
+        latestPhone = snap.docs.map(parseNotif);
+        applyMerge();
       });
     };
 
+    // Always listen by uid too
+    const qUid = query(collection(db, "notifications"), where("toUid", "==", authUser.uid));
+    unsubUid = onSnapshot(qUid, snap => {
+      latestUid = snap.docs.map(parseNotif);
+      applyMerge();
+    });
+
     const phone = authUser.phone?.replace(/\D/g,"").slice(-10);
-    console.log("[Notif] Listener starting for uid:", authUser.uid, "phone:", phone);
     if (phone) {
-      startListener(phone);
+      startPhoneListener(phone);
     } else {
-      // phone missing from authUser — fetch from Firestore
       getDoc(doc(db, "users", authUser.uid)).then(snap => {
         if (snap.exists()) {
           const p = snap.data().phone?.replace(/\D/g,"").slice(-10);
-          console.log("[Notif] Fetched phone from Firestore:", p);
-          startListener(p);
+          startPhoneListener(p);
         }
-      }).catch(e => console.error("[Notif] Fetch phone failed:", e));
+      }).catch(()=>{});
     }
 
-    return () => unsub();
+    return () => { unsubPhone(); unsubUid(); };
   }, [authUser?.uid]);
 
   const filtered = alerts.filter(a => {
@@ -4801,9 +4816,20 @@ export default function App() {
 
     for (const m of newMembers) {
       const phone = m.phone.replace(/\D/g,"").slice(-10);
-      console.log("[Invite] sending to phone:", phone, "convoyId:", convoyId, "name:", m.name);
+      // Look up the member's uid by phone so we can also deliver by uid
+      let toUid = null;
+      try {
+        const userSnap = await getDocs(query(collection(db, "users"), where("phone", "==", phone)));
+        if (!userSnap.empty) toUid = userSnap.docs[0].id;
+        // also try with +91 prefix
+        if (!toUid) {
+          const snap2 = await getDocs(query(collection(db, "users"), where("phone", "==", `+91${phone}`)));
+          if (!snap2.empty) toUid = snap2.docs[0].id;
+        }
+      } catch(_) {}
       await addDoc(collection(db, "notifications"), {
         toPhone: phone,
+        ...(toUid ? { toUid } : {}),
         type: "invite",
         title: `${adminName} added you to a convoy`,
         convoyName,
