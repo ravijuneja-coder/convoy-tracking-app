@@ -4816,15 +4816,14 @@ export default function App() {
 
     for (const m of newMembers) {
       const phone = m.phone.replace(/\D/g,"").slice(-10);
-      // Look up the member's uid by phone so we can also deliver by uid
+      // Look up the member's uid by phone (try multiple formats)
       let toUid = null;
       try {
-        const userSnap = await getDocs(query(collection(db, "users"), where("phone", "==", phone)));
-        if (!userSnap.empty) toUid = userSnap.docs[0].id;
-        // also try with +91 prefix
-        if (!toUid) {
-          const snap2 = await getDocs(query(collection(db, "users"), where("phone", "==", `+91${phone}`)));
-          if (!snap2.empty) toUid = snap2.docs[0].id;
+        const phoneFull = m.phone.replace(/\D/g,"");
+        const formats = [phone, phoneFull, `+91${phone}`, `91${phone}`];
+        for (const fmt of formats) {
+          const snap = await getDocs(query(collection(db, "users"), where("phone", "==", fmt)));
+          if (!snap.empty) { toUid = snap.docs[0].id; break; }
         }
       } catch(_) {}
       await addDoc(collection(db, "notifications"), {
