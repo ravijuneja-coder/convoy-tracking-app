@@ -2198,7 +2198,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
           )}
         </div>
         <div style={{padding:"12px 18px 20px",borderTop:`1px solid ${T.border}`}}>
-          <button onClick={()=>valid&&onSave({...form,id:convoy?.id||Date.now(),pitStops})} disabled={!valid}
+          <button onClick={()=>valid&&onSave({...form,id:convoy?.id||undefined,pitStops})} disabled={!valid}
             style={{width:"100%",padding:"15px",borderRadius:14,background:valid?T.accent:T.muted,border:"none",color:valid?(T.isDark?"#080B12":"#fff"):T.surface,fontSize:15,fontWeight:800,cursor:valid?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <Ic d={ICONS.check} size={17} color={valid?(T.isDark?"#080B12":"#fff"):T.surface} sw={2.5}/>{editing?"Save Changes":"Create Convoy"}
           </button>
@@ -4936,23 +4936,42 @@ export default function App() {
     const existing = data.id ? convoys.find(c=>c.id===data.id) : null;
     const phones = memberPhones(data.members || []);
     if (existing && data.id) {
+      // Check if this doc actually exists in Firestore (legacy convoys may have Date.now() IDs with no real doc)
+      let firestoreDocExists = false;
+      let latestSnap = null;
       try {
-        // Fetch latest Firestore members to preserve anyone who accepted an invite
-        // after the form was opened (they'd be wiped if we just write data.members)
-        let finalMembers = data.members || [];
+        latestSnap = await getDoc(doc(db, "convoys", String(data.id)));
+        firestoreDocExists = latestSnap.exists();
+      } catch(_) {}
+
+      if (!firestoreDocExists) {
+        // No Firestore doc — create fresh with addDoc (discards the legacy numeric ID)
         try {
-          const latestSnap = await getDoc(doc(db, "convoys", String(data.id)));
-          if (latestSnap.exists()) {
-            const latestMembers = latestSnap.data().members || [];
-            const formPhones = new Set(finalMembers.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean));
-            // Add any member in Firestore that isn't already in the form (accepted via invite)
-            const extraMembers = latestMembers.filter(m => {
-              const p = m.phone?.replace(/\D/g,"").slice(-10);
-              return p && !formPhones.has(p);
-            });
-            finalMembers = [...finalMembers, ...extraMembers];
-          }
-        } catch(_) {}
+          const newData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+          delete newData.id;
+          const ref = await addDoc(collection(db, "convoys"), newData);
+          const savedConvoy = { ...newData, id: ref.id };
+          setConvoys(cs => [savedConvoy, ...cs.filter(c => String(c.id) !== String(data.id))]);
+          flash(`"${data.name}" saved!`);
+        } catch (e) {
+          console.error("[handleSave] addDoc (recovery) failed:", e.code, e.message);
+          flash(`Failed to save — ${e.code || e.message}`, "warn");
+        }
+        setSheet(null);
+        return;
+      }
+
+      try {
+        let finalMembers = data.members || [];
+        if (latestSnap?.exists()) {
+          const latestMembers = latestSnap.data().members || [];
+          const formPhones = new Set(finalMembers.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean));
+          const extraMembers = latestMembers.filter(m => {
+            const p = m.phone?.replace(/\D/g,"").slice(-10);
+            return p && !formPhones.has(p);
+          });
+          finalMembers = [...finalMembers, ...extraMembers];
+        }
         const finalPhones = memberPhones(finalMembers);
         await updateDoc(doc(db, "convoys", String(data.id)), { ...data, members: finalMembers, memberPhones: finalPhones, ownerUid: authUser.uid, updatedAt: serverTimestamp() });
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data, members: finalMembers}));
