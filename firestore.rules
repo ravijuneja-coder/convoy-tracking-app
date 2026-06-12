@@ -2,12 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Convoys: owner can read/write/delete; any authenticated user can read/update (member check done client-side)
+    // Convoys: any auth user can read/create; only owner can update/delete
+    // Exception: members can update to join (add themselves to memberPhones/members)
     match /convoys/{convoyId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow update: if request.auth != null && (
+        resource.data.ownerUid == request.auth.uid ||
+        onlyJoiningAsmember()
+      );
+      allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+    }
+
+    function onlyJoiningAsmember() {
+      // Allow update only if the only changed fields are members and memberPhones
+      let allowedFields = ['members', 'memberPhones'];
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
     }
 
     // Notifications: any authenticated user can read/write (phone-based delivery requires open read)
