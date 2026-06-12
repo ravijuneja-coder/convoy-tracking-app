@@ -4930,8 +4930,25 @@ export default function App() {
     const phones = memberPhones(data.members || []);
     if (existing) {
       try {
-        await updateDoc(doc(db, "convoys", String(data.id)), { ...data, memberPhones: phones, ownerUid: authUser.uid, updatedAt: serverTimestamp() });
-        if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
+        // Fetch latest Firestore members to preserve anyone who accepted an invite
+        // after the form was opened (they'd be wiped if we just write data.members)
+        let finalMembers = data.members || [];
+        try {
+          const latestSnap = await getDoc(doc(db, "convoys", String(data.id)));
+          if (latestSnap.exists()) {
+            const latestMembers = latestSnap.data().members || [];
+            const formPhones = new Set(finalMembers.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean));
+            // Add any member in Firestore that isn't already in the form (accepted via invite)
+            const extraMembers = latestMembers.filter(m => {
+              const p = m.phone?.replace(/\D/g,"").slice(-10);
+              return p && !formPhones.has(p);
+            });
+            finalMembers = [...finalMembers, ...extraMembers];
+          }
+        } catch(_) {}
+        const finalPhones = memberPhones(finalMembers);
+        await updateDoc(doc(db, "convoys", String(data.id)), { ...data, members: finalMembers, memberPhones: finalPhones, ownerUid: authUser.uid, updatedAt: serverTimestamp() });
+        if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data, members: finalMembers}));
         flash(`"${data.name}" updated`);
       } catch (e) {
         console.error("[handleSave] updateDoc failed:", e.code, e.message);
