@@ -4930,13 +4930,12 @@ export default function App() {
     const phones = memberPhones(data.members || []);
     if (existing) {
       try {
-        await updateDoc(doc(db, "convoys", String(data.id)), { ...data, memberPhones: phones, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, "convoys", String(data.id)), { ...data, memberPhones: phones, ownerUid: authUser.uid, updatedAt: serverTimestamp() });
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
         flash(`"${data.name}" updated`);
       } catch (e) {
-        setConvoys(cs=>cs.map(c=>c.id===data.id?{...c,...data}:c));
-        if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data}));
-        flash(`"${data.name}" updated`);
+        console.error("[handleSave] updateDoc failed:", e.code, e.message);
+        flash(`Failed to save — ${e.code || e.message}`, "warn");
       }
       await sendMemberNotifications(data.name, data.members, existing.members, data.id);
       await sendUpdateNotifications(data, existing);
