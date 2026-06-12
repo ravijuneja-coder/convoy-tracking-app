@@ -4859,12 +4859,15 @@ export default function App() {
     setConvoys(cs=>cs.filter(c=>String(c.id)!==id));
     try {
       if (authUser?.uid && id) {
+        console.log("[Delete] updating id:", id, "authUser.uid:", authUser.uid);
         await updateDoc(doc(db, "convoys", id), { deleted: true, deletedAt: serverTimestamp() });
+        console.log("[Delete] updateDoc succeeded");
         flash(`"${name}" deleted`,"warn");
       } else {
         flash(`"${name}" deleted`,"warn");
       }
     } catch (e) {
+      console.error("[Delete] FAILED:", e.code, e.message);
       flash(`Failed to delete "${name}" — check permissions`,"warn");
     }
   };
