@@ -3055,6 +3055,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                             }
                             try {
                               const snap = await getDoc(doc(db,"convoys",String(a.convoyId)));
+                              console.log("[Accept] convoyId:", a.convoyId, "exists:", snap.exists());
                               if (!snap.exists()) {
                                 updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                                 markRead(a.id);
@@ -3067,6 +3068,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 const uSnap = await getDoc(doc(db,"users",authUser.uid));
                                 if (uSnap.exists()) myPhone = uSnap.data().phone?.replace(/\D/g,"").slice(-10) || "";
                               }
+                              console.log("[Accept] myPhone:", myPhone, "authUser.uid:", authUser.uid);
                               const alreadyMember = myPhone && (convoyData.members||[]).some(m =>
                                 m.phone?.replace(/\D/g,"").slice(-10) === myPhone
                               );
@@ -3088,6 +3090,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                               markRead(a.id);
                               notifyAdminOfResponse(a, true);
                               const joinedConvoy = {...convoyData, id: String(a.convoyId)};
+                              console.log("[Accept] joinedConvoy.id:", joinedConvoy.id, "memberPhones:", convoyData.memberPhones);
                               onViewInvite?.(joinedConvoy, {...a, _justAccepted: true});
                             } catch(_) {}
                           }} style={{flex:1,padding:"9px 0",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}55`,cursor:"pointer",fontSize:12,fontWeight:800,color:T.accent}}>
