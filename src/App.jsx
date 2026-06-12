@@ -4933,9 +4933,9 @@ export default function App() {
 
   const handleSave = async (data) => {
     if (!authUser?.uid) return;
-    const existing = convoys.find(c=>c.id===data.id);
+    const existing = data.id ? convoys.find(c=>c.id===data.id) : null;
     const phones = memberPhones(data.members || []);
-    if (existing) {
+    if (existing && data.id) {
       try {
         // Fetch latest Firestore members to preserve anyone who accepted an invite
         // after the form was opened (they'd be wiped if we just write data.members)
@@ -4973,9 +4973,9 @@ export default function App() {
         setConvoys(cs => [savedConvoy, ...cs.filter(c => String(c.id) !== String(data.id))]);
         flash(`"${data.name}" created!`);
       } catch (e) {
-        const newConvoy={...data,distance:data.distance||0,inviteCode:data.inviteCode||Math.floor(100000+Math.random()*900000).toString()};
-        setConvoys(cs=>[newConvoy,...cs]);
-        flash(`"${data.name}" created!`);
+        console.error("[handleSave] addDoc failed:", e.code, e.message);
+        flash(`Failed to create — ${e.code || e.message}`, "warn");
+        return;
       }
       await sendMemberNotifications(data.name, data.members, [], newConvoyId);
     }
