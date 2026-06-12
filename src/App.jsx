@@ -4801,6 +4801,7 @@ export default function App() {
 
     for (const m of newMembers) {
       const phone = m.phone.replace(/\D/g,"").slice(-10);
+      console.log("[Invite] sending to phone:", phone, "convoyId:", convoyId, "name:", m.name);
       await addDoc(collection(db, "notifications"), {
         toPhone: phone,
         type: "invite",
