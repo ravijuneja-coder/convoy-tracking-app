@@ -4778,8 +4778,7 @@ export default function App() {
 
           const unsubOwned = onSnapshot(ownedQ, snap => {
             snap.docs.forEach(d => {
-              console.log("[Snapshot] id:", d.id, "name:", d.data().name, "deleted:", d.data().deleted);
-              if (!deletedIds.current.has(d.id) && !d.data().deleted) ownedMap[d.id] = { id: d.id, ...d.data() };
+              if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...d.data() };
               else delete ownedMap[d.id];
             });
             Object.keys(ownedMap).forEach(id => {
@@ -4789,7 +4788,7 @@ export default function App() {
           });
           const unsubMember = memberQ ? onSnapshot(memberQ, snap => {
             snap.docs.forEach(d => {
-              if (!deletedIds.current.has(d.id) && !d.data().deleted) memberMap[d.id] = { id: d.id, ...d.data() };
+              if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...d.data() };
               else delete memberMap[d.id];
             });
             Object.keys(memberMap).forEach(id => {
@@ -4899,18 +4898,22 @@ export default function App() {
     deletedIds.current.add(id);
     if(activeC?.id===id){setScreen("home");setActiveC(null);}
     setConvoys(cs=>cs.filter(c=>String(c.id)!==id));
+    flash(`"${name}" deleted`,"warn");
+    if (!authUser?.uid) return;
     try {
-      if (authUser?.uid && id) {
-        console.log("[Delete] updating id:", id, "authUser.uid:", authUser.uid);
-        await updateDoc(doc(db, "convoys", id), { deleted: true, deletedAt: serverTimestamp() });
-        console.log("[Delete] updateDoc succeeded");
-        flash(`"${name}" deleted`,"warn");
-      } else {
-        flash(`"${name}" deleted`,"warn");
+      // Try direct delete first
+      const directSnap = await getDoc(doc(db,"convoys",id));
+      if (directSnap.exists()) {
+        await deleteDoc(doc(db,"convoys",id));
+        return;
       }
-    } catch (e) {
-      console.error("[Delete] FAILED:", e.code, e.message);
-      flash(`Failed to delete "${name}" — check permissions`,"warn");
+      // Stale numeric ID — find by name and ownerUid
+      const fallback = await getDocs(query(collection(db,"convoys"), where("name","==",name), where("ownerUid","==",authUser.uid)));
+      if (!fallback.empty) {
+        await Promise.all(fallback.docs.map(d => deleteDoc(doc(db,"convoys",d.id))));
+      }
+    } catch(e) {
+      console.error("[Delete] failed:", e.code, e.message);
     }
   };
 
