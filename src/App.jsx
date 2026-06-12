@@ -1147,12 +1147,14 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
           <span style={{fontSize:13}}>🆘</span>
           <span style={{fontSize:11,fontWeight:800,color:T.red,letterSpacing:.6}}>SOS</span>
         </button>
-        <button onClick={()=>onEdit(convoy)} style={{width:32,height:32,borderRadius:9,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Ic d={ICONS.edit} size={13} color={T.accent}/>
-        </button>
-        <button onClick={()=>onDelete(convoy)} style={{width:32,height:32,borderRadius:9,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <Ic d={ICONS.trash} size={13} color={T.red}/>
-        </button>
+        {authUser && convoy.ownerUid === authUser.uid && <>
+          <button onClick={()=>onEdit(convoy)} style={{width:32,height:32,borderRadius:9,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={ICONS.edit} size={13} color={T.accent}/>
+          </button>
+          <button onClick={()=>onDelete(convoy)} style={{width:32,height:32,borderRadius:9,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={ICONS.trash} size={13} color={T.red}/>
+          </button>
+        </>}
       </div>
 
       {/* progress */}
@@ -1504,19 +1506,21 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
             )}
           </div>
 
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
-            </button>
-            {isAdmin&&(
-              <button onClick={()=>setEndConfirm(true)} style={{padding:"14px",borderRadius:14,background:`${T.amber}14`,border:`1.5px solid ${T.amber}`,color:T.amber,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                🏁 End Convoy Early
+          {authUser && convoy.ownerUid === authUser.uid && (
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
               </button>
-            )}
-            <button onClick={()=>onDelete(convoy)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              <Ic d={ICONS.trash} size={16} color={T.red} sw={2}/> Delete Convoy
-            </button>
-          </div>
+              {isAdmin&&(
+                <button onClick={()=>setEndConfirm(true)} style={{padding:"14px",borderRadius:14,background:`${T.amber}14`,border:`1.5px solid ${T.amber}`,color:T.amber,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  🏁 End Convoy Early
+                </button>
+              )}
+              <button onClick={()=>onDelete(convoy)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Ic d={ICONS.trash} size={16} color={T.red} sw={2}/> Delete Convoy
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1828,19 +1832,21 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             );
           })}
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {isUpcoming&&onStartConvoy&&(
-            <button onClick={()=>onStartConvoy(convoy)} style={{padding:"14px",borderRadius:14,background:"#1a3a25",border:"1.5px solid #3DD68C",color:"#3DD68C",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              🚀 Start Convoy
+        {authUser && convoy.ownerUid === authUser.uid && (
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {isUpcoming&&onStartConvoy&&(
+              <button onClick={()=>onStartConvoy(convoy)} style={{padding:"14px",borderRadius:14,background:"#1a3a25",border:"1.5px solid #3DD68C",color:"#3DD68C",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                🚀 Start Convoy
+              </button>
+            )}
+            <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
             </button>
-          )}
-          <button onClick={()=>onEdit(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.edit} size={16} color={T.accent} sw={2}/> Edit Convoy
-          </button>
-          <button onClick={()=>onDelete(convoy)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.trash} size={16} color={T.red} sw={2}/> Delete Convoy
-          </button>
-        </div>
+            <button onClick={()=>onDelete(convoy)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic d={ICONS.trash} size={16} color={T.red} sw={2}/> Delete Convoy
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2258,8 +2264,9 @@ const DeleteSheet = ({ convoy, onConfirm, onClose }) => {
 };
 
 // ── Convoy Card ───────────────────────────────────────────────────────────────
-const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
+const ConvoyCard = ({ convoy, onTap, onEdit, onDelete, authUser }) => {
   const T=useT();
+  const isOwner = authUser && convoy.ownerUid === authUser.uid;
   return (
     <div onClick={()=>onTap(convoy)} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:18,cursor:"pointer",transition:"box-shadow .15s",overflow:"hidden"}}
       onMouseEnter={e=>e.currentTarget.style.boxShadow=`0 4px 20px ${convoy.color}22`}
@@ -2273,12 +2280,12 @@ const ConvoyCard = ({ convoy, onTap, onEdit, onDelete }) => {
             <div style={{fontSize:15,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"left"}}>{convoy.name}</div>
           </div>
           <Badge status={convoy.status}/>
-          <button onClick={e=>{e.stopPropagation();onEdit(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          {isOwner && <button onClick={e=>{e.stopPropagation();onEdit(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <Ic d={ICONS.edit} size={12} color={T.accent}/>
-          </button>
-          <button onClick={e=>{e.stopPropagation();onDelete(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          </button>}
+          {isOwner && <button onClick={e=>{e.stopPropagation();onDelete(convoy);}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <Ic d={ICONS.trash} size={12} color={T.red}/>
-          </button>
+          </button>}
         </div>
         {/* Row 2: route (startingPoint → destination) */}
         {convoy.startingPoint ? (
@@ -2373,7 +2380,7 @@ const MembersModal = ({ allMembers, onClose }) => {
 };
 
 // ── Home Screen ───────────────────────────────────────────────────────────────
-const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpenPricing }) => {
+const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpenPricing, authUser }) => {
   const T=useT();
   const [search,setSearch]=useState(""), [filter,setFilter]=useState("all");
   const [showMembers,setShowMembers]=useState(false);
@@ -2458,7 +2465,7 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
           return (
             <div key={c.id} style={{marginBottom:12,position:"relative"}}>
               <div style={{opacity:locked?.35:1,pointerEvents:locked?"none":"auto"}}>
-                <ConvoyCard convoy={c} onTap={onTap} onEdit={onEdit} onDelete={onDelete}/>
+                <ConvoyCard convoy={c} onTap={onTap} onEdit={onEdit} onDelete={onDelete} authUser={authUser}/>
               </div>
               {locked&&(
                 <div onClick={onOpenPricing} style={{position:"absolute",inset:0,borderRadius:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",background:`${T.isDark?"rgba(8,11,18,.6)":"rgba(255,255,255,.6)"}`,backdropFilter:"blur(3px)",border:"1.5px solid #4A9EFF44"}}>
@@ -5037,7 +5044,7 @@ export default function App() {
             ) : (
               <>
                 {screen==="home"&&(
-                  <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)}
+                  <HomeScreen convoys={convoys} onTap={c=>{setActiveC(c);setScreen("detail");}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser}
                     isPremium={isPremium} onOpenPricing={()=>setScreen("pricing")}
                     onNew={()=>{
                       const activeConvoys = convoys.filter(c=>c.status!=="completed").length;
