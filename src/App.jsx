@@ -3061,8 +3061,14 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 return;
                               }
                               const convoyData = snap.data();
-                              const alreadyMember = (convoyData.members||[]).some(m =>
-                                m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone?.replace(/\D/g,"").slice(-10)
+                              // Resolve phone — fetch from Firestore if missing in authUser
+                              let myPhone = authUser.phone?.replace(/\D/g,"").slice(-10) || "";
+                              if (!myPhone) {
+                                const uSnap = await getDoc(doc(db,"users",authUser.uid));
+                                if (uSnap.exists()) myPhone = uSnap.data().phone?.replace(/\D/g,"").slice(-10) || "";
+                              }
+                              const alreadyMember = myPhone && (convoyData.members||[]).some(m =>
+                                m.phone?.replace(/\D/g,"").slice(-10) === myPhone
                               );
                               if (!alreadyMember) {
                                 const newMember = {
@@ -3071,7 +3077,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                   initials: (authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),
                                   color: "#3DD68C",
                                   role: "member",
-                                  phone: authUser.phone || "",
+                                  phone: myPhone,
                                 };
                                 const updatedMembers = [...(convoyData.members||[]), newMember];
                                 const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
