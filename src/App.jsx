@@ -2763,6 +2763,7 @@ const ALERT_META = {
   invite:           { icon:"🚗", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Invite"   },
   invite_accepted:  { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Accepted" },
   invite_declined:  { icon:"❌", iconBg:"#FF4F4F22", iconColor:"#FF4F4F", label:"Declined" },
+  convoy_update:    { icon:"✏️", iconBg:"#F5A62322", iconColor:"#F5A623", label:"Updated"  },
 };
 
 const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin, authUser, onViewInvite }) => {
@@ -2962,7 +2963,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
         ) : filtered.map((a, idx) => {
           const meta = ALERT_META[a.type] || ALERT_META.live;
           return (
-            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId&&a.status==="pending") { getDoc(doc(db,"convoys",String(a.convoyId))).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } }}
+            <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId&&a.status==="pending") { getDoc(doc(db,"convoys",String(a.convoyId))).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } if(a.type==="convoy_update"&&a.convoyId) { onTapConvoy?.(convoys.find(c=>c.id===a.convoyId)||{id:a.convoyId,name:a.convoyName}); } }}
               style={{background:a.unread?T.raised:T.card,border:`1px solid ${a.unread?T.borderHi:T.border}`,borderRadius:16,padding:"13px 13px",marginBottom:10,cursor:"pointer",position:"relative",transition:"background .2s",animation:`slideDown .25s ease ${idx*.04}s both`}}>
 
               {/* Unread dot */}
@@ -3122,6 +3123,30 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                       <div style={{display:"flex",justifyContent:"flex-end",marginTop:6}}>
                         <button onClick={e=>{e.stopPropagation();dismiss(a.id);}}
                           style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",color:T.muted,fontSize:11}}>
+                          <Ic d={ICONS.close} size={12} color={T.muted}/>
+                        </button>
+                      </div>
+                    </>
+                  ) : a.type === "convoy_update" ? (
+                    <>
+                      <div style={{fontSize:12,color:T.muted,lineHeight:1.45,marginBottom:8}}>{a.msg}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:8}}>
+                        {a.updatedBy && (
+                          <div style={{background:T.bg,borderRadius:10,padding:"4px 9px",border:`1px solid ${T.border}`}}>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:1}}>Updated by</div>
+                            <div style={{fontSize:12,fontWeight:800,color:T.text}}>{a.updatedBy}</div>
+                          </div>
+                        )}
+                        {a.convoyName && (
+                          <div style={{background:T.bg,borderRadius:10,padding:"4px 9px",border:`1px solid ${T.border}`,flex:1,minWidth:80}}>
+                            <div style={{fontSize:9,fontWeight:700,color:T.muted,textTransform:"uppercase",letterSpacing:.6,marginBottom:1}}>Convoy</div>
+                            <div style={{fontSize:12,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.convoyName}</div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div style={{fontSize:11,color:T.accent,fontWeight:700}}>Tap to view convoy →</div>
+                        <button onClick={e=>{e.stopPropagation();dismiss(a.id);}} style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px"}}>
                           <Ic d={ICONS.close} size={12} color={T.muted}/>
                         </button>
                       </div>
@@ -4858,6 +4883,47 @@ export default function App() {
   const memberPhones = (members) =>
     [...new Set(members.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
 
+  const sendUpdateNotifications = async (data, existing) => {
+    const adminName = authUser?.name || "Admin";
+    const adminPhone = authUser?.phone?.replace(/\D/g,"").slice(-10);
+    // Notify all current members except the admin who made the change
+    const members = (data.members || []).slice(1); // skip index 0 (admin slot)
+    const changed = [];
+    if (existing.name !== data.name) changed.push("name");
+    if (existing.date !== data.date) changed.push("date");
+    if (existing.destination !== data.destination) changed.push("destination");
+    if (existing.time !== data.time) changed.push("time");
+    if (existing.startingPoint !== data.startingPoint) changed.push("meeting point");
+    if (!changed.length) return; // nothing meaningful changed
+
+    const whatChanged = changed.join(", ");
+    for (const m of members) {
+      const phone = m.phone?.replace(/\D/g,"").slice(-10);
+      if (!phone || phone === adminPhone) continue;
+      let toUid = null;
+      try {
+        const phoneFull = m.phone.replace(/\D/g,"");
+        const formats = [phone, phoneFull, `+91${phone}`, `91${phone}`];
+        for (const fmt of formats) {
+          const snap = await getDocs(query(collection(db, "users"), where("phone", "==", fmt)));
+          if (!snap.empty) { toUid = snap.docs[0].id; break; }
+        }
+      } catch(_) {}
+      await addDoc(collection(db, "notifications"), {
+        toPhone: phone,
+        ...(toUid ? { toUid } : {}),
+        type: "convoy_update",
+        title: `${adminName} updated "${data.name}"`,
+        msg: `Changed: ${whatChanged}`,
+        convoyName: data.name,
+        convoyId: data.id,
+        updatedBy: adminName,
+        unread: true,
+        createdAt: serverTimestamp(),
+      }).catch(()=>{});
+    }
+  };
+
   const handleSave = async (data) => {
     if (!authUser?.uid) return;
     const existing = convoys.find(c=>c.id===data.id);
@@ -4873,6 +4939,7 @@ export default function App() {
         flash(`"${data.name}" updated`);
       }
       await sendMemberNotifications(data.name, data.members, existing.members, data.id);
+      await sendUpdateNotifications(data, existing);
     } else {
       let newConvoyId = null;
       try {
