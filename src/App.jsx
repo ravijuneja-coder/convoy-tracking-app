@@ -4749,6 +4749,7 @@ export default function App() {
 
           const unsubOwned = onSnapshot(ownedQ, snap => {
             snap.docs.forEach(d => {
+              console.log("[Snapshot] id:", d.id, "name:", d.data().name, "deleted:", d.data().deleted);
               if (!deletedIds.current.has(d.id) && !d.data().deleted) ownedMap[d.id] = { id: d.id, ...d.data() };
               else delete ownedMap[d.id];
             });
