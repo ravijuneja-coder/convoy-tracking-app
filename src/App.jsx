@@ -4840,6 +4840,8 @@ export default function App() {
         const newData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
         const ref = await addDoc(collection(db, "convoys"), newData);
         newConvoyId = ref.id;
+        const savedConvoy = { ...data, ...newData, id: ref.id };
+        setConvoys(cs => [savedConvoy, ...cs.filter(c => String(c.id) !== String(data.id))]);
         flash(`"${data.name}" created!`);
       } catch (e) {
         const newConvoy={...data,distance:data.distance||0,inviteCode:data.inviteCode||Math.floor(100000+Math.random()*900000).toString()};
