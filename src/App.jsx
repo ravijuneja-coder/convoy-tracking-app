@@ -3054,8 +3054,13 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                               return;
                             }
                             try {
-                              const snap = await getDoc(doc(db,"convoys",String(a.convoyId)));
+                              let snap = await getDoc(doc(db,"convoys",String(a.convoyId)));
                               console.log("[Accept] convoyId:", a.convoyId, "exists:", snap.exists());
+                              // Fallback: numeric/stale ID — find convoy by name
+                              if (!snap.exists() && a.convoyName) {
+                                const fallback = await getDocs(query(collection(db,"convoys"), where("name","==",a.convoyName)));
+                                if (!fallback.empty) snap = fallback.docs[0];
+                              }
                               if (!snap.exists()) {
                                 updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                                 markRead(a.id);
@@ -3083,13 +3088,13 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 };
                                 const updatedMembers = [...(convoyData.members||[]), newMember];
                                 const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
-                                await updateDoc(doc(db,"convoys",String(a.convoyId)), { members: updatedMembers, memberPhones: updatedPhones });
+                                await updateDoc(doc(db,"convoys",snap.id), { members: updatedMembers, memberPhones: updatedPhones });
                                 convoyData.members = updatedMembers;
                               }
                               await updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
                               markRead(a.id);
                               notifyAdminOfResponse(a, true);
-                              const joinedConvoy = {...convoyData, id: String(a.convoyId)};
+                              const joinedConvoy = {...convoyData, id: snap.id};
                               console.log("[Accept] joinedConvoy.id:", joinedConvoy.id, "memberPhones:", convoyData.memberPhones);
                               onViewInvite?.(joinedConvoy, {...a, _justAccepted: true});
                             } catch(_) {}
