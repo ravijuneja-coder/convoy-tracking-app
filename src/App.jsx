@@ -199,7 +199,7 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
 const LocationPickerMap = ({ value, onChange, onClose, accentColor, pinColor, title="Pick Destination" }) => {
   const T = useT();
   const accent = accentColor || T.accent;
-  const pin    = pinColor    || "#3DD68C";
+  const pin    = pinColor    || T.accent;
   const wrapRef     = useRef(null);
   const mapRef      = useRef(null);
   const markerRef   = useRef(null);
@@ -221,7 +221,7 @@ const LocationPickerMap = ({ value, onChange, onClose, accentColor, pinColor, ti
   const dropPin = (L, map, lat, lng) => {
     if (markerRef.current) markerRef.current.remove();
     markerRef.current = L.marker([lat, lng], {
-      icon: L.divIcon({ className:"", iconSize:[28,28], iconAnchor:[14,28], html:pinHtml("#3DD68C") }),
+      icon: L.divIcon({ className:"", iconSize:[28,28], iconAnchor:[14,28], html:pinHtml(pin) }),
     }).addTo(map);
   };
 
@@ -457,7 +457,7 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef, positions }) => {
       : "";
     const label = isMe ? "★ You" : m.name;
     const lbgc  = isMe ? m.color : (T.isDark ? "rgba(10,13,22,.9)" : "rgba(255,255,255,.95)");
-    const ltxtc = isMe ? (T.isDark ? "#080B12" : "#fff") : m.color;
+    const ltxtc = isMe ? "#FFFFFF" : m.color;
     return `<div style="position:relative;width:${R}px;height:${R}px;${bdr};border-radius:50%;cursor:pointer;">
       ${pulse}${img}
       <div style="position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:${lbgc};color:${ltxtc};font-size:${isMe?10:9}px;font-weight:800;white-space:nowrap;padding:2px 8px;border-radius:20px;font-family:DM Sans,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2);">${label}</div>
@@ -492,7 +492,7 @@ const LiveMap = ({ members, selectedId, onSelect, outerMapRef, positions }) => {
       const routeWaypoints = [[28.5672, 77.3211], [28.6448, 77.2167]];
       fetchOSRMRoute(routeWaypoints).then(coords => {
         if (!mapRef.current) return;
-        L.polyline(coords, { color: "#1DB870", weight: 5, opacity: .8 }).addTo(map);
+        L.polyline(coords, { color: T.accent, weight: 5, opacity: .8 }).addTo(map);
       });
 
       // Destination marker
@@ -789,7 +789,7 @@ const FullscreenMap = ({ convoy, initialSelId, onClose, positions }) => {
   }, []);
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:70,display:"flex",flexDirection:"column",background:"#080B12",animation:"fsIn .3s cubic-bezier(.2,.8,.4,1)"}}>
+    <div style={{position:"fixed",inset:0,zIndex:70,display:"flex",flexDirection:"column",background:T.bg,animation:"fsIn .3s cubic-bezier(.2,.8,.4,1)"}}>
 
       {/* ════════════════════  MAP LAYER  ════════════════════ */}
       <div style={{flex:1,position:"relative",overflow:"hidden",minHeight:0}}>
@@ -1258,7 +1258,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
                     </div>
                     <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:1}}>
                       <span style={{fontSize:11,fontWeight:700,color:"#fff",whiteSpace:"nowrap"}}>{m.name}</span>
-                      <span style={{fontSize:9,fontWeight:600,color:stopped?"#FFBC42":"#3dd68c",whiteSpace:"nowrap"}}>{stopped?"⏸ Stopped":`${ld?.speed??0} km/h`}</span>
+                      <span style={{fontSize:9,fontWeight:600,color:stopped?T.amber:T.accent,whiteSpace:"nowrap"}}>{stopped?"⏸ Stopped":`${ld?.speed??0} km/h`}</span>
                     </div>
                   </button>
                 );
@@ -1661,11 +1661,11 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
       if (startPt && endPt) {
         const coords = await fetchOSRMRoute([startPt, endPt]).catch(() => [startPt, endPt]);
         if (!mapObjRef.current) return;
-        L.polyline(coords, { color: convoy.color || "#3DD68C", weight: 4, opacity: .6 }).addTo(map);
+        L.polyline(coords, { color: convoy.color || T.accent, weight: 4, opacity: .6 }).addTo(map);
         L.marker(startPt, { icon: L.divIcon({ className:"", iconSize:[18,18], iconAnchor:[9,9],
           html:`<div style="width:18px;height:18px;background:#4A9EFF;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>` }) }).addTo(map);
         L.marker(endPt, { icon: L.divIcon({ className:"", iconSize:[24,24], iconAnchor:[12,12],
-          html:`<div style="width:24px;height:24px;background:${convoy.color||"#3DD68C"};border-radius:50%;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.3);">🏁</div>` }) }).addTo(map);
+          html:`<div style="width:24px;height:24px;background:${convoy.color||T.accent};border-radius:50%;border:2.5px solid ${T.surface};display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.3);">🏁</div>` }) }).addTo(map);
       }
 
       // Fetch last-known GPS positions from Firestore locations subcollection
@@ -1696,7 +1696,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
         }
         memberBounds.push([lat, lng]);
         const initials = (m.initials || (m.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2)).toUpperCase();
-        const color = m.color || "#3DD68C";
+        const color = m.color || T.accent;
         const R = 32;
         const html = `<div style="position:relative;width:${R}px;height:${R+20}px;display:flex;flex-direction:column;align-items:center;">
           <div style="width:${R}px;height:${R}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 0 0 2px ${color},0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -1721,9 +1721,9 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
   }, [convoy.id, convoy.members.length]);
 
   const STATUS_OPTS = [
-    { key:"ready",    label:"✅ Ready",        color:"#3DD68C" },
-    { key:"late",     label:"🕐 Running Late", color:"#F5A623" },
-    { key:"enroute",  label:"🚗 En Route",     color:"#4A9EFF" },
+    { key:"ready",    label:"✅ Ready",        color:T.accent },
+    { key:"late",     label:"🕐 Running Late", color:T.amber  },
+    { key:"enroute",  label:"🚗 En Route",     color:T.blue   },
   ];
 
   return (
@@ -1852,7 +1852,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
         {authUser && convoy.ownerUid === authUser.uid && (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {isUpcoming&&onStartConvoy&&(
-              <button onClick={()=>onStartConvoy(convoy)} style={{padding:"14px",borderRadius:14,background:"#1a3a25",border:"1.5px solid #3DD68C",color:"#3DD68C",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <button onClick={()=>onStartConvoy(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 🚀 Start Convoy
               </button>
             )}
@@ -1879,7 +1879,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
     if(!authUser?.name) return [];
     const n=authUser.name.trim().replace(/\b\w/g,c=>c.toUpperCase());
     const initials=n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    return [{id:Date.now(),name:n,initials,phone:authUser.phone||"",car:"",color:"#3DD68C",role:"admin",isOwner:true}];
+    return [{id:Date.now(),name:n,initials,phone:authUser.phone||"",car:"",color:T.accent,role:"admin",isOwner:true}];
   };
   const blank={name:"",startingPoint:"",startCoords:null,destination:"",destCoords:null,distance:0,date:"",endDate:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
   const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:{...blank,members:makeDefaultMembers()});
@@ -2143,7 +2143,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                         <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${already?T.accent:T.border}`,background:already?T.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
                           {already&&<Ic d={ICONS.check} size={11} color={"#FFFFFF"} sw={2.5}/>}
                         </div>
-                        <div style={{width:34,height:34,borderRadius:10,background:`#4A9EFF22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#4A9EFF",flexShrink:0}}>
+                        <div style={{width:34,height:34,borderRadius:10,background:T.blueLo,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:T.blue,flexShrink:0}}>
                           {(m.initials||(m.name[0]||"?").toUpperCase())}
                         </div>
                         <div style={{flex:1,minWidth:0,textAlign:"left"}}>
@@ -2232,7 +2232,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
           }}
           onClose={()=>setShowStartPicker(false)}
           accentColor={T.blue}
-          pinColor="#4A9EFF"
+          pinColor={T.blue}
           title="Pick Starting Point"
         />
       )}
@@ -2485,7 +2485,7 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
               {locked&&(
                 <div onClick={onOpenPricing} style={{position:"absolute",inset:0,borderRadius:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",background:`${T.isDark?"rgba(8,11,18,.6)":"rgba(255,255,255,.6)"}`,backdropFilter:"blur(3px)",border:"1.5px solid #4A9EFF44"}}>
                   <span style={{fontSize:24}}>🔒</span>
-                  <span style={{fontSize:12,fontWeight:800,color:"#4A9EFF"}}>Upgrade to unlock</span>
+                  <span style={{fontSize:12,fontWeight:800,color:T.blue}}>Upgrade to unlock</span>
                   <span style={{fontSize:10,color:T.muted}}>Premium · ₹299/month</span>
                 </div>
               )}
@@ -2774,19 +2774,19 @@ const MapScreen = ({ convoys, onTapConvoy }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 const ALERT_SEED = [];
 
-const ALERT_META = {
-  sos:      { icon:"🆘", iconBg:"#FF4F4F22", iconColor:"#FF4F4F", label:"SOS"      },
-  gap:      { icon:"⚠️", iconBg:"#F5A62322", iconColor:"#F5A623", label:"Gap"      },
-  stopped:  { icon:"⏸",  iconBg:"#F5A62322", iconColor:"#F5A623", label:"Stopped"  },
-  live:     { icon:"🟢", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Live"     },
-  joined:   { icon:"👤", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Joined"   },
-  upcoming: { icon:"📅", iconBg:"#9B6EFF22", iconColor:"#9B6EFF", label:"Upcoming" },
-  done:     { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Done"     },
-  invite:           { icon:"🚗", iconBg:"#4A9EFF22", iconColor:"#4A9EFF", label:"Invite"   },
-  invite_accepted:  { icon:"✅", iconBg:"#3DD68C22", iconColor:"#3DD68C", label:"Accepted" },
-  invite_declined:  { icon:"❌", iconBg:"#FF4F4F22", iconColor:"#FF4F4F", label:"Declined" },
-  convoy_update:    { icon:"✏️", iconBg:"#F5A62322", iconColor:"#F5A623", label:"Updated"  },
-};
+const getAlertMeta = (T) => ({
+  sos:             { icon:"🆘", iconBg:`${T.red}22`,    iconColor:T.red,    label:"SOS"      },
+  gap:             { icon:"⚠️", iconBg:`${T.amber}22`,  iconColor:T.amber,  label:"Gap"      },
+  stopped:         { icon:"⏸",  iconBg:`${T.amber}22`,  iconColor:T.amber,  label:"Stopped"  },
+  live:            { icon:"🟢", iconBg:`${T.accent}22`, iconColor:T.accent, label:"Live"     },
+  joined:          { icon:"👤", iconBg:`${T.blue}22`,   iconColor:T.blue,   label:"Joined"   },
+  upcoming:        { icon:"📅", iconBg:`${T.violet}22`, iconColor:T.violet, label:"Upcoming" },
+  done:            { icon:"✅", iconBg:`${T.accent}22`, iconColor:T.accent, label:"Done"     },
+  invite:          { icon:"🚗", iconBg:`${T.blue}22`,   iconColor:T.blue,   label:"Invite"   },
+  invite_accepted: { icon:"✅", iconBg:`${T.accent}22`, iconColor:T.accent, label:"Accepted" },
+  invite_declined: { icon:"❌", iconBg:`${T.red}22`,    iconColor:T.red,    label:"Declined" },
+  convoy_update:   { icon:"✏️", iconBg:`${T.amber}22`,  iconColor:T.amber,  label:"Updated"  },
+});
 
 const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, onGoJoin, authUser, onViewInvite }) => {
   const T = useT();
@@ -2983,6 +2983,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
             </div>
           </div>
         ) : filtered.map((a, idx) => {
+          const ALERT_META = getAlertMeta(T);
           const meta = ALERT_META[a.type] || ALERT_META.live;
           return (
             <div key={a.id} onClick={()=>{ markRead(a.id); if(a.type==="invite"&&a.convoyId&&a.status==="pending") { getDoc(doc(db,"convoys",String(a.convoyId))).then(snap=>{ if(snap.exists()&&onViewInvite) onViewInvite({...snap.data(),id:snap.id},a); }).catch(()=>{}); } if(a.type==="convoy_update"&&a.convoyId) { onTapConvoy?.(convoys.find(c=>c.id===a.convoyId)||{id:a.convoyId,name:a.convoyName}); } }}
@@ -3105,7 +3106,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                   id: Date.now(),
                                   name: authUser.name,
                                   initials: (authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),
-                                  color: "#3DD68C",
+                                  color: T.accent,
                                   role: "member",
                                   phone: myPhone,
                                 };
@@ -3289,7 +3290,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       setPmEditId(null); setPmName(""); setPmPhone(""); setPmOpen(false); return;
     }
     const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    setProfileMembers(ms=>[...ms,{id:Date.now(),name:pmName.trim(),initials,phone:pmPhone.trim(),color:"#4A9EFF"}]);
+    setProfileMembers(ms=>[...ms,{id:Date.now(),name:pmName.trim(),initials,phone:pmPhone.trim(),color:T.blue}]);
     setPmName(""); setPmPhone(""); setPmOpen(false);
   };
   const [activeField, setActiveField] = useState(null); // inline field edit
@@ -3495,11 +3496,11 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                   {isPremium?"👑":"🚀"}
                 </div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:800,color:isPremium?"#4A9EFF":"#F5A623"}}>{isPremium?"Premium Active":"Upgrade to Premium"}</div>
+                  <div style={{fontSize:13,fontWeight:800,color:isPremium?T.blue:T.amber}}>{isPremium?"Premium Active":"Upgrade to Premium"}</div>
                   <div style={{fontSize:11,color:T.muted,marginTop:1}}>{isPremium?"Unlimited convoys & features":"₹299/month · First convoy free"}</div>
                 </div>
-                {!isPremium&&<Ic d={ICONS.chevron} size={15} color="#F5A623"/>}
-                {isPremium&&<span style={{fontSize:11,fontWeight:800,color:"#4A9EFF"}}>ACTIVE</span>}
+                {!isPremium&&<Ic d={ICONS.chevron} size={15} color={T.amber}/>}
+                {isPremium&&<span style={{fontSize:11,fontWeight:800,color:T.blue}}>ACTIVE</span>}
               </div>
             )}
 
@@ -3646,7 +3647,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             <Row icon={ICONS.flag} label="Number Plate"  field="plate"   placeholder="e.g. DL 4C 1234"/>
             <div style={{marginTop:16}}>
               <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Active Convoys</div>
-              {[{name:"Delhi Road Trip",st:"live",c:"#3DD68C"},{name:"Goa Beach Weekend",st:"upcoming",c:"#4A9EFF"}].map(cv=>(
+              {[{name:"Delhi Road Trip",st:"live",c:T.accent},{name:"Goa Beach Weekend",st:"upcoming",c:T.blue}].map(cv=>(
                 <div key={cv.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px",background:T.card,borderRadius:14,marginBottom:8,border:`1px solid ${T.border}`}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:cv.c,flexShrink:0,...(cv.st==="live"?{animation:"pulse 1.4s infinite"}:{})}}/>
                   <div style={{flex:1}}>
@@ -3749,10 +3750,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
               {icon:ICONS.shield,label:"Privacy Policy",   action:null, accent:false},
             ].map(item=>(
               <div key={item.label} onClick={item.action||undefined} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 0",borderBottom:`1px solid ${T.border}`,cursor:item.action?"pointer":"default"}}>
-                <div style={{width:36,height:36,borderRadius:11,background:item.accent?"#4A9EFF18":item.action?T.accentLo:T.raised,border:`1px solid ${item.accent?"#4A9EFF44":item.action?T.accent+"33":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <Ic d={item.icon} size={16} color={item.accent?"#4A9EFF":item.action?T.accent:T.muted}/>
+                <div style={{width:36,height:36,borderRadius:11,background:item.accent?T.blueLo:item.action?T.accentLo:T.raised,border:`1px solid ${item.accent?T.blue+"44":item.action?T.accent+"33":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Ic d={item.icon} size={16} color={item.accent?T.blue:item.action?T.accent:T.muted}/>
                 </div>
-                <span style={{flex:1,fontSize:13,fontWeight:item.accent?800:700,color:item.accent?"#4A9EFF":T.text,textAlign:"left"}}>{item.label}</span>
+                <span style={{flex:1,fontSize:13,fontWeight:item.accent?800:700,color:item.accent?T.blue:T.text,textAlign:"left"}}>{item.label}</span>
                 <Ic d={ICONS.chevron} size={14} color={T.muted}/>
               </div>
             ))}
@@ -3793,35 +3794,16 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 // ══════════════════════════════════════════════════════════════════════════════
 // ONBOARDING / LOGIN SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
-const ONBOARD_SLIDES = [
-  {
-    emoji:"🚗",
-    title:"Welcome to Convoy",
-    subtitle:"The smartest way to plan and track group road trips with friends & family.",
-    bg:"#3DD68C",
-  },
-  {
-    emoji:"📍",
-    title:"Live GPS Tracking",
-    subtitle:"See every member's real-time location on the map. Know exactly who's ahead, behind, or stopped.",
-    bg:"#4A9EFF",
-  },
-  {
-    emoji:"🆘",
-    title:"SOS Emergency Alerts",
-    subtitle:"One tap sends an emergency alert with your live location to all convoy members instantly.",
-    bg:"#FF4F4F",
-  },
-  {
-    emoji:"📲",
-    title:"Easy Invites",
-    subtitle:"Invite members via WhatsApp. They get a link, download the app, and join your convoy in seconds.",
-    bg:"#25D366",
-  },
+const getOnboardSlides = (T) => [
+  { emoji:"🚗", title:"Welcome to Convoy",    subtitle:"The smartest way to plan and track group road trips with friends & family.",                                          bg:T.accent },
+  { emoji:"📍", title:"Live GPS Tracking",    subtitle:"See every member's real-time location on the map. Know exactly who's ahead, behind, or stopped.",                    bg:T.blue   },
+  { emoji:"🆘", title:"SOS Emergency Alerts", subtitle:"One tap sends an emergency alert with your live location to all convoy members instantly.",                           bg:T.red    },
+  { emoji:"📲", title:"Easy Invites",         subtitle:"Invite members via WhatsApp. They get a link, download the app, and join your convoy in seconds.",                   bg:"#25D366" },
 ];
 
 const OnboardingScreen = ({ onDone }) => {
   const T = useT();
+  const ONBOARD_SLIDES_T = getOnboardSlides(T);
   const [step,     setStep]     = useState(0); // 0-3 = slides, 4 = auth
   const [authTab,      setAuthTab]      = useState("signup");
   const [useEmail,     setUseEmail]     = useState(false);
@@ -3836,8 +3818,8 @@ const OnboardingScreen = ({ onDone }) => {
   const [err,          setErr]          = useState("");
   const [loading,      setLoading]      = useState(false);
 
-  const isLastSlide = step === ONBOARD_SLIDES.length - 1;
-  const slide       = ONBOARD_SLIDES[step] || {};
+  const isLastSlide = step === ONBOARD_SLIDES_T.length - 1;
+  const slide       = ONBOARD_SLIDES_T[step] || {};
 
   const handleSubmit = async () => {
     if (authTab==="signup" && !name.trim()) { setErr("Please enter your name."); return; }
@@ -3915,11 +3897,11 @@ const OnboardingScreen = ({ onDone }) => {
   };
 
   /* ── AUTH SCREEN ── */
-  if (step >= ONBOARD_SLIDES.length) return (
+  if (step >= ONBOARD_SLIDES_T.length) return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:T.bg}}>
       {/* Back button */}
       <div style={{padding:"14px 16px 0",flexShrink:0}}>
-        <button onClick={()=>setStep(ONBOARD_SLIDES.length-1)}
+        <button onClick={()=>setStep(ONBOARD_SLIDES_T.length-1)}
           style={{width:34,height:34,borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <Ic d={ICONS.back} size={16}/>
         </button>
@@ -4036,7 +4018,7 @@ const OnboardingScreen = ({ onDone }) => {
       {/* Slide visual */}
       <div style={{flex:1,background:`linear-gradient(160deg,${slide.bg}22,${slide.bg}08)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",position:"relative"}}>
         {/* Skip button */}
-        <button onClick={()=>setStep(ONBOARD_SLIDES.length)}
+        <button onClick={()=>setStep(ONBOARD_SLIDES_T.length)}
           style={{position:"absolute",top:16,right:16,background:"none",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:T.muted,padding:"6px 12px"}}>
           Skip
         </button>
@@ -4058,19 +4040,19 @@ const OnboardingScreen = ({ onDone }) => {
       <div style={{padding:"24px 24px 36px",background:T.surface,borderTop:`1px solid ${T.border}`,flexShrink:0}}>
         {/* Progress dots */}
         <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:24}}>
-          {ONBOARD_SLIDES.map((_,i)=>(
+          {ONBOARD_SLIDES_T.map((_,i)=>(
             <div key={i} onClick={()=>setStep(i)} style={{width:i===step?22:8,height:8,borderRadius:4,background:i===step?slide.bg:T.border,transition:"all .3s",cursor:"pointer"}}/>
           ))}
         </div>
 
         {/* Next / Get Started */}
         <button onClick={()=>setStep(s=>s+1)}
-          style={{width:"100%",padding:"15px",borderRadius:14,background:slide.bg,border:"none",color:["#3DD68C","#25D366"].includes(slide.bg)?("#FFFFFF"):"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${slide.bg}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          style={{width:"100%",padding:"15px",borderRadius:14,background:slide.bg,border:"none",color:"#FFFFFF",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${slide.bg}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
           {isLastSlide?"Get Started 🚀":"Next →"}
         </button>
 
         {step===0&&(
-          <button onClick={()=>{setStep(ONBOARD_SLIDES.length);setAuthTab("signin");}}
+          <button onClick={()=>{setStep(ONBOARD_SLIDES_T.length);setAuthTab("signin");}}
             style={{width:"100%",marginTop:10,padding:"12px",borderRadius:14,background:"none",border:`1px solid ${T.border}`,color:T.muted,fontSize:13,fontWeight:700,cursor:"pointer"}}>
             Already have an account? Sign In
           </button>
@@ -4083,13 +4065,13 @@ const OnboardingScreen = ({ onDone }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // PRICING SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
-const PLANS = [
+const getPlans = (T) => [
   {
     id:"free",
     name:"Free",
     price:"₹0",
     period:"forever",
-    color:"#3DD68C",
+    color:T.accent,
     emoji:"🆓",
     highlight:true,
     features:[
@@ -4111,7 +4093,7 @@ const PLANS = [
     period:"per month",
     yearlyPrice:"₹2,499",
     yearlyPeriod:"per year  (save 30%)",
-    color:"#4A9EFF",
+    color:T.blue,
     emoji:"👑",
     highlight:false,
     features:[
@@ -4130,6 +4112,7 @@ const PLANS = [
 
 const PricingScreen = ({ onBack, onUpgrade, isPremium }) => {
   const T = useT();
+  const PLANS = getPlans(T);
   const [billing, setBilling] = useState("monthly"); // monthly | yearly
 
   return (
@@ -4143,7 +4126,7 @@ const PricingScreen = ({ onBack, onUpgrade, isPremium }) => {
           <div style={{fontSize:16,fontWeight:800,color:T.text}}>Choose Your Plan</div>
           <div style={{fontSize:11,color:T.muted}}>First convoy is always free</div>
         </div>
-        {isPremium&&<span style={{fontSize:11,fontWeight:800,color:"#4A9EFF",background:"#4A9EFF18",padding:"4px 10px",borderRadius:20,border:"1px solid #4A9EFF44"}}>👑 Premium</span>}
+        {isPremium&&<span style={{fontSize:11,fontWeight:800,color:T.blue,background:T.blueLo,padding:"4px 10px",borderRadius:20,border:`1px solid ${T.blue}44`}}>👑 Premium</span>}
       </div>
 
       <div style={{flex:1,overflowY:"auto",padding:"16px"}}>
@@ -4210,12 +4193,12 @@ const PricingScreen = ({ onBack, onUpgrade, isPremium }) => {
                 </div>
               ):(
                 isPremium?(
-                  <div style={{padding:"12px 0",borderRadius:13,background:`${"#4A9EFF"}18`,border:`1.5px solid ${"#4A9EFF"}`,textAlign:"center",fontSize:13,fontWeight:800,color:"#4A9EFF"}}>
+                  <div style={{padding:"12px 0",borderRadius:13,background:T.blueLo,border:`1.5px solid ${T.blue}`,textAlign:"center",fontSize:13,fontWeight:800,color:T.blue}}>
                     👑 Active Plan
                   </div>
                 ):(
                   <button onClick={()=>onUpgrade&&onUpgrade(billing)}
-                    style={{width:"100%",padding:"14px 0",borderRadius:13,background:"#4A9EFF",border:"none",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 16px #4A9EFF44"}}>
+                    style={{width:"100%",padding:"14px 0",borderRadius:13,background:T.blue,border:"none",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 16px ${T.blue}44`}}>
                     Upgrade to Premium 👑
                   </button>
                 )
@@ -4264,26 +4247,26 @@ const PaywallModal = ({ onUpgrade, onClose }) => {
         <div style={{background:T.raised,borderRadius:14,padding:"14px",marginBottom:20,border:`1px solid ${T.border}`}}>
           {["Unlimited convoys","Unlimited members","Trip history & analytics","Priority support"].map((f,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<3?10:0}}>
-              <span style={{fontSize:14,color:"#4A9EFF"}}>✓</span>
+              <span style={{fontSize:14,color:T.blue}}>✓</span>
               <span style={{fontSize:13,color:T.text,fontWeight:500}}>{f}</span>
             </div>
           ))}
         </div>
 
         {/* Price */}
-        <div style={{background:"#4A9EFF14",border:"1.5px solid #4A9EFF44",borderRadius:14,padding:"10px 16px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{background:T.blueLo,border:`1.5px solid ${T.blue}44`,borderRadius:14,padding:"10px 16px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
             <div style={{fontSize:12,color:T.muted}}>Premium Plan</div>
             <div style={{fontSize:11,color:T.muted,marginTop:1}}>₹2,499/year saves 30%</div>
           </div>
           <div style={{textAlign:"right"}}>
-            <div style={{fontSize:22,fontWeight:900,color:"#4A9EFF"}}>₹299</div>
+            <div style={{fontSize:22,fontWeight:900,color:T.blue}}>₹299</div>
             <div style={{fontSize:10,color:T.muted}}>/month</div>
           </div>
         </div>
 
         <button onClick={onUpgrade}
-          style={{width:"100%",padding:"15px",borderRadius:14,background:"#4A9EFF",border:"none",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 20px #4A9EFF44"}}>
+          style={{width:"100%",padding:"15px",borderRadius:14,background:T.blue,border:"none",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:`0 4px 20px ${T.blue}44`}}>
           Upgrade Now 👑
         </button>
         <button onClick={onClose}
@@ -4562,8 +4545,8 @@ const SAMPLE_INVITE = {
   color: "#4A9EFF",
   invitedBy: "Sneha",
   members: [
-    { id:5,  name:"Sneha",  color:"#4A9EFF" },
-    { id:6,  name:"Vikram", color:"#9B6EFF" },
+    { id:5,  name:"Sneha",  color:"#5F2E85" },
+    { id:6,  name:"Vikram", color:"#7B52FF" },
   ],
 };
 
@@ -4728,7 +4711,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                         id: Date.now(),
                         name: authUser.name,
                         initials: (authUser.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(),
-                        color: "#3DD68C",
+                        color: T.accent,
                         role: "member",
                         phone: authUser.phone || "",
                       };
@@ -5053,7 +5036,7 @@ export default function App() {
   return (
     <ThemeCtx.Provider value={T}>
       {/* Page background */}
-      <div style={{position:"fixed",inset:0,background:isDark?"#04060A":"#CBD5E8",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans','Nunito',system-ui,sans-serif"}}>
+      <div style={{position:"fixed",inset:0,background:isDark?T.bg:T.border,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans','Nunito',system-ui,sans-serif"}}>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
 
         {/* Phone shell */}
@@ -5073,7 +5056,7 @@ export default function App() {
                   {alertUnread>0&&<span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>}
                 </button>
                 <button onClick={()=>{setNavTab("profile");setScreen("profile");setActiveC(null);}}
-                  style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:isDark?"#080B12":"#fff",border:`2px solid ${T.surface}`,cursor:"pointer"}}>
+                  style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:"#FFFFFF",border:`2px solid ${T.surface}`,cursor:"pointer"}}>
                   {authUser?.name?.slice(0,2).toUpperCase()||"ME"}
                 </button>
               </>}
@@ -5141,7 +5124,7 @@ export default function App() {
                     destination: pendingInvite.convoy.destination || "TBD",
                     date: pendingInvite.convoy.date || "",
                     endDate: pendingInvite.convoy.endDate || pendingInvite.convoy.date || "",
-                    color: pendingInvite.convoy.color || "#4A9EFF",
+                    color: pendingInvite.convoy.color || T.blue,
                     members: pendingInvite.convoy.members || [],
                     id: pendingInvite.convoy.id,
                     notifStatus: pendingInvite.notif?.status || "pending",
