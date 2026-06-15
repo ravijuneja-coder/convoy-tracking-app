@@ -4772,6 +4772,13 @@ export default function App() {
   const [isPremium,  setIsPremium] = useState(true);
   const [showPaywall,setShowPaywall]=useState(false);
   const [profileMembers, setProfileMembers] = useState([]);
+  const profileMembersRef = useRef(profileMembers);
+  useEffect(() => {
+    profileMembersRef.current = profileMembers;
+    if (authUser?.uid) {
+      updateDoc(doc(db, "users", authUser.uid), { profileMembers }).catch(() => {});
+    }
+  }, [profileMembers]);
 
   // ── Global alert unread count (lifted) ──
   const [alertUnread, setAlertUnread] = useState(() => ALERT_SEED.filter(a=>a.unread).length);
@@ -4791,6 +4798,7 @@ export default function App() {
           const user = { uid: fbUser.uid, name: userData.name || fbUser.displayName || "", phone: userData.phone || "", email: fbUser.email || "" };
           setAuthUser(user);
           setAuthed(true);
+          if (Array.isArray(userData.profileMembers)) setProfileMembers(userData.profileMembers);
           // Load convoys from Firestore — own convoys + convoys where user is a member
           const ownedQ = query(collection(db, "convoys"), where("ownerUid", "==", fbUser.uid));
           const phone = userData.phone?.replace(/\D/g,"").slice(-10);
