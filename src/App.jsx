@@ -3269,9 +3269,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     }
     const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     setProfileMembers(ms=>[...ms,{id:Date.now(),name:pmName.trim(),initials,phone:pmPhone.trim(),color:"#4A9EFF"}]);
-    const msg=encodeURIComponent(`Hi ${pmName.trim()}! 👋 You've been invited to join a convoy trip on Convoy App.\n\nDownload the app & join: https://convoy.app/download 🚗`);
-    window.open(`https://wa.me/${pmPhone.trim().replace(/\D/g,"")}?text=${msg}`,"_blank");
-    setPmName(""); setPmPhone(""); setPmOpen(false); setPmSent(true); setTimeout(()=>setPmSent(false),3000);
+    setPmName(""); setPmPhone(""); setPmOpen(false);
   };
   const [activeField, setActiveField] = useState(null); // inline field edit
   const [fieldVal,    setFieldVal]    = useState("");
@@ -3665,11 +3663,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 </div>
                 {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>{(authUser?.phone||profile.phone||"").replace(/\D/g,"")&&pmPhone.trim().replace(/\D/g,"")===(authUser?.phone||profile.phone||"").replace(/\D/g,"")?"You cannot add your own number":"Enter a valid 10-digit mobile number"}</div>}
                 <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
-                  {pmEditId?"✓ Save Changes":"📲 Add & Send Invite on WhatsApp"}
+                  {pmEditId?"✓ Save Changes":"+ Add Member"}
                 </button>
               </div>
             )}
-            {pmSent&&<div style={{textAlign:"center",fontSize:12,fontWeight:700,color:T.accent,marginBottom:10}}>✓ Invite sent via WhatsApp!</div>}
 
             {/* Members list */}
             {profileMembers.length===0?(
