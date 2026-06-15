@@ -6,28 +6,44 @@ import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc,
 // ══════════════════════════════════════════════════════════════════════════════
 // THEME SYSTEM
 // ══════════════════════════════════════════════════════════════════════════════
+// Design System tokens — DesignSystem-June (source: designSystem.md)
+// Surface/Primary → Color/Info/700 → color/red/700 → #C0392B
+// Button/Primary/Surface → Surface/Primary → #C0392B
+// Button/Primary/Surface-hover → Surface/Primary-hover → #A93226
+// color/background/surface → page bg → #FFFFFF (light) / #0E1219 (dark)
+// color/text/primary → #0D1528 (light) / #EEF2FF (dark)
+// Input/Surface/Default → #FFFFFF (light) / #131820 (dark)
 const DARK = {
-  bg:"#080B12", surface:"#0E1219", card:"#131820", raised:"#181F2B",
-  border:"#1C2333", borderHi:"#2A3550",
-  accent:"#3DD68C", accentLo:"#152D20", accentHi:"#5AEFAA",
+  bg:"#0A0D14", surface:"#0E1219", card:"#141A24", raised:"#1A2130",
+  border:"#222C3E", borderHi:"#2E3E58",
+  // Surface/Primary (dark variant) — Button/Primary/Surface
+  accent:"#E84545", accentLo:"#2A1010", accentHi:"#F06060",
+  // Button/Outline — blue/info tint
   blue:"#4A9EFF",   blueLo:"#0D1E38",
   violet:"#9B6EFF",
+  // amber = warning token, red = danger/error token (Icon/Error)
   amber:"#F5A623",  amberLo:"#2E1E00",
-  red:"#FF4F4F",    redLo:"#2E0E0E",
+  red:"#E84545",    redLo:"#2A1010",
   text:"#EEF2FF",   sub:"#8895B3",   muted:"#3D4D6A",
   isDark: true,
   mapBg:"#0D1118", mapRoad:"#1A2030", mapDash:"#1E2840", mapBlock:"#111820",
   pillBg:"rgba(10,12,16,.92)", nameBg:"rgba(10,12,16,.9)",
 };
 const LIGHT = {
-  bg:"#F0F4FC", surface:"#FFFFFF", card:"#FFFFFF", raised:"#F5F8FF",
-  border:"#DDE5F4", borderHi:"#B8CAEE",
-  accent:"#1DB870", accentLo:"#D4F5E5", accentHi:"#15A060",
-  blue:"#2B7FFF",   blueLo:"#DBE9FF",
+  // color/background/surface
+  bg:"#F5F6F8", surface:"#FFFFFF", card:"#FFFFFF", raised:"#F7F8FA",
+  // Input/Border/Color/Hover → subtle blue-grey
+  border:"#E2E6EF", borderHi:"#C8D0E0",
+  // Surface/Primary → color/red/700 → #C0392B  (Button/Primary/Surface)
+  accent:"#C0392B", accentLo:"#FDECEA", accentHi:"#A93226",
+  // Button/Outline / info states
+  blue:"#2B7FFF",   blueLo:"#EBF2FF",
   violet:"#7B52FF",
-  amber:"#E08800",  amberLo:"#FFF3D0",
-  red:"#E03030",    redLo:"#FFE0E0",
-  text:"#0D1528",   sub:"#4A5880",   muted:"#9BAAC8",
+  // Icon/Warning → amber; Icon/Error = accent (red)
+  amber:"#E08800",  amberLo:"#FFF8E1",
+  red:"#C0392B",    redLo:"#FDECEA",
+  // color/text/primary, sub, muted
+  text:"#111827",   sub:"#4B5563",   muted:"#9CA3AF",
   isDark: false,
   mapBg:"#E8EEF8", mapRoad:"#CDD8EE", mapDash:"#B8C8E4", mapBlock:"#DBE4F4",
   pillBg:"rgba(255,255,255,.95)", nameBg:"rgba(255,255,255,.93)",
@@ -44,7 +60,8 @@ const getStatus = T => ({
 });
 
 // ── Static data ───────────────────────────────────────────────────────────────
-const MC = ["#3DD68C","#4A9EFF","#9B6EFF","#F5A623","#FF4F4F","#00C4EE","#FF6B9D","#FFD166"];
+// Member avatar colors — mapped to design system color ramps
+const MC = ["#C0392B","#2B7FFF","#7B52FF","#E08800","#E84545","#00B8D9","#D63771","#F59E0B"];
 const LIVE_DATA = {
   1:{ speed:62, dist:0,   eta:"0 min",  memberStatus:"moving",  lastSeen:"now"    },
   2:{ speed:58, dist:1.2, eta:"2 min",  memberStatus:"moving",  lastSeen:"now"    },
@@ -369,8 +386,8 @@ const LocationPickerMap = ({ value, onChange, onClose, accentColor, pinColor, ti
       {/* ── Confirm ── */}
       <div style={{padding:"12px 14px 20px",background:T.surface,borderTop:`1px solid ${T.border}`,flexShrink:0}}>
         <button onClick={confirm} disabled={!label||loading}
-          style={{width:"100%",padding:"14px",borderRadius:14,background:label&&!loading?accent:T.muted,border:"none",color:label&&!loading?(T.isDark?"#080B12":"#fff"):T.surface,fontSize:14,fontWeight:800,cursor:label&&!loading?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .2s"}}>
-          <Ic d={ICONS.check} size={16} color={label&&!loading?(T.isDark?"#080B12":"#fff"):T.surface} sw={2.5}/>
+          style={{width:"100%",padding:"14px",borderRadius:14,background:label&&!loading?accent:T.muted,border:"none",color:label&&!loading?("#FFFFFF"):T.surface,fontSize:14,fontWeight:800,cursor:label&&!loading?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .2s"}}>
+          <Ic d={ICONS.check} size={16} color={label&&!loading?("#FFFFFF"):T.surface} sw={2.5}/>
           Use This Location
         </button>
       </div>
@@ -727,7 +744,7 @@ const SosNotifFeed = ({ convoy, sender, onClose }) => {
             <div style={{fontSize:11,color:T.muted,marginTop:1}}>All convoy members can see you on the map</div>
           </div>
         </div>
-        <button onClick={onClose} style={{width:"100%",padding:"14px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+        <button onClick={onClose} style={{width:"100%",padding:"14px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:14,fontWeight:800,cursor:"pointer"}}>
           ✓ Close & Return to Trip
         </button>
       </div>
@@ -1499,7 +1516,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
                     message: msg,
                     createdAt: serverTimestamp(),
                   }).catch(()=>{});
-                }} style={{padding:"9px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:T.isDark?"#080B12":"#fff",flexShrink:0}}>
+                }} style={{padding:"9px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>
                   📢 Send
                 </button>
               </div>
@@ -2051,7 +2068,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div style={{fontSize:11,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Members · {form.members.length}</div>
                 <button onClick={()=>{setShowAddForm(s=>!s);setMName("");setMPhone("");setMCar("");setPhoneErr(false);}}
-                  style={{width:30,height:30,borderRadius:9,background:showAddForm?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:showAddForm?(T.isDark?"#080B12":"#fff"):T.accent,flexShrink:0,transition:"all .15s"}}>
+                  style={{width:30,height:30,borderRadius:9,background:showAddForm?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:showAddForm?("#FFFFFF"):T.accent,flexShrink:0,transition:"all .15s"}}>
                   {showAddForm?"✕":"+"}
                 </button>
               </div>
@@ -2070,7 +2087,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                   </div>
                   {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700}}>⚠ Valid mobile number is required</span>}
                   <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
-                    style={{width:"100%",padding:"13px",borderRadius:12,background:canAdd?T.accent:T.raised,border:`1.5px solid ${canAdd?T.accent:T.border}`,color:canAdd?(T.isDark?"#080B12":"#fff"):T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
+                    style={{width:"100%",padding:"13px",borderRadius:12,background:canAdd?T.accent:T.raised,border:`1.5px solid ${canAdd?T.accent:T.border}`,color:canAdd?("#FFFFFF"):T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
                     + Add Member
                   </button>
                 </div>
@@ -2124,7 +2141,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                     return(
                       <div key={m.id} onClick={toggle} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:already?T.accentLo:"transparent",transition:"background .15s"}}>
                         <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${already?T.accent:T.border}`,background:already?T.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
-                          {already&&<Ic d={ICONS.check} size={11} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>}
+                          {already&&<Ic d={ICONS.check} size={11} color={"#FFFFFF"} sw={2.5}/>}
                         </div>
                         <div style={{width:34,height:34,borderRadius:10,background:`#4A9EFF22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#4A9EFF",flexShrink:0}}>
                           {(m.initials||(m.name[0]||"?").toUpperCase())}
@@ -2197,8 +2214,8 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
         </div>
         <div style={{padding:"12px 18px 20px",borderTop:`1px solid ${T.border}`}}>
           <button onClick={()=>valid&&onSave({...form,id:convoy?.id||undefined,pitStops})} disabled={!valid}
-            style={{width:"100%",padding:"15px",borderRadius:14,background:valid?T.accent:T.muted,border:"none",color:valid?(T.isDark?"#080B12":"#fff"):T.surface,fontSize:15,fontWeight:800,cursor:valid?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.check} size={17} color={valid?(T.isDark?"#080B12":"#fff"):T.surface} sw={2.5}/>{editing?"Save Changes":"Create Convoy"}
+            style={{width:"100%",padding:"15px",borderRadius:14,background:valid?T.accent:T.muted,border:"none",color:valid?("#FFFFFF"):T.surface,fontSize:15,fontWeight:800,cursor:valid?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={17} color={valid?("#FFFFFF"):T.surface} sw={2.5}/>{editing?"Save Changes":"Create Convoy"}
           </button>
         </div>
       </div>
@@ -2401,7 +2418,7 @@ const HomeScreen = ({ convoys, onTap, onEdit, onDelete, onNew, isPremium, onOpen
             <div style={{fontSize:12,color:T.muted,marginTop:3,textAlign:"left"}}>{convoys.length} trips · {live.length} live</div>
           </div>
           <button onClick={onNew} style={{width:40,height:40,borderRadius:13,background:T.accent,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 20px ${T.accent}44`,flexShrink:0}}>
-            <Ic d={ICONS.plus} size={18} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            <Ic d={ICONS.plus} size={18} color={"#FFFFFF"} sw={2.5}/>
           </button>
         </div>
         {live.length>0&&(
@@ -3224,7 +3241,7 @@ const AddMemberCard = () => {
             style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
         </div>
         {phoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>Enter a valid 10-digit mobile number</div>}
-        <button onClick={invite} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+        <button onClick={invite} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
           📲 Add & Send Invite on WhatsApp
         </button>
         {sent&&<div style={{textAlign:"center",fontSize:12,fontWeight:700,color:T.accent}}>✓ Invite sent via WhatsApp!</div>}
@@ -3403,7 +3420,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       </div>
       <button onClick={()=>editing?set(field,!P[field]):setProfile(prev=>({...prev,[field]:!prev[field]}))}
         style={{width:44,height:26,borderRadius:13,background:P[field]?T.accent:T.raised,border:`1px solid ${P[field]?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
-        <div style={{width:20,height:20,borderRadius:"50%",background:P[field]?(T.isDark?"#080B12":"#fff"):"#fff",marginLeft:P[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+        <div style={{width:20,height:20,borderRadius:"50%",background:P[field]?("#FFFFFF"):"#fff",marginLeft:P[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
       </button>
     </div>
   );
@@ -3418,8 +3435,8 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
           {editing && (
             <div style={{display:"flex",gap:8}}>
               <button onClick={cancelEdit} style={{padding:"7px 14px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.sub}}>Cancel</button>
-              <button onClick={saveEdit} style={{padding:"7px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:800,color:T.isDark?"#080B12":"#fff",display:"flex",alignItems:"center",gap:5}}>
-                <Ic d={ICONS.check} size={12} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>Save
+              <button onClick={saveEdit} style={{padding:"7px 14px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:12,fontWeight:800,color:"#FFFFFF",display:"flex",alignItems:"center",gap:5}}>
+                <Ic d={ICONS.check} size={12} color={"#FFFFFF"} sw={2.5}/>Save
               </button>
             </div>
           )}
@@ -3447,7 +3464,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 {/* Camera button — always visible, tappable */}
                 <button onClick={()=>fileInputRef.current?.click()}
                   style={{position:"absolute",bottom:0,right:0,width:30,height:30,borderRadius:"50%",background:T.accent,border:`2.5px solid ${T.surface}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,.25)"}}>
-                  <Ic d={ICONS.camera} size={14} color={T.isDark?"#080B12":"#fff"} sw={2}/>
+                  <Ic d={ICONS.camera} size={14} color={"#FFFFFF"} sw={2}/>
                 </button>
               </div>
               {!editing ? (
@@ -3514,7 +3531,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                         style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}/>
                       <div style={{display:"flex",gap:8}}>
                         <button onClick={()=>{setProfile(p=>({...p,bio:fieldVal}));setActiveField(null);setSaved(true);setTimeout(()=>setSaved(false),2200);}}
-                          style={{flex:1,padding:"9px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:13,fontWeight:800,color:T.isDark?"#080B12":"#fff"}}>Save</button>
+                          style={{flex:1,padding:"9px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:13,fontWeight:800,color:"#FFFFFF"}}>Save</button>
                         <button onClick={cancelField}
                           style={{padding:"9px 16px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:13,fontWeight:700,color:T.muted}}>Cancel</button>
                       </div>
@@ -3649,7 +3666,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16,marginBottom:12}}>
               <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase"}}>Members · {profileMembers.length}</div>
               <button onClick={()=>{setPmOpen(o=>!o);setPmName("");setPmPhone("");setPmPhoneErr(false);setPmEditId(null);}}
-                style={{width:32,height:32,borderRadius:10,background:pmOpen?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:pmOpen?(T.isDark?"#080B12":"#fff"):T.accent,transition:"all .15s"}}>
+                style={{width:32,height:32,borderRadius:10,background:pmOpen?T.accent:T.accentLo,border:`1.5px solid ${T.accent}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:pmOpen?("#FFFFFF"):T.accent,transition:"all .15s"}}>
                 {pmOpen?"✕":"+"}
               </button>
             </div>
@@ -3666,7 +3683,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                     style={{width:"100%",background:T.surface,border:`1.5px solid ${pmPhoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                 </div>
                 {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>{pmDupErr?"Duplicate profile — this number is already added":(authUser?.phone||profile.phone||"").replace(/\D/g,"")&&pmPhone.trim().replace(/\D/g,"")===(authUser?.phone||profile.phone||"").replace(/\D/g,"")?"You cannot add your own number":"Enter a valid 10-digit mobile number"}</div>}
-                <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer"}}>
                   {pmEditId?"✓ Save Changes":"+ Add Member"}
                 </button>
               </div>
@@ -3715,7 +3732,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
               </div>
               <button onClick={onToggleDark}
                 style={{width:44,height:26,borderRadius:13,background:isDark?T.accent:T.raised,border:`1px solid ${isDark?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
-                <div style={{width:20,height:20,borderRadius:"50%",background:isDark?(T.isDark?"#080B12":"#fff"):"#fff",marginLeft:isDark?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+                <div style={{width:20,height:20,borderRadius:"50%",background:isDark?("#FFFFFF"):"#fff",marginLeft:isDark?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
               </button>
             </div>
 
@@ -3755,8 +3772,8 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             Cancel
           </button>
           <button onClick={saveEdit}
-            style={{flex:2,padding:"13px",borderRadius:13,background:T.accent,border:"none",cursor:"pointer",fontSize:14,fontWeight:800,color:T.isDark?"#080B12":"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.check} size={15} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            style={{flex:2,padding:"13px",borderRadius:13,background:T.accent,border:"none",cursor:"pointer",fontSize:14,fontWeight:800,color:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={15} color={"#FFFFFF"} sw={2.5}/>
             Save Changes
           </button>
         </div>
@@ -3972,7 +3989,7 @@ const OnboardingScreen = ({ onDone }) => {
                       setErr("Could not send reset email. Check the address and try again.");
                     } finally { setResetLoading(false); }
                   }} disabled={resetLoading}
-                    style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
+                    style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
                     {resetLoading?"Sending…":"Send Reset Link"}
                   </button>
                 </>
@@ -3991,8 +4008,8 @@ const OnboardingScreen = ({ onDone }) => {
           )}
 
           {!showForgot&&<button onClick={handleSubmit} disabled={loading}
-            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`,opacity:loading?0.7:1}}>
-            <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:15,fontWeight:800,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:4,boxShadow:`0 4px 20px ${T.accent}44`,opacity:loading?0.7:1}}>
+            <Ic d={ICONS.check} size={17} color={"#FFFFFF"} sw={2.5}/>
             {loading?"Please wait…":authTab==="signup"?"Create Account 🚗":"Sign In"}
           </button>}
 
@@ -4048,7 +4065,7 @@ const OnboardingScreen = ({ onDone }) => {
 
         {/* Next / Get Started */}
         <button onClick={()=>setStep(s=>s+1)}
-          style={{width:"100%",padding:"15px",borderRadius:14,background:slide.bg,border:"none",color:["#3DD68C","#25D366"].includes(slide.bg)?(T.isDark?"#080B12":"#fff"):"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${slide.bg}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          style={{width:"100%",padding:"15px",borderRadius:14,background:slide.bg,border:"none",color:["#3DD68C","#25D366"].includes(slide.bg)?("#FFFFFF"):"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${slide.bg}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
           {isLastSlide?"Get Started 🚀":"Next →"}
         </button>
 
@@ -4317,7 +4334,7 @@ const SettingsScreen = ({ onBack }) => {
       </div>
       <button onClick={()=>upd(field,!s[field])}
         style={{width:44,height:26,borderRadius:13,background:s[field]?T.accent:T.raised,border:`1px solid ${s[field]?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
-        <div style={{width:20,height:20,borderRadius:"50%",background:s[field]?(T.isDark?"#080B12":"#fff"):"#fff",marginLeft:s[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+        <div style={{width:20,height:20,borderRadius:"50%",background:s[field]?("#FFFFFF"):"#fff",marginLeft:s[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
       </button>
     </div>
   );
@@ -4524,8 +4541,8 @@ const TripSummaryScreen = ({ convoy, onClose, onBack }) => {
         {/* Done button */}
         <div style={{padding:"20px 16px 24px"}}>
           <button onClick={onClose}
-            style={{width:"100%",padding:"14px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <Ic d={ICONS.check} size={16} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+            style={{width:"100%",padding:"14px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Ic d={ICONS.check} size={16} color={"#FFFFFF"} sw={2.5}/>
             Done — Back to Home
           </button>
         </div>
@@ -4575,7 +4592,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
         <div style={{fontSize:56}}>✅</div>
         <div style={{fontSize:20,fontWeight:900,color:T.text}}>Already Joined</div>
         <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You are part of <strong style={{color:T.text}}>{invite.convoyName}</strong>. Check your convoy list.</div>
-        <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>Go to Convoys</button>
+        <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:14,fontWeight:800,cursor:"pointer"}}>Go to Convoys</button>
       </div>
     );
   }
@@ -4598,7 +4615,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
         <div style={{fontSize:56}}>🎉</div>
         <div style={{fontSize:20,fontWeight:900,color:T.text}}>You've Joined!</div>
         <div style={{fontSize:13,color:T.muted,textAlign:"center",lineHeight:1.6}}>You are now part of <strong style={{color:T.text}}>{nm.convoyName||nm.name}</strong>. See you on the road!</div>
-        <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+        <button onClick={onAccept} style={{marginTop:8,padding:"14px 32px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:14,fontWeight:800,cursor:"pointer"}}>
           Go to Convoy
         </button>
       </div>
@@ -4619,7 +4636,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
         {/* Mode toggle */}
         <div style={{display:"flex",background:T.raised,borderRadius:10,padding:2,border:`1px solid ${T.border}`}}>
           {[["invite","Invite"],["code","Code"]].map(([m,l])=>(
-            <button key={m} onClick={()=>setMode(m)} style={{padding:"5px 12px",borderRadius:8,background:mode===m?T.accent:"transparent",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,color:mode===m?(T.isDark?"#080B12":"#fff"):T.muted,transition:"all .15s"}}>{l}</button>
+            <button key={m} onClick={()=>setMode(m)} style={{padding:"5px 12px",borderRadius:8,background:mode===m?T.accent:"transparent",border:"none",cursor:"pointer",fontSize:11,fontWeight:700,color:mode===m?("#FFFFFF"):T.muted,transition:"all .15s"}}>{l}</button>
           ))}
         </div>
       </div>
@@ -4643,8 +4660,8 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
             />
             {codeError&&<div style={{fontSize:11,color:T.red,fontWeight:700,textAlign:"center"}}>⚠ {codeError}</div>}
             <button onClick={handleCodeJoin}
-              style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+              style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic d={ICONS.check} size={17} color={"#FFFFFF"} sw={2.5}/>
               Join Convoy
             </button>
           </div>
@@ -4728,8 +4745,8 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                     onAccept?.();
                   }
                 }}
-                style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                <Ic d={ICONS.check} size={17} color={T.isDark?"#080B12":"#fff"} sw={2.5}/>
+                style={{width:"100%",padding:"15px",borderRadius:14,background:T.accent,border:"none",color:"#FFFFFF",fontSize:15,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Ic d={ICONS.check} size={17} color={"#FFFFFF"} sw={2.5}/>
                 Accept & Join
               </button>
               <button onClick={()=>{ onNotifyAdmin?.(false); onDecline?.(); }}
