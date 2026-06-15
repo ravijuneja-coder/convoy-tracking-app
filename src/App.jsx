@@ -3254,13 +3254,17 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   const setProfileMembers = (updater) => onProfileMembersChange?.(typeof updater==="function"?updater(profileMembers):updater);
   const [pmOpen, setPmOpen] = useState(false);
   const [pmEditId, setPmEditId] = useState(null);
-  const [pmName, setPmName] = useState(""); const [pmPhone, setPmPhone] = useState(""); const [pmPhoneErr, setPmPhoneErr] = useState(false); const [pmSent, setPmSent] = useState(false);
+  const [pmName, setPmName] = useState(""); const [pmPhone, setPmPhone] = useState(""); const [pmPhoneErr, setPmPhoneErr] = useState(false); const [pmSent, setPmSent] = useState(false); const [pmDupErr, setPmDupErr] = useState(false);
   const openPmEdit = (m) => { setPmEditId(m.id); setPmName(m.name); setPmPhone(m.phone); setPmPhoneErr(false); setPmOpen(true); };
   const addProfileMember = () => {
     if(!pmName.trim()) return;
     if(pmPhone.trim().replace(/\D/g,"").length<10){ setPmPhoneErr(true); return; }
     const myPhone=(authUser?.phone||profile.phone||"").replace(/\D/g,"");
     if(myPhone&&pmPhone.trim().replace(/\D/g,"")===myPhone){ setPmPhoneErr(true); return; }
+    const newPhone=pmPhone.trim().replace(/\D/g,"").slice(-10);
+    const isDuplicate=profileMembers.some(m=>m.id!==pmEditId&&m.phone.replace(/\D/g,"").slice(-10)===newPhone);
+    if(isDuplicate){ setPmPhoneErr(true); setPmDupErr(true); return; }
+    setPmDupErr(false);
     setPmPhoneErr(false);
     if(pmEditId){
       const initials=pmName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
@@ -3658,10 +3662,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                   style={{width:"100%",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                 <div style={{position:"relative"}}>
                   <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:12,color:T.muted,pointerEvents:"none"}}>📱 +91</span>
-                  <input value={pmPhone} onChange={e=>{setPmPhone(e.target.value);setPmPhoneErr(false);}} placeholder="Mobile number" type="tel"
+                  <input value={pmPhone} onChange={e=>{setPmPhone(e.target.value);setPmPhoneErr(false);setPmDupErr(false);}} placeholder="Mobile number" type="tel"
                     style={{width:"100%",background:T.surface,border:`1.5px solid ${pmPhoneErr?T.red:T.border}`,borderRadius:12,padding:"11px 14px 11px 68px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                 </div>
-                {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>{(authUser?.phone||profile.phone||"").replace(/\D/g,"")&&pmPhone.trim().replace(/\D/g,"")===(authUser?.phone||profile.phone||"").replace(/\D/g,"")?"You cannot add your own number":"Enter a valid 10-digit mobile number"}</div>}
+                {pmPhoneErr&&<div style={{fontSize:11,color:T.red,marginTop:-4}}>{pmDupErr?"Duplicate profile — this number is already added":(authUser?.phone||profile.phone||"").replace(/\D/g,"")&&pmPhone.trim().replace(/\D/g,"")===(authUser?.phone||profile.phone||"").replace(/\D/g,"")?"You cannot add your own number":"Enter a valid 10-digit mobile number"}</div>}
                 <button onClick={addProfileMember} style={{padding:"13px",borderRadius:12,background:T.accent,border:"none",color:T.isDark?"#080B12":"#fff",fontSize:13,fontWeight:800,cursor:"pointer"}}>
                   {pmEditId?"✓ Save Changes":"+ Add Member"}
                 </button>
