@@ -2096,11 +2096,11 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                     <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
                       <Ic d={ICONS.phone} size={12} color={T.muted}/>
                       <span style={{fontSize:11,color:T.muted,flex:1,textAlign:"left"}}>{m.phone}</span>
-                      <button onClick={()=>sendWhatsAppInvite(m.name,m.phone)}
+                      {!m.isOwner&&<button onClick={()=>sendWhatsAppInvite(m.name,m.phone)}
                         style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#25D36614",border:"1px solid #25D36633",cursor:"pointer"}}>
                         <span style={{fontSize:13}}>📲</span>
                         <span style={{fontSize:10,fontWeight:800,color:"#25D366"}}>Invite on WhatsApp</span>
-                      </button>
+                      </button>}
                     </div>
                   )}
                 </div>
