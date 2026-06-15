@@ -13,17 +13,19 @@ import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc,
 // color/background/surface → page bg → #FFFFFF (light) / #0E1219 (dark)
 // color/text/primary → #0D1528 (light) / #EEF2FF (dark)
 // Input/Surface/Default → #FFFFFF (light) / #131820 (dark)
+// Design System tokens — DesignSystem-June (source: designSystem.md)
+// Surface/Primary → Button/Primary/Surface → brand red #C0392B
+// Icon/Error → color/red/500 → distinct danger red #EF4444
 const DARK = {
   bg:"#0A0D14", surface:"#0E1219", card:"#141A24", raised:"#1A2130",
   border:"#222C3E", borderHi:"#2E3E58",
-  // Surface/Primary (dark variant) — Button/Primary/Surface
-  accent:"#E84545", accentLo:"#2A1010", accentHi:"#F06060",
-  // Button/Outline — blue/info tint
+  // Button/Primary/Surface — Surface/Primary dark variant
+  accent:"#C0392B", accentLo:"#2A1010", accentHi:"#A93226",
   blue:"#4A9EFF",   blueLo:"#0D1E38",
   violet:"#9B6EFF",
-  // amber = warning token, red = danger/error token (Icon/Error)
   amber:"#F5A623",  amberLo:"#2E1E00",
-  red:"#E84545",    redLo:"#2A1010",
+  // Icon/Error — distinct from accent so danger actions are visually separate
+  red:"#EF4444",    redLo:"#2D1010",
   text:"#EEF2FF",   sub:"#8895B3",   muted:"#3D4D6A",
   isDark: true,
   mapBg:"#0D1118", mapRoad:"#1A2030", mapDash:"#1E2840", mapBlock:"#111820",
@@ -32,17 +34,14 @@ const DARK = {
 const LIGHT = {
   // color/background/surface
   bg:"#F5F6F8", surface:"#FFFFFF", card:"#FFFFFF", raised:"#F7F8FA",
-  // Input/Border/Color/Hover → subtle blue-grey
   border:"#E2E6EF", borderHi:"#C8D0E0",
-  // Surface/Primary → color/red/700 → #C0392B  (Button/Primary/Surface)
+  // Button/Primary/Surface → Surface/Primary → color/red/700 → #C0392B
   accent:"#C0392B", accentLo:"#FDECEA", accentHi:"#A93226",
-  // Button/Outline / info states
   blue:"#2B7FFF",   blueLo:"#EBF2FF",
   violet:"#7B52FF",
-  // Icon/Warning → amber; Icon/Error = accent (red)
   amber:"#E08800",  amberLo:"#FFF8E1",
-  red:"#C0392B",    redLo:"#FDECEA",
-  // color/text/primary, sub, muted
+  // Icon/Error → color/red/500 → distinct orange-red for danger/destructive
+  red:"#EF4444",    redLo:"#FEE2E2",
   text:"#111827",   sub:"#4B5563",   muted:"#9CA3AF",
   isDark: false,
   mapBg:"#E8EEF8", mapRoad:"#CDD8EE", mapDash:"#B8C8E4", mapBlock:"#DBE4F4",
