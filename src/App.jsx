@@ -1913,11 +1913,11 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
     const initials=mName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     const newMember={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:mCar.trim()||"Vehicle TBD",color:MC[form.members.length%MC.length],role:"member"};
     set("members",[...form.members,newMember]);
-    // Open WhatsApp with invite link
-    const msg=encodeURIComponent(`Hi ${mName.trim()}! 👋 You've been invited to join the "${form.name||"Convoy"}" trip on Convoy App.\n\n📍 Destination: ${form.destination||"TBD"}\n📅 Start: ${form.date||"TBD"}${form.endDate?`  →  End: ${form.endDate}`:""}\n🕐 Departure: ${form.time||"TBD"}\n\nDownload the app & join: https://convoy.app/join/link\n\nSee you on the road! 🚗`);
-    const phone=mPhone.trim().replace(/\D/g,"");
-    window.open(`https://wa.me/${phone}?text=${msg}`,"_blank");
     setMName(""); setMCar(""); setMPhone(""); setPhoneErr(false);
+  };
+  const sendWhatsAppInvite=(name,phone)=>{
+    const msg=encodeURIComponent(`Hi ${name}! 👋 You've been invited to join the "${form.name||"Convoy"}" trip on Convoy App.\n\n📍 Destination: ${form.destination||"TBD"}\n📅 Start: ${form.date||"TBD"}${form.endDate?`  →  End: ${form.endDate}`:""}\n🕐 Departure: ${form.time||"TBD"}\n\nDownload the app & join: https://convoy.app/join/link\n\nSee you on the road! 🚗`);
+    window.open(`https://wa.me/${phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
   };
   return (
     <div style={{position:"absolute",inset:0,zIndex:50,display:"flex",flexDirection:"column"}}>
@@ -2069,10 +2069,16 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                       style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"12px 14px 12px 60px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                   </div>
                   {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700}}>⚠ Valid mobile number is required</span>}
-                  <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
-                    style={{padding:"13px",borderRadius:12,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .15s"}}>
-                    <span>📲</span> Add & Send Invite on WhatsApp
-                  </button>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
+                      style={{flex:1,padding:"13px",borderRadius:12,background:canAdd?T.accent:T.raised,border:`1.5px solid ${canAdd?T.accent:T.border}`,color:canAdd?(T.isDark?"#080B12":"#fff"):T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
+                      + Add Member
+                    </button>
+                    <button onClick={()=>{if(canAdd){sendWhatsAppInvite(mName.trim(),mPhone.trim());}}} disabled={!canAdd}
+                      style={{flex:1,padding:"13px",borderRadius:12,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
+                      <span>📲</span> Invite
+                    </button>
+                  </div>
                 </div>
               )}
               {form.members.length===0&&!showAddForm&&<div style={{textAlign:"center",padding:"20px 0",fontSize:12,color:T.muted}}>No members yet.</div>}
