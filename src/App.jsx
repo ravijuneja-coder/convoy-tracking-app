@@ -16,15 +16,18 @@ import { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc,
 // Design System tokens — DesignSystem-June (source: designSystem.md)
 // Surface/Primary → Button/Primary/Surface → brand red #C0392B
 // Icon/Error → color/red/500 → distinct danger red #EF4444
+// Design System tokens — DesignSystem-June (source: designSystem.md)
+// Button/Primary/Surface → Surface/Primary → #5F2E85 (purple)
+// Button/Primary/Surface-hover → Surface/Primary-hover → #4A2268
+// Icon/Error → danger red, kept distinct from primary
 const DARK = {
   bg:"#0A0D14", surface:"#0E1219", card:"#141A24", raised:"#1A2130",
   border:"#222C3E", borderHi:"#2E3E58",
-  // Button/Primary/Surface — Surface/Primary dark variant
-  accent:"#C0392B", accentLo:"#2A1010", accentHi:"#A93226",
+  // Surface/Primary dark variant — slightly lighter purple for dark bg readability
+  accent:"#7B3FA8", accentLo:"#1E0D2E", accentHi:"#9B55C8",
   blue:"#4A9EFF",   blueLo:"#0D1E38",
   violet:"#9B6EFF",
   amber:"#F5A623",  amberLo:"#2E1E00",
-  // Icon/Error — distinct from accent so danger actions are visually separate
   red:"#EF4444",    redLo:"#2D1010",
   text:"#EEF2FF",   sub:"#8895B3",   muted:"#3D4D6A",
   isDark: true,
@@ -32,15 +35,13 @@ const DARK = {
   pillBg:"rgba(10,12,16,.92)", nameBg:"rgba(10,12,16,.9)",
 };
 const LIGHT = {
-  // color/background/surface
   bg:"#F5F6F8", surface:"#FFFFFF", card:"#FFFFFF", raised:"#F7F8FA",
   border:"#E2E6EF", borderHi:"#C8D0E0",
-  // Button/Primary/Surface → Surface/Primary → color/red/700 → #C0392B
-  accent:"#C0392B", accentLo:"#FDECEA", accentHi:"#A93226",
+  // Button/Primary/Surface → Surface/Primary → #5F2E85
+  accent:"#5F2E85", accentLo:"#F3EAF9", accentHi:"#4A2268",
   blue:"#2B7FFF",   blueLo:"#EBF2FF",
   violet:"#7B52FF",
   amber:"#E08800",  amberLo:"#FFF8E1",
-  // Icon/Error → color/red/500 → distinct orange-red for danger/destructive
   red:"#EF4444",    redLo:"#FEE2E2",
   text:"#111827",   sub:"#4B5563",   muted:"#9CA3AF",
   isDark: false,
@@ -59,8 +60,8 @@ const getStatus = T => ({
 });
 
 // ── Static data ───────────────────────────────────────────────────────────────
-// Member avatar colors — mapped to design system color ramps
-const MC = ["#C0392B","#2B7FFF","#7B52FF","#E08800","#E84545","#00B8D9","#D63771","#F59E0B"];
+// Member avatar colors — Surface/Primary leads, then supporting palette
+const MC = ["#5F2E85","#2B7FFF","#7B52FF","#E08800","#EF4444","#00B8D9","#D63771","#F59E0B"];
 const LIVE_DATA = {
   1:{ speed:62, dist:0,   eta:"0 min",  memberStatus:"moving",  lastSeen:"now"    },
   2:{ speed:58, dist:1.2, eta:"2 min",  memberStatus:"moving",  lastSeen:"now"    },
