@@ -2069,16 +2069,10 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                       style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"12px 14px 12px 60px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                   </div>
                   {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700}}>⚠ Valid mobile number is required</span>}
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
-                      style={{flex:1,padding:"13px",borderRadius:12,background:canAdd?T.accent:T.raised,border:`1.5px solid ${canAdd?T.accent:T.border}`,color:canAdd?(T.isDark?"#080B12":"#fff"):T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
-                      + Add Member
-                    </button>
-                    <button onClick={()=>{if(canAdd){sendWhatsAppInvite(mName.trim(),mPhone.trim());}}} disabled={!canAdd}
-                      style={{flex:1,padding:"13px",borderRadius:12,background:canAdd?"#25D366":T.raised,border:`1.5px solid ${canAdd?"#25D366":T.border}`,color:canAdd?"#fff":T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
-                      <span>📲</span> Invite
-                    </button>
-                  </div>
+                  <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
+                    style={{width:"100%",padding:"13px",borderRadius:12,background:canAdd?T.accent:T.raised,border:`1.5px solid ${canAdd?T.accent:T.border}`,color:canAdd?(T.isDark?"#080B12":"#fff"):T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
+                    + Add Member
+                  </button>
                 </div>
               )}
               {form.members.length===0&&!showAddForm&&<div style={{textAlign:"center",padding:"20px 0",fontSize:12,color:T.muted}}>No members yet.</div>}
@@ -2102,12 +2096,10 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                     <div style={{display:"flex",alignItems:"center",gap:8,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
                       <Ic d={ICONS.phone} size={12} color={T.muted}/>
                       <span style={{fontSize:11,color:T.muted,flex:1,textAlign:"left"}}>{m.phone}</span>
-                      <button onClick={()=>{
-                        const msg=encodeURIComponent(`Hi ${m.name}! 👋 Reminder: join the "${form.name}" convoy trip on Convoy App.\n\nDownload & join: https://convoy.app/join/link 🚗`);
-                        window.open(`https://wa.me/${m.phone.replace(/\D/g,"")}?text=${msg}`,"_blank");
-                      }} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#25D36614",border:"1px solid #25D36633",cursor:"pointer"}}>
+                      <button onClick={()=>sendWhatsAppInvite(m.name,m.phone)}
+                        style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"#25D36614",border:"1px solid #25D36633",cursor:"pointer"}}>
                         <span style={{fontSize:13}}>📲</span>
-                        <span style={{fontSize:10,fontWeight:800,color:"#25D366"}}>Resend</span>
+                        <span style={{fontSize:10,fontWeight:800,color:"#25D366"}}>Invite on WhatsApp</span>
                       </button>
                     </div>
                   )}
