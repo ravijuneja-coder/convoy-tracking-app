@@ -4960,6 +4960,7 @@ export default function App() {
           const savedConvoy = { ...newData, id: ref.id };
           setConvoys(cs => [savedConvoy, ...cs.filter(c => String(c.id) !== String(data.id))]);
           flash(`"${data.name}" saved!`);
+          syncConvoyMembersToProfile(data.members || []);
         } catch (e) {
           console.error("[handleSave] addDoc (recovery) failed:", e.code, e.message);
           flash(`Failed to save — ${e.code || e.message}`, "warn");
@@ -5006,7 +5007,28 @@ export default function App() {
       await sendMemberNotifications(data.name, data.members, [], newConvoyId);
     }
     setSheet(null);
+    syncConvoyMembersToProfile(data.members || []);
   };
+
+  // Merge new convoy members into profileMembers (skip self, skip duplicates by phone)
+  const syncConvoyMembersToProfile = (convoyMembers) => {
+    if (!convoyMembers?.length) return;
+    setProfileMembers(prev => {
+      const existingPhones = new Set(prev.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean));
+      const selfPhone = authUser?.phone?.replace(/\D/g,"").slice(-10);
+      const selfName = authUser?.name?.toLowerCase();
+      const toAdd = convoyMembers.filter(m => {
+        if (!m.name || (!m.phone && !m.id)) return false;
+        const phone = m.phone?.replace(/\D/g,"").slice(-10);
+        if (selfPhone && phone === selfPhone) return false;
+        if (selfName && m.name.toLowerCase() === selfName) return false;
+        if (phone && existingPhones.has(phone)) return false;
+        return true;
+      }).map(m => ({ id: m.id || `pm_${Date.now()}_${Math.random().toString(36).slice(2)}`, name: m.name, phone: m.phone || "", car: m.car || "", color: m.color || "" }));
+      return toAdd.length ? [...prev, ...toAdd] : prev;
+    });
+  };
+
   const handleDelete = async () => {
     const name=delTarget.name;
     const id=String(delTarget.id);
