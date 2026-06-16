@@ -4954,7 +4954,8 @@ export default function App() {
       if (!firestoreDocExists) {
         // No Firestore doc — create fresh with addDoc (discards the legacy numeric ID)
         try {
-          const newData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+          const rawData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+          const newData = Object.fromEntries(Object.entries(rawData).filter(([,v]) => v !== undefined));
           delete newData.id;
           const ref = await addDoc(collection(db, "convoys"), newData);
           const savedConvoy = { ...newData, id: ref.id };
@@ -4993,7 +4994,10 @@ export default function App() {
     } else {
       let newConvoyId = null;
       try {
-        const newData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+        const rawData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+        // Firestore rejects undefined values — strip them before writing
+        const newData = Object.fromEntries(Object.entries(rawData).filter(([,v]) => v !== undefined));
+        delete newData.id;
         const ref = await addDoc(collection(db, "convoys"), newData);
         newConvoyId = ref.id;
         const savedConvoy = { ...data, ...newData, id: ref.id };
