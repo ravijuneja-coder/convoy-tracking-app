@@ -3359,20 +3359,15 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     </button>
   );
 
-  const Row = ({icon,label,field,placeholder,type="text"}) => {
+  const renderRow = (icon,label,field,placeholder,type="text") => {
     const isActive = !editing && activeField===field;
     return (
-      <div style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
-        {/* Label always above the row */}
+      <div key={field} style={{padding:"12px 0",borderBottom:`1px solid ${T.border}`}}>
         <div style={{fontSize:10,fontWeight:700,color:isActive||editing?T.accent:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:5,textAlign:"left",paddingLeft:48}}>{label}</div>
-
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          {/* Icon */}
           <div style={{width:36,height:36,borderRadius:10,background:isActive||editing?T.accentLo:T.raised,border:`1px solid ${isActive||editing?T.accent+"44":T.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
             <Ic d={icon} size={15} color={isActive||editing?T.accent:T.muted}/>
           </div>
-
-          {/* Content */}
           <div style={{flex:1,minWidth:0}}>
             {editing ? (
               <input value={P[field]||""} onChange={e=>set(field,e.target.value)} placeholder={placeholder} type={type}
@@ -3387,8 +3382,6 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
               <div style={{fontSize:13,color:P[field]?T.text:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"left"}}>{P[field]||"Not set"}</div>
             )}
           </div>
-
-          {/* Action buttons */}
           {!editing&&(
             isActive ? (
               <div style={{display:"flex",gap:6,flexShrink:0}}>
@@ -3550,10 +3543,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
               </div>
             </div>
 
-            <Row icon={ICONS.phone}  label="Phone"             field="phone"     placeholder="+91 00000 00000" type="tel"/>
-            <Row icon={ICONS.note}   label="Email"             field="email"     placeholder="you@email.com"   type="email"/>
-            <Row icon={ICONS.locate} label="City"              field="city"      placeholder="Your city"/>
-            <Row icon={ICONS.sos}    label="Emergency Contact" field="emergency" placeholder="+91 00000 00000" type="tel"/>
+            {renderRow(ICONS.phone,  "Phone",             "phone",     "+91 00000 00000", "tel")}
+            {renderRow(ICONS.note,   "Email",             "email",     "you@email.com",   "email")}
+            {renderRow(ICONS.locate, "City",              "city",      "Your city")}
+            {renderRow(ICONS.sos,    "Emergency Contact", "emergency", "+91 00000 00000", "tel")}
 
             {/* ── Refer the App ── */}
             {!editing&&(
@@ -3643,8 +3636,8 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 <span style={{fontSize:15,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:2}}>{P.plate||"— — —"}</span>
               </div>
             </div>
-            <Row icon={ICONS.car2} label="Vehicle Model" field="vehicle" placeholder="e.g. Swift Dzire"/>
-            <Row icon={ICONS.flag} label="Number Plate"  field="plate"   placeholder="e.g. DL 4C 1234"/>
+            {renderRow(ICONS.car2, "Vehicle Model", "vehicle", "e.g. Swift Dzire")}
+            {renderRow(ICONS.flag, "Number Plate",  "plate",   "e.g. DL 4C 1234")}
             <div style={{marginTop:16}}>
               <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Active Convoys</div>
               {[{name:"Delhi Road Trip",st:"live",c:T.accent},{name:"Goa Beach Weekend",st:"upcoming",c:T.blue}].map(cv=>(
