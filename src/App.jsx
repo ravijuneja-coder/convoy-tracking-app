@@ -2369,12 +2369,12 @@ const MembersModal = ({ allMembers, onClose }) => {
               <div style={{width:44,height:44,borderRadius:14,background:`${T.accent}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:700,color:T.accent,flexShrink:0,overflow:"hidden"}}>
                 {m.avatar?<img src={m.avatar} style={{width:44,height:44,objectFit:"cover"}}/>:(m.name[0]||"?").toUpperCase()}
               </div>
-              <div style={{flex:1,minWidth:0}}>
+              <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
                   <span style={{fontSize:14,fontWeight:700,color:T.text}}>{m.name}</span>
                   {m.role==="admin"&&<span style={{fontSize:9,fontWeight:800,color:T.accent,background:T.accentLo,padding:"2px 6px",borderRadius:6}}>ADMIN</span>}
                 </div>
-                <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%"}}>
                   {m.phone||"No phone"}{m.convoys?.filter(Boolean).length?` · ${m.convoys.filter(Boolean).join(", ")}` : ""}
                 </div>
               </div>
