@@ -1883,6 +1883,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
   };
   const blank={name:"",startingPoint:"",startCoords:null,destination:"",destCoords:null,distance:0,date:"",endDate:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
   const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:{...blank,members:makeDefaultMembers()});
+  const [removedPhones,setRemovedPhones]=useState(new Set());
   const [tab,setTab]=useState("details");
   const [mName,setMName]=useState(""); const [mCar,setMCar]=useState(""); const [mPhone,setMPhone]=useState("");
   const [phoneErr,setPhoneErr]=useState(false);
@@ -2105,7 +2106,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                       </div>
                       <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%"}}>{m.car||"Vehicle TBD"}</div>
                     </div>
-                    {!m.isOwner&&<button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {!m.isOwner&&<button onClick={()=>{const phone=m.phone?.replace(/\D/g,"").slice(-10);if(phone)setRemovedPhones(s=>new Set([...s,phone]));set("members",form.members.filter(x=>x.id!==m.id));}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <Ic d={ICONS.close} size={12} color={T.red}/>
                     </button>}
                   </div>
@@ -2132,7 +2133,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                   {pm.map(m=>{
                     const already=!!form.members.find(fm=>fm.name.toLowerCase()===m.name.toLowerCase());
                     const toggle=()=>{
-                      if(already){ set("members",form.members.filter(fm=>fm.name.toLowerCase()!==m.name.toLowerCase())); }
+                      if(already){ const phone=m.phone?.replace(/\D/g,"").slice(-10);if(phone)setRemovedPhones(s=>new Set([...s,phone]));set("members",form.members.filter(fm=>fm.name.toLowerCase()!==m.name.toLowerCase())); }
                       else {
                         const newM={...m,id:Date.now()+Math.random(),color:MC[form.members.length%MC.length],role:"member"};
                         set("members",[...form.members,newM]);
@@ -2213,7 +2214,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
           )}
         </div>
         <div style={{padding:"12px 18px 20px",borderTop:`1px solid ${T.border}`}}>
-          <button onClick={()=>valid&&onSave({...form,id:convoy?.id||undefined,pitStops})} disabled={!valid}
+          <button onClick={()=>valid&&onSave({...form,id:convoy?.id||undefined,pitStops,removedPhones})} disabled={!valid}
             style={{width:"100%",padding:"15px",borderRadius:14,background:valid?T.accent:T.muted,border:"none",color:valid?("#FFFFFF"):T.surface,fontSize:15,fontWeight:800,cursor:valid?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <Ic d={ICONS.check} size={17} color={valid?("#FFFFFF"):T.surface} sw={2.5}/>{editing?"Save Changes":"Create Convoy"}
           </button>
@@ -4968,14 +4969,16 @@ export default function App() {
         if (latestSnap?.exists()) {
           const latestMembers = latestSnap.data().members || [];
           const formPhones = new Set(finalMembers.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean));
+          const intentionallyRemoved = data.removedPhones instanceof Set ? data.removedPhones : new Set(data.removedPhones||[]);
           const extraMembers = latestMembers.filter(m => {
             const p = m.phone?.replace(/\D/g,"").slice(-10);
-            return p && !formPhones.has(p);
+            return p && !formPhones.has(p) && !intentionallyRemoved.has(p);
           });
           finalMembers = [...finalMembers, ...extraMembers];
         }
         const finalPhones = memberPhones(finalMembers);
-        await updateDoc(doc(db, "convoys", String(data.id)), { ...data, members: finalMembers, memberPhones: finalPhones, ownerUid: authUser.uid, updatedAt: serverTimestamp() });
+        const {removedPhones:_rp, ...dataToWrite} = data;
+        await updateDoc(doc(db, "convoys", String(data.id)), { ...dataToWrite, members: finalMembers, memberPhones: finalPhones, ownerUid: authUser.uid, updatedAt: serverTimestamp() });
         if(activeC?.id===data.id) setActiveC(prev=>({...prev,...data, members: finalMembers}));
         flash(`"${data.name}" updated`);
       } catch (e) {
@@ -4987,7 +4990,8 @@ export default function App() {
     } else {
       let newConvoyId = null;
       try {
-        const rawData = { ...data, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
+        const {removedPhones:_rp2, ...dataClean} = data;
+        const rawData = { ...dataClean, memberPhones: phones, distance: data.distance||0, ownerUid: authUser.uid, inviteCode: data.inviteCode||Math.floor(100000+Math.random()*900000).toString(), createdAt: serverTimestamp() };
         // Firestore rejects undefined values — strip them before writing
         const newData = Object.fromEntries(Object.entries(rawData).filter(([,v]) => v !== undefined));
         delete newData.id;
