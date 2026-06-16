@@ -3351,6 +3351,12 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setProfile(p=>({...p,[activeField]:fieldVal}));
     setActiveField(null);
     setSaved(true); setTimeout(()=>setSaved(false),2200);
+    // Persist phone/name changes to authUser so the sync useEffect doesn't overwrite them
+    if(activeField==="phone"||activeField==="name"){
+      const updated={...(authUser||{}), [activeField]:fieldVal};
+      localStorage.setItem("convoy_user", JSON.stringify(updated));
+      onProfileUpdate?.(updated);
+    }
   };
   const cancelField = () => setActiveField(null);
 
