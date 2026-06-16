@@ -2097,13 +2097,13 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                 <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 12px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:m.phone?8:0}}>
                     <Avatar name={m.name} color={m.color} size={36}/>
-                    <div style={{flex:1,minWidth:0}}>
+                    <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
                         <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
                         {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
                         {m.isOwner&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                       </div>
-                      {m.car&&<div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"left"}}>{m.car}</div>}
+                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%"}}>{m.car||"Vehicle TBD"}</div>
                     </div>
                     {!m.isOwner&&<button onClick={()=>set("members",form.members.filter(x=>x.id!==m.id))} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <Ic d={ICONS.close} size={12} color={T.red}/>
