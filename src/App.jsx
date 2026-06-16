@@ -35,7 +35,7 @@ const DARK = {
   pillBg:"rgba(10,12,16,.92)", nameBg:"rgba(10,12,16,.9)",
 };
 const LIGHT = {
-  bg:"#F5F6F8", surface:"#FFFFFF", card:"#FFFFFF", raised:"#F7F8FA",
+  bg:"#F4F4F4", surface:"#FFFFFF", card:"#FFFFFF", raised:"#F7F8FA",
   border:"#E2E6EF", borderHi:"#C8D0E0",
   // Button/Primary/Surface → Surface/Primary → #5F2E85
   accent:"#5F2E85", accentLo:"#F3EAF9", accentHi:"#4A2268",
