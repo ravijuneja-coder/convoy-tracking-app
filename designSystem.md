@@ -71,10 +71,14 @@ Defined in the `Alias` variable collection. Maps primitives to semantic intent.
 These are the primary tokens to use in UI design. Defined in the `Mapped` variable collection.
 
 #### Surface
-| Token | Usage |
-|---|---|
-| `Surface/Primary` | Primary action surface (brand color background) |
-| `Surface/Primary-hover` | Hovered state of primary surface |
+| Token | Hex | Usage |
+|---|---|---|
+| `Surface/Primary` | `#5F2E85` | Primary action surface (brand color background) |
+| `Surface/Primary-hover` | `#7938B2` | Hovered state of primary surface |
+| `Surface/Body` | `#FFFFFF` | Page/screen body background |
+| `Surface/Info` | — | Informational surface tint |
+| `Surface/Error` | `#FF2323` | Error state surface / border |
+| `Surface/Success` | — | Success state surface tint |
 
 #### Icon
 | Token | Usage |
@@ -94,12 +98,12 @@ These are the primary tokens to use in UI design. Defined in the `Mapped` variab
 | `color/focus` | Focus ring color |
 
 #### Background
-| Token | Usage |
-|---|---|
-| `color/background/surface` | Page/card surface background |
-| `color/background/action/primary` | Primary action background (default) |
-| `color/background/action/primary-hover` | Primary action background (hover) |
-| `color/background/action/primary-active` | Primary action background (active/pressed) |
+| Token | Hex | Usage |
+|---|---|---|
+| `color/background/surface` | `#FFFFFF` | Page/card surface background |
+| `color/background/action/primary` | `#5F2E85` | Primary action background (default) |
+| `color/background/action/primary-hover` | `#7938B2` | Primary action background (hover) |
+| `color/background/action/primary-active` | — | Primary action background (active/pressed) |
 
 #### Icon (via `mapped` collection)
 | Token | Usage |
@@ -199,34 +203,43 @@ Spacing should be applied via component tokens wherever possible. For layout gap
 
 ### 5.1 Button Tokens
 
-| Token | Type | Usage |
-|---|---|---|
-| `Button/p-x` | FLOAT | Horizontal padding |
-| `Button/p-y` | FLOAT | Vertical padding |
-| `Button/Radius` | FLOAT | Border radius |
-| `Button/Primary/Surface` | COLOR | Filled primary background (default) |
-| `Button/Primary/Surface-hover` | COLOR | Filled primary background (hover) |
-| `Button/Primary/Border` | COLOR | Primary button border |
-| `Button/Primary/Text` | COLOR | Primary button label color |
-| `Button/Primary/Icon` | COLOR | Primary button icon color |
-| `Button/Outline/surface` | COLOR | Outline button background |
-| `Button/Outline/border` | COLOR | Outline button border |
-| `Button/Outline/text` | COLOR | Outline button label color |
-| `Button/Outline/Icon` | COLOR | Outline button icon color |
+| Token | Type | Hex / Value | Usage |
+|---|---|---|---|
+| `Button/p-x` | FLOAT | `24px` | Horizontal padding |
+| `Button/p-y` | FLOAT | `16px` | Vertical padding |
+| `Button/Radius` | FLOAT | `8px` | Border radius |
+| `Button/Primary/Surface` | COLOR | `#5F2E85` | Filled primary background (default) |
+| `Button/Primary/Surface-hover` | COLOR | `#7938B2` | Filled primary background (hover) |
+| `Button/Primary/Border` | COLOR | `#5F2E85` | Primary button border |
+| `Button/Primary/Text` | COLOR | `#FFFFFF` | Primary button label color |
+| `Button/Primary/Icon` | COLOR | `#FFFFFF` | Primary button icon color |
+| `Button/Outline/surface` | COLOR | `#FFFFFF` | Outline button background (default) |
+| `Button/Outline/surface-hover` | COLOR | `#F7F7F7` | Outline button background (hover) |
+| `Button/Outline/border` | COLOR | `#5F2E85` | Outline button border |
+| `Button/Outline/text` | COLOR | `#5F2E85` | Outline button label color |
+| `Button/Outline/Icon` | COLOR | `#5F2E85` | Outline button icon color |
 
 ### 5.2 Input Tokens
 
-| Token | Type | Usage |
-|---|---|---|
-| `Input/Surface/Default` | COLOR | Input background |
-| `Input/Border/Color/Hover` | COLOR | Border color on hover |
-| `Input/Border/Radius/Radius` | FLOAT | Input corner radius |
-| `Input/Text/Default` | COLOR | Entered value text |
-| `Input/Text/Placeholder` | COLOR | Placeholder text |
-| `Input/Text/Hint` | COLOR | Hint/helper text below input |
-| `Input/Label/Heading` | COLOR | Field label text |
-| `Input/Label/Description` | COLOR | Field sub-label / description text |
-| `Input/Icon/Default` | COLOR | Inline icon color |
+| Token | Type | Hex / Value | Usage |
+|---|---|---|---|
+| `Input/Surface/Default` | COLOR | `#FFFFFF` | Input background |
+| `Input/Border/Color/Default` | COLOR | `#C7C7C7` | Border color (default/empty state) |
+| `Input/Border/Color/Hover` | COLOR | `#5F2E85` | Border color on hover/focus |
+| `Input/Border/Color/Error` | COLOR | `#FF2323` | Border color on error |
+| `Input/Border/Radius/Radius` | FLOAT | `6px` | Input corner radius |
+| `Input/Text/Default` | COLOR | — | Entered value text |
+| `Input/Text/Placeholder` | COLOR | `#C7C7C7` | Placeholder text |
+| `Input/Text/Hint` | COLOR | `#C7C7C7` | Hint/helper text below input |
+| `Input/Label/Heading` | COLOR | `#171717` | Field label text |
+| `Input/Label/Description` | COLOR | `#697177` | Field sub-label / description text |
+| `Input/Icon/Default` | COLOR | — | Inline icon color |
+| `content/error` | COLOR | `#FF2323` | Error message text |
+| `content/on-action-primary` | COLOR | `#FFFFFF` | Text/icon on primary action surface |
+| `content/heading` | COLOR | `#171717` | Heading text |
+| `content/body` | COLOR | `#707070` | Body/secondary text |
+| `border/default` | COLOR | `#C7C7C7` | Default border |
+| `border/error` | COLOR | `#FF2323` | Error border |
 
 ---
 
