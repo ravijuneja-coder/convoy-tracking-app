@@ -3352,6 +3352,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
 
     const processConvoyList = (list) => {
+      console.log("[syncVehicle] processConvoyList — count:", list.length, "myPhone:", myPhone, "carLabel:", carLabel);
       const updated = list.map(convoy => {
         if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
         const isMyConvoy = convoy.ownerUid === authUser.uid;
@@ -3361,9 +3362,12 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
           m.id===authUser.uid ||
           (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
         );
+        console.log("[syncVehicle] convoy:", convoy.name, "idx:", idx, "isMyConvoy:", isMyConvoy, "members:", convoy.members.map(m=>({name:m.name,phone:m.phone,isOwner:m.isOwner,role:m.role,id:m.id})));
         if(idx===-1) return convoy;
         const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
-        updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
+        updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers})
+          .then(()=>console.log("[syncVehicle] Firestore updated for convoy:", convoy.id))
+          .catch(e=>console.error("[syncVehicle] Firestore error:", e.code, e.message));
         return {...convoy, members:updatedMembers};
       });
       onConvoysChange?.(updated);
@@ -3374,6 +3378,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       processConvoyList(convoys);
       return;
     }
+    console.log("[syncVehicle] convoys prop empty — fetching from Firestore");
     try {
       const [ownedSnap, memberSnap] = await Promise.all([
         getDocs(query(collection(db,"convoys"), where("ownerUid","==",authUser.uid))),
@@ -3381,8 +3386,9 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       ]);
       const combined = {};
       [...ownedSnap.docs, ...memberSnap.docs].forEach(d=>{ combined[d.id]={...d.data(),id:d.id}; });
+      console.log("[syncVehicle] fetched from Firestore — count:", Object.keys(combined).length);
       processConvoyList(Object.values(combined));
-    } catch(_) {}
+    } catch(e) { console.error("[syncVehicle] fetch error:", e.code, e.message); }
   };
 
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
