@@ -3347,41 +3347,42 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   };
 
   const syncVehicleToConvoys = async (vehicle, plate) => {
-    console.log("[syncVehicle] called — uid:", authUser?.uid, "vehicle:", vehicle, "plate:", plate);
     if(!authUser?.uid) return;
     const carLabel = [vehicle, plate].filter(Boolean).join(" · ") || "";
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
 
-    // Fetch live from Firestore — prop may be stale/empty if user navigated to profile before load
-    let liveConvoys = convoys?.length ? convoys : [];
-    if(!liveConvoys.length) {
-      try {
-        const [ownedSnap, memberSnap] = await Promise.all([
-          getDocs(query(collection(db,"convoys"), where("ownerUid","==",authUser.uid))),
-          myPhone ? getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains",myPhone))) : Promise.resolve({docs:[]}),
-        ]);
-        const combined = {};
-        [...ownedSnap.docs, ...memberSnap.docs].forEach(d=>{ combined[d.id]={...d.data(),id:d.id}; });
-        liveConvoys = Object.values(combined);
-      } catch(_) { return; }
-    }
-    if(!liveConvoys.length) return;
+    const processConvoyList = (list) => {
+      const updated = list.map(convoy => {
+        if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
+        const isMyConvoy = convoy.ownerUid === authUser.uid;
+        const idx = convoy.members.findIndex(m =>
+          m.isOwner ||
+          (myPhone && m.phone?.replace(/\D/g,"").slice(-10)===myPhone) ||
+          m.id===authUser.uid ||
+          (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
+        );
+        if(idx===-1) return convoy;
+        const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
+        updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
+        return {...convoy, members:updatedMembers};
+      });
+      onConvoysChange?.(updated);
+    };
 
-    const updatedConvoys = liveConvoys.map(convoy => {
-      if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
-      const isMyConvoy = convoy.ownerUid === authUser.uid;
-      const idx = convoy.members.findIndex(m =>
-        m.isOwner ||
-        (myPhone && m.phone?.replace(/\D/g,"").slice(-10)===myPhone) ||
-        m.id===authUser.uid ||
-        (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
-      );
-      if(idx===-1) return convoy;
-      const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
-      updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
-      return {...convoy, members:updatedMembers};
-    });
-    onConvoysChange?.(updatedConvoys);
+    // Use prop if already loaded, else fetch from Firestore
+    if(convoys?.length) {
+      processConvoyList(convoys);
+      return;
+    }
+    try {
+      const [ownedSnap, memberSnap] = await Promise.all([
+        getDocs(query(collection(db,"convoys"), where("ownerUid","==",authUser.uid))),
+        myPhone ? getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains",myPhone))) : Promise.resolve({docs:[]}),
+      ]);
+      const combined = {};
+      [...ownedSnap.docs, ...memberSnap.docs].forEach(d=>{ combined[d.id]={...d.data(),id:d.id}; });
+      processConvoyList(Object.values(combined));
+    } catch(_) {}
   };
 
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
