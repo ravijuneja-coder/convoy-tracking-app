@@ -3808,9 +3808,11 @@ const OnboardingScreen = ({ onDone }) => {
   const [authTab,      setAuthTab]      = useState("signup");
   const [useEmail,     setUseEmail]     = useState(false);
   const [showForgot,      setShowForgot]      = useState(false);
+  const [resetPhone,      setResetPhone]      = useState("");
   const [resetEmail,      setResetEmail]      = useState("");
   const [resetSent,       setResetSent]       = useState(false);
   const [resetLoading,    setResetLoading]    = useState(false);
+  const [resetErr,        setResetErr]        = useState("");
   const [name,         setName]         = useState("");
   const [email,        setEmail]        = useState("");
   const [phone,        setPhone]        = useState("");
@@ -3943,7 +3945,7 @@ const OnboardingScreen = ({ onDone }) => {
               <button onClick={()=>{setUseEmail(e=>!e);setErr("");setShowForgot(false);}} style={{background:"none",border:"none",color:T.accent,fontSize:12,fontWeight:700,cursor:"pointer",padding:0}}>
                 {useEmail?"Use mobile number instead":"Use email instead"}
               </button>
-              <button onClick={()=>{setShowForgot(f=>!f);setResetSent(false);setResetEmail(email||"");setErr("");}} style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0}}>
+              <button onClick={()=>{setShowForgot(f=>!f);setResetSent(false);setResetPhone("");setResetEmail("");setResetErr("");setErr("");}} style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0}}>
                 Forgot password?
               </button>
             </div>
@@ -3954,37 +3956,51 @@ const OnboardingScreen = ({ onDone }) => {
             <div style={{background:T.raised,borderRadius:14,padding:"16px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",gap:10}}>
               <div style={{display:"flex",flexDirection:"column",gap:3}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"left"}}>Reset Password</div>
-                <div style={{fontSize:11,color:T.muted,textAlign:"left"}}>Enter your email to receive a reset link</div>
+                <div style={{fontSize:11,color:T.muted,textAlign:"left"}}>Enter your registered mobile number</div>
               </div>
               {!resetSent ? (
                 <>
-                  <input value={resetEmail} onChange={e=>setResetEmail(e.target.value)} placeholder="your@email.com" type="email"
-                    style={{width:"100%",background:T.card,border:`1.5px solid ${T.border}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                  <input value={resetPhone} onChange={e=>{setResetPhone(e.target.value);setResetErr("");}} placeholder="+91 98765 43210" type="tel"
+                    style={{width:"100%",background:T.card,border:`1.5px solid ${resetErr?T.red:T.border}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                  {resetErr&&<div style={{fontSize:11,color:T.red,fontWeight:600}}>{resetErr}</div>}
                   <button onClick={async()=>{
-                    if(!resetEmail.trim()){ return; }
+                    const raw = resetPhone.trim().replace(/\D/g,"");
+                    const last10 = raw.slice(-10);
+                    if(last10.length<10){ setResetErr("Enter a valid 10-digit mobile number."); return; }
                     setResetLoading(true);
+                    setResetErr("");
                     try{
-                      await sendPasswordResetEmail(auth, resetEmail.trim());
+                      // Look up email by phone in Firestore
+                      let snap = await getDocs(query(collection(db,"users"), where("phone","==",last10)));
+                      if(snap.empty) snap = await getDocs(query(collection(db,"users"), where("phone","==","91"+last10)));
+                      if(snap.empty){ setResetErr("No account found with this mobile number."); setResetLoading(false); return; }
+                      const foundEmail = snap.docs[0].data().email;
+                      if(!foundEmail){ setResetErr("No email linked to this account. Contact support."); setResetLoading(false); return; }
+                      await sendPasswordResetEmail(auth, foundEmail);
+                      // Mask email: r****a@gmail.com
+                      const [user,domain] = foundEmail.split("@");
+                      const masked = user.length<=2 ? user[0]+"****" : user[0]+"****"+user[user.length-1];
+                      setResetEmail(masked+"@"+domain);
                       setResetSent(true);
-                      setErr("");
                     } catch(e){
-                      setErr("Could not send reset email. Check the address and try again.");
+                      setResetErr("Something went wrong. Please try again.");
                     } finally { setResetLoading(false); }
                   }} disabled={resetLoading}
                     style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
-                    {resetLoading?"Sending…":"Send Reset Link"}
+                    {resetLoading?"Looking up…":"Send Reset Link"}
                   </button>
                 </>
               ):(
-                <div style={{display:"flex",alignItems:"center",gap:8,background:T.accentLo,borderRadius:10,padding:"10px 12px",justifyContent:"flex-start"}}>
-                  <span style={{fontSize:16}}>✅</span>
+                <div style={{display:"flex",alignItems:"center",gap:8,background:T.accentLo,borderRadius:10,padding:"12px",justifyContent:"flex-start"}}>
+                  <span style={{fontSize:18}}>✅</span>
                   <div style={{textAlign:"left"}}>
                     <div style={{fontSize:12,fontWeight:700,color:T.accent}}>Reset link sent!</div>
-                    <div style={{fontSize:11,color:T.muted}}>Check your email inbox</div>
+                    <div style={{fontSize:11,color:T.muted,marginTop:2}}>We've sent a reset link to</div>
+                    <div style={{fontSize:12,fontWeight:700,color:T.text,marginTop:1}}>{resetEmail}</div>
                   </div>
                 </div>
               )}
-              <button onClick={()=>{setShowForgot(false);setResetSent(false);setResetEmail("");setErr("");}}
+              <button onClick={()=>{setShowForgot(false);setResetSent(false);setResetPhone("");setResetEmail("");setResetErr("");setErr("");}}
                 style={{background:"none",border:"none",color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",padding:0,textAlign:"center",alignSelf:"center"}}>← Back</button>
             </div>
           )}
