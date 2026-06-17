@@ -3263,7 +3263,7 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null, convoys=[], onConvoysChange=null }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null, convoys=[], convoysRef=null, onConvoysChange=null }) => {
   const T = useT();
   const [profile,     setProfile]     = useState({...PROFILE_DEFAULT});
   const [editing,     setEditing]     = useState(false);
@@ -3373,9 +3373,10 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       onConvoysChange?.(updated);
     };
 
-    // Use prop if already loaded, else fetch from Firestore
-    if(convoys?.length) {
-      processConvoyList(convoys);
+    // Use ref (always current) or prop, else fetch from Firestore
+    const liveList = convoysRef?.current?.length ? convoysRef.current : convoys;
+    if(liveList?.length) {
+      processConvoyList(liveList);
       return;
     }
     console.log("[syncVehicle] convoys prop empty — fetching from Firestore. uid:", authUser.uid, "phone:", myPhone);
@@ -4874,6 +4875,8 @@ export default function App() {
   });
 
   const [convoys,    setConvoys]   = useState([]);
+  const convoysRef = useRef([]);
+  useEffect(() => { convoysRef.current = convoys; }, [convoys]);
   const deletedIds = useRef(new Set());
   const [screen,     setScreen]    = useState("home");
   const [activeC,    setActiveC]   = useState(null);
@@ -5255,7 +5258,7 @@ export default function App() {
                     }
                     setPendingInvite({convoy,notif});setScreen("join");setNavTab("bell");
                   }}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onConvoysChange={setConvoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} convoysRef={convoysRef} onConvoysChange={setConvoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
