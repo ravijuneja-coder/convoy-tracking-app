@@ -3346,13 +3346,27 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     );
   };
 
-  const syncVehicleToConvoys = (vehicle, plate) => {
-    console.log("[syncVehicle] called — uid:", authUser?.uid, "convoys:", convoys?.length, "vehicle:", vehicle, "plate:", plate);
-    if(!authUser?.uid||!convoys?.length) return;
+  const syncVehicleToConvoys = async (vehicle, plate) => {
+    if(!authUser?.uid) return;
     const carLabel = [vehicle, plate].filter(Boolean).join(" · ") || "";
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
-    console.log("[syncVehicle] uid:", authUser.uid, "phone:", myPhone, "carLabel:", carLabel, "convoys:", convoys.length);
-    const updatedConvoys = convoys.map(convoy => {
+
+    // Fetch live from Firestore — prop may be stale/empty if user navigated to profile before load
+    let liveConvoys = convoys?.length ? convoys : [];
+    if(!liveConvoys.length) {
+      try {
+        const [ownedSnap, memberSnap] = await Promise.all([
+          getDocs(query(collection(db,"convoys"), where("ownerUid","==",authUser.uid))),
+          myPhone ? getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains",myPhone))) : Promise.resolve({docs:[]}),
+        ]);
+        const combined = {};
+        [...ownedSnap.docs, ...memberSnap.docs].forEach(d=>{ combined[d.id]={...d.data(),id:d.id}; });
+        liveConvoys = Object.values(combined);
+      } catch(_) { return; }
+    }
+    if(!liveConvoys.length) return;
+
+    const updatedConvoys = liveConvoys.map(convoy => {
       if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
       const isMyConvoy = convoy.ownerUid === authUser.uid;
       const idx = convoy.members.findIndex(m =>
@@ -3361,7 +3375,6 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
         m.id===authUser.uid ||
         (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
       );
-      console.log("[syncVehicle] convoy:", convoy.name, "isMyConvoy:", isMyConvoy, "idx:", idx, "members:", convoy.members.map(m=>({name:m.name,phone:m.phone,role:m.role,isOwner:m.isOwner,id:m.id})));
       if(idx===-1) return convoy;
       const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
       updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
