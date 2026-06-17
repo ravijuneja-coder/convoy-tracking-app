@@ -3346,12 +3346,32 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     );
   };
 
+  const syncVehicleToConvoys = (vehicle, plate) => {
+    if(!authUser?.uid||!convoys?.length) return;
+    const carLabel = [vehicle, plate].filter(Boolean).join(" · ") || "";
+    const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
+    convoys.forEach(convoy => {
+      if(!convoy.id||!Array.isArray(convoy.members)) return;
+      const idx = convoy.members.findIndex(m =>
+        m.isOwner ||
+        (myPhone && m.phone?.replace(/\D/g,"").slice(-10)===myPhone) ||
+        m.id===authUser.uid
+      );
+      if(idx===-1) return;
+      const updated = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
+      updateDoc(doc(db,"convoys",String(convoy.id)),{members:updated}).catch(()=>{});
+    });
+  };
+
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
   const cancelEdit = () => { setDraft(null); setEditing(false); };
   const saveEdit   = () => {
     setProfile({...draft}); setEditing(false); setDraft(null);
     setSaved(true); setTimeout(()=>setSaved(false), 2200);
     persistProfile(draft);
+    if(draft?.vehicle!==undefined||draft?.plate!==undefined){
+      syncVehicleToConvoys(draft.vehicle||"", draft.plate||"");
+    }
     if(draft?.name){
       const updated={...(authUser||{}), name:draft.name, phone:draft.phone||authUser?.phone||""};
       localStorage.setItem("convoy_user", JSON.stringify(updated));
@@ -3382,7 +3402,13 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setTimeout(()=>inputRef.current?.focus(), 50);
   };
   const saveField = () => {
-    setProfile(p=>({...p,[activeField]:fieldVal}));
+    setProfile(p=>{
+      const next={...p,[activeField]:fieldVal};
+      if(activeField==="vehicle"||activeField==="plate"){
+        syncVehicleToConvoys(activeField==="vehicle"?fieldVal:p.vehicle||"", activeField==="plate"?fieldVal:p.plate||"");
+      }
+      return next;
+    });
     setActiveField(null);
     setSaved(true); setTimeout(()=>setSaved(false),2200);
     persistProfile({[activeField]:fieldVal});
