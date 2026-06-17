@@ -3263,7 +3263,7 @@ const PROFILE_DEFAULT = {
   shareLocation:true, alerts:true, lowBattery:true,
 };
 
-const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null, convoys=[] }) => {
+const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null, convoys=[], onConvoysChange=null }) => {
   const T = useT();
   const [profile,     setProfile]     = useState({...PROFILE_DEFAULT});
   const [editing,     setEditing]     = useState(false);
@@ -3350,17 +3350,21 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     if(!authUser?.uid||!convoys?.length) return;
     const carLabel = [vehicle, plate].filter(Boolean).join(" · ") || "";
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
-    convoys.forEach(convoy => {
-      if(!convoy.id||!Array.isArray(convoy.members)) return;
+    const updatedConvoys = convoys.map(convoy => {
+      if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
+      const isMyConvoy = convoy.ownerUid === authUser.uid;
       const idx = convoy.members.findIndex(m =>
         m.isOwner ||
         (myPhone && m.phone?.replace(/\D/g,"").slice(-10)===myPhone) ||
-        m.id===authUser.uid
+        m.id===authUser.uid ||
+        (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
       );
-      if(idx===-1) return;
-      const updated = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
-      updateDoc(doc(db,"convoys",String(convoy.id)),{members:updated}).catch(()=>{});
+      if(idx===-1) return convoy;
+      const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
+      updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
+      return {...convoy, members:updatedMembers};
     });
+    onConvoysChange?.(updatedConvoys);
   };
 
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
@@ -5225,7 +5229,7 @@ export default function App() {
                     }
                     setPendingInvite({convoy,notif});setScreen("join");setNavTab("bell");
                   }}/>}
-                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
+                {screen==="profile"&&<ProfileScreen isPremium={isPremium} authUser={authUser} onProfileUpdate={handleProfileUpdate} profileMembers={profileMembers} onProfileMembersChange={setProfileMembers} isDark={isDark} onToggleDark={()=>setIsDark(d=>!d)} convoys={convoys} onConvoysChange={setConvoys} onSignOut={async ()=>{try{await fbSignOut(auth);}catch(_){}localStorage.removeItem("convoy_authed");localStorage.removeItem("convoy_user");setAuthed(false);setAuthUser(null);setConvoys([]); setScreen("home");setNavTab("home");}} onOpenSettings={()=>setScreen("settings")} onOpenPricing={()=>setScreen("pricing")}/>}
                 {screen==="settings"&&<SettingsScreen onBack={()=>setScreen("profile")}/>}
                 {screen==="pricing"&&<PricingScreen isPremium={isPremium} onBack={()=>setScreen("profile")} onUpgrade={()=>{localStorage.setItem("convoy_premium","1");setIsPremium(true);setScreen("profile");flash("🎉 Welcome to Premium!");}}/>}
                 {screen==="summary"&&activeC&&<TripSummaryScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onClose={()=>{setScreen("home");setActiveC(null);setNavTab("home");}} onBack={()=>setScreen("detail")}/>}
