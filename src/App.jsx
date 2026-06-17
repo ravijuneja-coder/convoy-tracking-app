@@ -3378,12 +3378,13 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       processConvoyList(convoys);
       return;
     }
-    console.log("[syncVehicle] convoys prop empty — fetching from Firestore");
+    console.log("[syncVehicle] convoys prop empty — fetching from Firestore. uid:", authUser.uid, "phone:", myPhone);
     try {
       const [ownedSnap, memberSnap] = await Promise.all([
         getDocs(query(collection(db,"convoys"), where("ownerUid","==",authUser.uid))),
         myPhone ? getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains",myPhone))) : Promise.resolve({docs:[]}),
       ]);
+      console.log("[syncVehicle] ownedSnap:", ownedSnap.docs.length, "memberSnap:", memberSnap.docs?.length);
       const combined = {};
       [...ownedSnap.docs, ...memberSnap.docs].forEach(d=>{ combined[d.id]={...d.data(),id:d.id}; });
       console.log("[syncVehicle] fetched from Firestore — count:", Object.keys(combined).length);
