@@ -3983,7 +3983,10 @@ const OnboardingScreen = ({ onDone }) => {
                       setResetEmail(masked+"@"+domain);
                       setResetSent(true);
                     } catch(e){
-                      setResetErr("Something went wrong. Please try again.");
+                      console.error("Reset error:", e.code, e.message);
+                      if(e.code==="auth/unauthorized-continue-uri"||e.code==="auth/unauthorized-domain") setResetErr("Domain not authorized. Add localhost to Firebase Auth domains.");
+                      else if(e.code==="auth/invalid-email") setResetErr("Invalid email linked to this account.");
+                      else setResetErr(e.message||"Something went wrong. Please try again.");
                     } finally { setResetLoading(false); }
                   }} disabled={resetLoading}
                     style={{padding:"11px",borderRadius:10,background:T.accent,border:"none",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer",opacity:resetLoading?0.7:1}}>
