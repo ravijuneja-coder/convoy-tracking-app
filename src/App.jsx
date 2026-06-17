@@ -3408,19 +3408,19 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setTimeout(()=>inputRef.current?.focus(), 50);
   };
   const saveField = () => {
-    setProfile(p=>{
-      const next={...p,[activeField]:fieldVal};
-      if(activeField==="vehicle"||activeField==="plate"){
-        syncVehicleToConvoys(activeField==="vehicle"?fieldVal:p.vehicle||"", activeField==="plate"?fieldVal:p.plate||"");
-      }
-      return next;
-    });
+    const field = activeField;
+    const val = fieldVal;
+    setProfile(p=>({...p,[field]:val}));
     setActiveField(null);
     setSaved(true); setTimeout(()=>setSaved(false),2200);
-    persistProfile({[activeField]:fieldVal});
-    // Persist phone/name changes to authUser so the sync useEffect doesn't overwrite them
-    if(activeField==="phone"||activeField==="name"){
-      const updated={...(authUser||{}), [activeField]:fieldVal};
+    persistProfile({[field]:val});
+    if(field==="vehicle"||field==="plate"){
+      const currentPlate   = field==="plate"   ? val : profile.plate||"";
+      const currentVehicle = field==="vehicle" ? val : profile.vehicle||"";
+      syncVehicleToConvoys(currentVehicle, currentPlate);
+    }
+    if(field==="phone"||field==="name"){
+      const updated={...(authUser||{}), [field]:val};
       localStorage.setItem("convoy_user", JSON.stringify(updated));
       onProfileUpdate?.(updated);
     }
