@@ -3300,7 +3300,33 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
 
   const fileInputRef = useRef(null);
 
-  // Sync authUser data into profile whenever authUser changes
+  // Load full profile from Firestore on mount
+  useEffect(()=>{
+    if(!authUser?.uid) return;
+    getDoc(doc(db,"users",authUser.uid)).then(snap=>{
+      if(snap.exists()){
+        const d=snap.data();
+        setProfile(p=>({
+          ...p,
+          ...(d.name      ?{name:d.name}:{}),
+          ...(d.phone     ?{phone:d.phone}:{}),
+          ...(d.email     ?{email:d.email}:{}),
+          ...(d.vehicle   ?{vehicle:d.vehicle}:{}),
+          ...(d.plate     ?{plate:d.plate}:{}),
+          ...(d.city      ?{city:d.city}:{}),
+          ...(d.emergency ?{emergency:d.emergency}:{}),
+          ...(d.bio       ?{bio:d.bio}:{}),
+          ...(d.username  ?{username:d.username}:{}),
+          ...(d.avatar    ?{avatar:d.avatar}:{}),
+          ...(d.shareLocation!==undefined?{shareLocation:d.shareLocation}:{}),
+          ...(d.alerts!==undefined       ?{alerts:d.alerts}:{}),
+          ...(d.lowBattery!==undefined   ?{lowBattery:d.lowBattery}:{}),
+        }));
+      }
+    }).catch(()=>{});
+  },[authUser?.uid]);
+
+  // Sync authUser data into profile whenever authUser changes (keeps name/phone/email fresh)
   useEffect(()=>{
     if(authUser?.name||authUser?.email||authUser?.phone){
       setProfile(p=>({
@@ -3312,12 +3338,20 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     }
   },[authUser?.name, authUser?.phone, authUser?.email]);
 
+  const persistProfile = (data) => {
+    if(!authUser?.uid) return;
+    const clean = Object.fromEntries(Object.entries(data).filter(([,v])=>v!==undefined&&v!==null));
+    updateDoc(doc(db,"users",authUser.uid), clean).catch(()=>
+      setDoc(doc(db,"users",authUser.uid), clean, {merge:true}).catch(()=>{})
+    );
+  };
+
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
   const cancelEdit = () => { setDraft(null); setEditing(false); };
   const saveEdit   = () => {
     setProfile({...draft}); setEditing(false); setDraft(null);
     setSaved(true); setTimeout(()=>setSaved(false), 2200);
-    // Persist name/phone back to authUser and localStorage
+    persistProfile(draft);
     if(draft?.name){
       const updated={...(authUser||{}), name:draft.name, phone:draft.phone||authUser?.phone||""};
       localStorage.setItem("convoy_user", JSON.stringify(updated));
@@ -3351,6 +3385,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setProfile(p=>({...p,[activeField]:fieldVal}));
     setActiveField(null);
     setSaved(true); setTimeout(()=>setSaved(false),2200);
+    persistProfile({[activeField]:fieldVal});
     // Persist phone/name changes to authUser so the sync useEffect doesn't overwrite them
     if(activeField==="phone"||activeField==="name"){
       const updated={...(authUser||{}), [activeField]:fieldVal};
@@ -3419,7 +3454,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
         <div style={{fontSize:13,fontWeight:700,color:T.text,textAlign:"left"}}>{label}</div>
         <div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>{sub}</div>
       </div>
-      <button onClick={()=>editing?set(field,!P[field]):setProfile(prev=>({...prev,[field]:!prev[field]}))}
+      <button onClick={()=>editing?set(field,!P[field]):setProfile(prev=>{const next=!prev[field];persistProfile({[field]:next});return {...prev,[field]:next};})}
         style={{width:44,height:26,borderRadius:13,background:P[field]?T.accent:T.raised,border:`1px solid ${P[field]?T.accent:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",padding:3,transition:"all .25s",flexShrink:0}}>
         <div style={{width:20,height:20,borderRadius:"50%",background:P[field]?("#FFFFFF"):"#fff",marginLeft:P[field]?18:0,transition:"margin .25s",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
       </button>
@@ -3531,7 +3566,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                       <textarea value={fieldVal} onChange={e=>setFieldVal(e.target.value)} rows={3} placeholder="Tell your convoy friends about you…"
                         style={{width:"100%",background:T.raised,border:`1.5px solid ${T.accent}`,borderRadius:10,padding:"10px 13px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit",resize:"none"}}/>
                       <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>{setProfile(p=>({...p,bio:fieldVal}));setActiveField(null);setSaved(true);setTimeout(()=>setSaved(false),2200);}}
+                        <button onClick={()=>{setProfile(p=>({...p,bio:fieldVal}));persistProfile({bio:fieldVal});setActiveField(null);setSaved(true);setTimeout(()=>setSaved(false),2200);}}
                           style={{flex:1,padding:"9px",borderRadius:10,background:T.accent,border:"none",cursor:"pointer",fontSize:13,fontWeight:800,color:"#FFFFFF"}}>Save</button>
                         <button onClick={cancelField}
                           style={{padding:"9px 16px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",fontSize:13,fontWeight:700,color:T.muted}}>Cancel</button>
