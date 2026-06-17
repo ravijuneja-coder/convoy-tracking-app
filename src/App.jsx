@@ -4932,8 +4932,11 @@ export default function App() {
           };
 
           const unsubOwned = onSnapshot(ownedQ, snap => {
+            console.log("[convoyLoad] ownedSnap docs:", snap.docs.length, "uid:", fbUser.uid);
             snap.docs.forEach(d => {
-              if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...d.data() };
+              const data = d.data();
+              console.log("[convoyLoad] owned convoy:", d.id, data.name, "ownerUid:", data.ownerUid, "memberPhones:", data.memberPhones);
+              if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...data };
               else delete ownedMap[d.id];
             });
             Object.keys(ownedMap).forEach(id => {
@@ -4942,8 +4945,11 @@ export default function App() {
             merge();
           });
           const unsubMember = memberQ ? onSnapshot(memberQ, snap => {
+            console.log("[convoyLoad] memberSnap docs:", snap.docs.length, "phone:", phone);
             snap.docs.forEach(d => {
-              if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...d.data() };
+              const data = d.data();
+              console.log("[convoyLoad] member convoy:", d.id, data.name, "memberPhones:", data.memberPhones);
+              if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...data };
               else delete memberMap[d.id];
             });
             Object.keys(memberMap).forEach(id => {
