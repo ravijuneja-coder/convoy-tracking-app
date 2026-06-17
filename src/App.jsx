@@ -2116,7 +2116,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                         {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
                         {m.isOwner&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                       </div>
-                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%"}}>{m.car||"Vehicle TBD"}</div>
+                      <div style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",width:"100%",textAlign:"left"}}>{m.car||"Vehicle TBD"}</div>
                     </div>
                     {!m.isOwner&&<button onClick={()=>{const phone=m.phone?.replace(/\D/g,"").slice(-10);if(phone)setRemovedPhones(s=>new Set([...s,phone]));set("members",form.members.filter(x=>x.id!==m.id));}} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <Ic d={ICONS.close} size={12} color={T.red}/>
