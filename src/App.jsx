@@ -3347,6 +3347,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
   };
 
   const syncVehicleToConvoys = async (vehicle, plate) => {
+    console.log("[syncVehicle] called — uid:", authUser?.uid, "vehicle:", vehicle, "plate:", plate);
     if(!authUser?.uid) return;
     const carLabel = [vehicle, plate].filter(Boolean).join(" · ") || "";
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
