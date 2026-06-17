@@ -3350,6 +3350,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     if(!authUser?.uid||!convoys?.length) return;
     const carLabel = [vehicle, plate].filter(Boolean).join(" · ") || "";
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
+    console.log("[syncVehicle] uid:", authUser.uid, "phone:", myPhone, "carLabel:", carLabel, "convoys:", convoys.length);
     const updatedConvoys = convoys.map(convoy => {
       if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
       const isMyConvoy = convoy.ownerUid === authUser.uid;
@@ -3359,6 +3360,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
         m.id===authUser.uid ||
         (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
       );
+      console.log("[syncVehicle] convoy:", convoy.name, "isMyConvoy:", isMyConvoy, "idx:", idx, "members:", convoy.members.map(m=>({name:m.name,phone:m.phone,role:m.role,isOwner:m.isOwner,id:m.id})));
       if(idx===-1) return convoy;
       const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
       updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
