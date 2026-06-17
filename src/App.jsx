@@ -3422,6 +3422,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setTimeout(()=>inputRef.current?.focus(), 50);
   };
   const saveField = () => {
+    console.log("[saveField] called — field:", activeField, "val:", fieldVal);
     const field = activeField;
     const val = fieldVal;
     setProfile(p=>({...p,[field]:val}));
