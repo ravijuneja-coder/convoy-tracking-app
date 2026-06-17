@@ -1875,14 +1875,26 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
 const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, profileMembers=[] }) => {
   const T=useT();
   const editing=!!convoy?.id;
-  const makeDefaultMembers=()=>{
+  const makeDefaultMembers=(carLabel="")=>{
     if(!authUser?.name) return [];
     const n=authUser.name.trim().replace(/\b\w/g,c=>c.toUpperCase());
     const initials=n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    return [{id:Date.now(),name:n,initials,phone:authUser.phone||"",car:"",color:T.accent,role:"admin",isOwner:true}];
+    return [{id:Date.now(),name:n,initials,phone:authUser.phone||"",car:carLabel,color:T.accent,role:"admin",isOwner:true}];
   };
   const blank={name:"",startingPoint:"",startCoords:null,destination:"",destCoords:null,distance:0,date:"",endDate:"",time:"",alertKm:5,notes:"",color:T.accent,status:"upcoming",members:[]};
   const [form,setForm]=useState(convoy?{...convoy,members:convoy.members.map(m=>({...m}))}:{...blank,members:makeDefaultMembers()});
+
+  // Load owner's vehicle from Firestore and patch the first member's car field
+  useEffect(()=>{
+    if(convoy||!authUser?.uid) return; // only for new convoy creation
+    getDoc(doc(db,"users",authUser.uid)).then(snap=>{
+      if(!snap.exists()) return;
+      const d=snap.data();
+      const carLabel=[d.vehicle,d.plate].filter(Boolean).join(" · ")||"";
+      if(!carLabel) return;
+      setForm(f=>({...f,members:f.members.map((m,i)=>i===0?{...m,car:carLabel}:m)}));
+    }).catch(()=>{});
+  },[authUser?.uid]);
   const [removedPhones,setRemovedPhones]=useState(new Set());
   const [tab,setTab]=useState("details");
   const [mName,setMName]=useState(""); const [mCar,setMCar]=useState(""); const [mPhone,setMPhone]=useState("");
@@ -3352,7 +3364,6 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     const myPhone = (authUser.phone||"").replace(/\D/g,"").slice(-10);
 
     const processConvoyList = (list) => {
-      console.log("[syncVehicle] processConvoyList — count:", list.length, "myPhone:", myPhone, "carLabel:", carLabel);
       const updated = list.map(convoy => {
         if(!convoy.id||!Array.isArray(convoy.members)) return convoy;
         const isMyConvoy = convoy.ownerUid === authUser.uid;
@@ -3362,12 +3373,9 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
           m.id===authUser.uid ||
           (isMyConvoy && m.role==="admin" && convoy.members.indexOf(m)===0)
         );
-        console.log("[syncVehicle] convoy:", convoy.name, "idx:", idx, "isMyConvoy:", isMyConvoy, "members:", convoy.members.map(m=>({name:m.name,phone:m.phone,isOwner:m.isOwner,role:m.role,id:m.id})));
         if(idx===-1) return convoy;
         const updatedMembers = convoy.members.map((m,i)=>i===idx?{...m,car:carLabel}:m);
-        updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers})
-          .then(()=>console.log("[syncVehicle] Firestore updated for convoy:", convoy.id))
-          .catch(e=>console.error("[syncVehicle] Firestore error:", e.code, e.message));
+        updateDoc(doc(db,"convoys",String(convoy.id)),{members:updatedMembers}).catch(()=>{});
         return {...convoy, members:updatedMembers};
       });
       onConvoysChange?.(updated);
@@ -3379,18 +3387,15 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
       processConvoyList(liveList);
       return;
     }
-    console.log("[syncVehicle] convoys prop empty — fetching from Firestore. uid:", authUser.uid, "phone:", myPhone);
     try {
       const [ownedSnap, memberSnap] = await Promise.all([
         getDocs(query(collection(db,"convoys"), where("ownerUid","==",authUser.uid))),
         myPhone ? getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains",myPhone))) : Promise.resolve({docs:[]}),
       ]);
-      console.log("[syncVehicle] ownedSnap:", ownedSnap.docs.length, "memberSnap:", memberSnap.docs?.length);
       const combined = {};
       [...ownedSnap.docs, ...memberSnap.docs].forEach(d=>{ combined[d.id]={...d.data(),id:d.id}; });
-      console.log("[syncVehicle] fetched from Firestore — count:", Object.keys(combined).length);
       processConvoyList(Object.values(combined));
-    } catch(e) { console.error("[syncVehicle] fetch error:", e.code, e.message); }
+    } catch(e) {}
   };
 
   const startEdit  = () => { setDraft({...profile}); setEditing(true); };
@@ -3432,7 +3437,6 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
     setTimeout(()=>inputRef.current?.focus(), 50);
   };
   const saveField = () => {
-    console.log("[saveField] called — field:", activeField, "val:", fieldVal);
     const field = activeField;
     const val = fieldVal;
     setProfile(p=>({...p,[field]:val}));
@@ -4932,11 +4936,8 @@ export default function App() {
           };
 
           const unsubOwned = onSnapshot(ownedQ, snap => {
-            console.log("[convoyLoad] ownedSnap docs:", snap.docs.length, "uid:", fbUser.uid);
             snap.docs.forEach(d => {
-              const data = d.data();
-              console.log("[convoyLoad] owned convoy:", d.id, data.name, "ownerUid:", data.ownerUid, "memberPhones:", data.memberPhones);
-              if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...data };
+              if (!deletedIds.current.has(d.id)) ownedMap[d.id] = { id: d.id, ...d.data() };
               else delete ownedMap[d.id];
             });
             Object.keys(ownedMap).forEach(id => {
@@ -4945,11 +4946,8 @@ export default function App() {
             merge();
           });
           const unsubMember = memberQ ? onSnapshot(memberQ, snap => {
-            console.log("[convoyLoad] memberSnap docs:", snap.docs.length, "phone:", phone);
             snap.docs.forEach(d => {
-              const data = d.data();
-              console.log("[convoyLoad] member convoy:", d.id, data.name, "memberPhones:", data.memberPhones);
-              if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...data };
+              if (!deletedIds.current.has(d.id)) memberMap[d.id] = { id: d.id, ...d.data() };
               else delete memberMap[d.id];
             });
             Object.keys(memberMap).forEach(id => {
