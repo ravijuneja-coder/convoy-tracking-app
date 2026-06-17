@@ -3832,12 +3832,15 @@ const OnboardingScreen = ({ onDone }) => {
     setLoading(true);
     try {
       if (authTab === "signup") {
-        // Check if mobile number already registered
-        const { getDocs, query: fsQuery, where: fsWhere, collection: fsCol } = await import("firebase/firestore");
+        // Check if mobile number or email already registered
         const rawSignupPhone = phone.trim().replace(/\D/g,"");
         const normSignupPhone = rawSignupPhone.length>10 ? rawSignupPhone.slice(-10) : rawSignupPhone;
-        const phoneCheck = await getDocs(query(collection(db,"users"), where("phone","==",normSignupPhone)));
+        const [phoneCheck, emailCheck] = await Promise.all([
+          getDocs(query(collection(db,"users"), where("phone","==",normSignupPhone))),
+          getDocs(query(collection(db,"users"), where("email","==",email.trim().toLowerCase()))),
+        ]);
         if(!phoneCheck.empty){ setErr("This mobile number is already registered. Please sign in."); setLoading(false); return; }
+        if(!emailCheck.empty){ setErr("This email is already registered. Please sign in."); setLoading(false); return; }
 
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(cred.user, { displayName: name.trim().replace(/\b\w/g,c=>c.toUpperCase()) });
@@ -3888,7 +3891,7 @@ const OnboardingScreen = ({ onDone }) => {
       }
     } catch (e) {
       const code = e.code || "";
-      if (code.includes("email-already-in-use")) setErr("This mobile number is already registered. Try signing in.");
+      if (code.includes("email-already-in-use")) setErr("This email is already registered. Please sign in.");
       else if (code.includes("wrong-password") || code.includes("invalid-credential")) setErr("Incorrect password. Please try again.");
       else if (code.includes("user-not-found")) setErr("No account found. Please sign up.");
       else if (code.includes("weak-password")) setErr("Password is too weak. Use at least 6 characters.");
