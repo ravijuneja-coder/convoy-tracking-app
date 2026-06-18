@@ -5417,7 +5417,10 @@ export default function App() {
         if (selfName && m.name.toLowerCase() === selfName) return false;
         if (phone && existingPhones.has(phone)) return false;
         return true;
-      }).map(m => ({ id: m.id || `pm_${Date.now()}_${Math.random().toString(36).slice(2)}`, name: m.name, phone: m.phone || "", car: m.car || "", color: m.color || "" }));
+      }).map(m => {
+        const initials = m.initials || m.name.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+        return { id: m.id || `pm_${Date.now()}_${Math.random().toString(36).slice(2)}`, name: m.name, initials, phone: m.phone || "", car: m.car || "", color: m.color || "" };
+      });
       return toAdd.length ? [...prev, ...toAdd] : prev;
     });
   };
