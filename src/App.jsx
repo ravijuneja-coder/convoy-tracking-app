@@ -3759,19 +3759,26 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
                 ))}
               </div>
             </div>
-            <div style={{marginTop:16}}>
-              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Active Convoys</div>
-              {[{name:"Delhi Road Trip",st:"live",c:T.accent},{name:"Goa Beach Weekend",st:"upcoming",c:T.blue}].map(cv=>(
-                <div key={cv.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px",background:T.card,borderRadius:14,marginBottom:8,border:`1px solid ${T.border}`}}>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:cv.c,flexShrink:0,...(cv.st==="live"?{animation:"pulse 1.4s infinite"}:{})}}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:T.text}}>{cv.name}</div>
-                    <div style={{fontSize:10,color:T.muted,marginTop:1}}>{cv.st==="live"?"Currently Live":"Upcoming"}</div>
-                  </div>
-                  <Ic d={ICONS.chevron} size={13} color={T.muted}/>
-                </div>
-              ))}
-            </div>
+            {convoys.length>0&&(
+              <div style={{marginTop:16}}>
+                <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Active Convoys</div>
+                {convoys.map(cv=>{
+                  const st=cv.status||"upcoming";
+                  const isLive=st==="live"||st==="active";
+                  const c=isLive?T.accent:T.blue;
+                  return(
+                    <div key={cv.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px",background:T.card,borderRadius:14,marginBottom:8,border:`1px solid ${T.border}`}}>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:c,flexShrink:0,...(isLive?{animation:"pulse 1.4s infinite"}:{})}}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:700,color:T.text}}>{cv.name||"Unnamed Convoy"}</div>
+                        <div style={{fontSize:10,color:T.muted,marginTop:1}}>{isLive?"Currently Live":"Upcoming"}</div>
+                      </div>
+                      <Ic d={ICONS.chevron} size={13} color={T.muted}/>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
 
