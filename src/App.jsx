@@ -3213,6 +3213,11 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 m.phone?.replace(/\D/g,"").slice(-10) === myPhone
                               );
                               if (!alreadyMember) {
+                                let carLabel = "";
+                                try {
+                                  const uSnap2 = await getDoc(doc(db,"users",authUser.uid));
+                                  if(uSnap2.exists()){const ud=uSnap2.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
+                                } catch(_){}
                                 const newMember = {
                                   id: Date.now(),
                                   name: authUser.name,
@@ -3220,6 +3225,7 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                   color: T.accent,
                                   role: "member",
                                   phone: myPhone,
+                                  car: carLabel,
                                 };
                                 const updatedMembers = [...(convoyData.members||[]), newMember];
                                 const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
@@ -4948,6 +4954,11 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                       m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone?.replace(/\D/g,"").slice(-10)
                     );
                     if (!alreadyMember) {
+                      let carLabel = "";
+                      try {
+                        const uSnap = await getDoc(doc(db,"users",authUser.uid));
+                        if(uSnap.exists()){const ud=uSnap.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
+                      } catch(_){}
                       const newMember = {
                         id: Date.now(),
                         name: authUser.name,
@@ -4955,6 +4966,7 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                         color: T.accent,
                         role: "member",
                         phone: authUser.phone || "",
+                        car: carLabel,
                       };
                       const updatedMembers = [...(convoyData.members||[]), newMember];
                       const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
@@ -5042,6 +5054,28 @@ export default function App() {
           setAuthUser(user);
           setAuthed(true);
           if (Array.isArray(userData.profileMembers)) setProfileMembers(userData.profileMembers);
+
+          // Backfill car field for this user in any convoy where it's missing
+          const carLabel = [userData.vehicle, userData.plate].filter(Boolean).join(" · ");
+          if (carLabel) {
+            const ph = userData.phone?.replace(/\D/g,"").slice(-10);
+            const backfillQ = ph ? query(collection(db,"convoys"), where("memberPhones","array-contains",ph)) : null;
+            if (backfillQ) {
+              getDocs(backfillQ).then(bSnap => {
+                bSnap.docs.forEach(async bDoc => {
+                  const bd = bDoc.data();
+                  const idx = (bd.members||[]).findIndex(m =>
+                    m.phone?.replace(/\D/g,"").slice(-10) === ph ||
+                    m.id === fbUser.uid || m.isOwner
+                  );
+                  if (idx !== -1 && !bd.members[idx].car) {
+                    const updated = bd.members.map((m,i) => i===idx ? {...m, car: carLabel} : m);
+                    updateDoc(bDoc.ref, {members: updated}).catch(()=>{});
+                  }
+                });
+              }).catch(()=>{});
+            }
+          }
           // Load convoys from Firestore — own convoys + convoys where user is a member
           const ownedQ = query(collection(db, "convoys"), where("ownerUid", "==", fbUser.uid));
           const phone = userData.phone?.replace(/\D/g,"").slice(-10);
