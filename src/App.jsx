@@ -5326,9 +5326,10 @@ export default function App() {
                         authUser={authUser}
                         onEndConvoy={c=>{
                           setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"completed"}:cv));
+                          updateDoc(doc(db,"convoys",String(c.id)),{status:"completed"}).catch(()=>{});
                           setScreen("summary");
                         }}/>
-                    :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser} onStartConvoy={c=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"live"}:cv)); setActiveC(prev=>({...prev,status:"live"})); flash("Convoy started! 🚀"); }}/>
+                    :<DetailScreen convoy={convoys.find(c=>c.id===activeC.id)||activeC} onBack={()=>{setScreen("home");setActiveC(null);}} onEdit={c=>setSheet(c)} onDelete={c=>setDelTarget(c)} authUser={authUser} onStartConvoy={c=>{ setConvoys(cs=>cs.map(cv=>cv.id===c.id?{...cv,status:"live"}:cv)); setActiveC(prev=>({...prev,status:"live"})); updateDoc(doc(db,"convoys",String(c.id)),{status:"live"}).catch(()=>{}); flash("Convoy started! 🚀"); }}/>
                 )}
                 {screen==="map"&&<MapScreen convoys={convoys} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}}/>}
                 {screen==="alerts"&&<AlertsScreen convoys={convoys} alertUnread={alertUnread} onAlertUnreadChange={setAlertUnread} onTapConvoy={c=>{setActiveC(c);setScreen("detail");setNavTab("home");}} onGoJoin={()=>setScreen("join")} authUser={authUser} onViewInvite={(convoy,notif)=>{
