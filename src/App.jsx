@@ -1011,6 +1011,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
   const [selId,    setSelId]    = useState(null);
   const [mapTab,   setMapTab]   = useState("map");
   const [showGapStrip, setShowGapStrip] = useState(true);
+  const [showProgress, setShowProgress] = useState(true);
   const [sosOpen,   setSosOpen]  = useState(false);
   const [sosSent,   setSosSent]  = useState(false);
   const [fullMap,   setFullMap]  = useState(() => localStorage.getItem(`convoy_fullmap_default_${convoy.id}`) === "1");
@@ -1196,21 +1197,30 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
         const originLabel = convoy.startingPoint ? convoy.startingPoint.split(",")[0] : "Start";
         const destLabel = convoy.destination ? convoy.destination.split(",")[0] : "Destination";
         return (
-          <div style={{padding:"10px 16px",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-              <span style={{fontSize:11,color:T.muted}}>{originLabel}</span>
-              <span style={{fontSize:11,fontWeight:700,color:T.accent}}>{kmLeft} km left</span>
-              <span style={{fontSize:11,color:T.muted,textAlign:"right",maxWidth:"45%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{destLabel}</span>
-            </div>
-            <div style={{height:5,background:T.raised,borderRadius:5,overflow:"hidden"}}>
-              <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:5,position:"relative"}}>
-                <div style={{position:"absolute",right:0,top:-2,width:9,height:9,borderRadius:"50%",background:convoy.color,boxShadow:`0 0 8px ${convoy.color}`}}/>
+          <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`}}>
+            {/* header row — always visible */}
+            <button onClick={()=>setShowProgress(v=>!v)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"none",border:"none",cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:80}}>{originLabel}</span>
+                <span style={{fontSize:11,fontWeight:700,color:T.accent}}>{kmLeft} km left</span>
+                <span style={{fontSize:11,color:T.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:80}}>{destLabel}</span>
               </div>
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-              <span style={{fontSize:10,color:T.muted}}>{kmDone} km done</span>
-              <span style={{fontSize:10,color:T.muted}}>ETA {etaStr}</span>
-            </div>
+              <span style={{fontSize:10,color:T.muted,lineHeight:1,transform:showProgress?"rotate(0deg)":"rotate(180deg)",transition:"transform .2s",display:"inline-block",flexShrink:0,marginLeft:8}}>▲</span>
+            </button>
+            {/* collapsible body */}
+            {showProgress && (
+              <div style={{padding:"0 16px 10px"}}>
+                <div style={{height:5,background:T.raised,borderRadius:5,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${convoy.color},${convoy.color}88)`,borderRadius:5,position:"relative"}}>
+                    <div style={{position:"absolute",right:0,top:-2,width:9,height:9,borderRadius:"50%",background:convoy.color,boxShadow:`0 0 8px ${convoy.color}`}}/>
+                  </div>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                  <span style={{fontSize:10,color:T.muted}}>{kmDone} km done</span>
+                  <span style={{fontSize:10,color:T.muted}}>ETA {etaStr}</span>
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
