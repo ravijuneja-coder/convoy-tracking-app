@@ -1961,7 +1961,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             {isMemberOfConvoy && leaveConfirm && (
               <div style={{background:T.redLo,border:`1.5px solid ${T.red}`,borderRadius:14,padding:"14px 16px"}}>
                 <div style={{fontSize:13,fontWeight:700,color:T.red,marginBottom:6,textAlign:"left"}}>Leave this convoy?</div>
-                <div style={{fontSize:12,color:T.muted,marginBottom:12,textAlign:"left"}}>All members will be notified. You won't be able to rejoin unless the admin re-invites you.</div>
+                <div style={{fontSize:12,color:T.red,opacity:.75,marginBottom:12,textAlign:"left"}}>All members will be notified. You won't be able to rejoin unless the admin re-invites you.</div>
                 <div style={{display:"flex",gap:8}}>
                   <button onClick={()=>setLeaveConfirm(false)} style={{flex:1,padding:"10px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,color:T.text,fontSize:13,fontWeight:700,cursor:"pointer"}}>
                     Cancel
