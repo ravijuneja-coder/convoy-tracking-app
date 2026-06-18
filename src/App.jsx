@@ -1874,7 +1874,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
                     </button>}
                   </div>
                 )}
-                <div style={{fontSize:11,color:T.muted,marginTop:2}}>{m.car}</div>
+                <div style={{fontSize:11,color:T.muted,marginTop:2,textAlign:"left"}}>{m.car||"Vehicle TBD"}</div>
               </div>
               {!editingNameId&&isUpcoming&&stInfo&&(
                 <span style={{fontSize:10,fontWeight:700,color:stInfo.color,background:stInfo.color+"22",border:`1px solid ${stInfo.color}44`,borderRadius:20,padding:"3px 9px",flexShrink:0}}>{stInfo.label}</span>
