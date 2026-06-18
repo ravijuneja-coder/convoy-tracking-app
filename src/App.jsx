@@ -1321,9 +1321,8 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
                         </div>
                         <div>
                           <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                            <span style={{fontSize:14,fontWeight:800,color:T.text}}>{m.name}</span>
+                            {(()=>{const me=authUser?(m.name.toLowerCase()===authUser.name?.toLowerCase()||(authUser.phone&&m.phone?.replace(/\D/g,"").slice(-10)===authUser.phone.replace(/\D/g,"").slice(-10))||m.id===authUser.uid):i===0;return(<span style={{fontSize:14,fontWeight:800,color:T.text}}>{m.name}{me&&<span style={{fontSize:12,fontWeight:500,color:T.muted}}> (you)</span>}</span>);})()}
                             {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
-                            {(authUser?m.name.toLowerCase()===authUser.name?.toLowerCase():i===0)&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                             {ld.eta&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"2px 8px",borderRadius:10,border:`1px solid ${T.blue}44`}}>🕐 {ld.eta}</span>}
                           </div>
                           <div style={{fontSize:11,color:T.muted,marginTop:1}}>{m.car}</div>
@@ -1603,7 +1602,13 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
   const [memberStatuses, setMemberStatuses] = useState({});
   const isUpcoming = convoy.status === "upcoming";
   const myMember = authUser ? convoy.members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase()) : null;
-  const isMe = (m) => authUser ? m.name.toLowerCase() === authUser.name?.toLowerCase() : false;
+  const isMe = (m) => {
+    if(!authUser) return false;
+    if(m.isOwner && convoy.ownerUid === authUser.uid) return true;
+    if(m.id === authUser.uid) return true;
+    if(authUser.phone && m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone.replace(/\D/g,"").slice(-10)) return true;
+    return m.name.toLowerCase() === authUser.name?.toLowerCase();
+  };
 
   const mapWrapRef = useRef(null);
   const mapObjRef  = useRef(null);
@@ -1836,9 +1841,8 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
               <Avatar name={m.name} color={m.color} size={38}/>
               <div style={{flex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}{isMe(m)&&<span style={{fontSize:12,fontWeight:500,color:T.muted}}> (you)</span>}</span>
                   {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
-                  {isMe(m)&&<span style={{background:T.blueLo,color:T.blue,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>YOU</span>}
                 </div>
                 <div style={{fontSize:11,color:T.muted,marginTop:2}}>{m.car}</div>
               </div>
