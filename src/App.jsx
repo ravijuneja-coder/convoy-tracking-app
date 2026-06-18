@@ -1600,8 +1600,20 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
 const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUser }) => {
   const T = useT();
   const [memberStatuses, setMemberStatuses] = useState({});
+  const [editingNameId, setEditingNameId] = useState(null);
+  const [editingNameVal, setEditingNameVal] = useState("");
   const isUpcoming = convoy.status === "upcoming";
   const myMember = authUser ? convoy.members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase()) : null;
+
+  const saveMemberName = async () => {
+    const newName = editingNameVal.trim();
+    if(!newName || !editingNameId) return;
+    const updatedMembers = convoy.members.map(m => m.id === editingNameId ? {...m, name: newName, initials: newName.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()} : m);
+    setEditingNameId(null);
+    try {
+      await updateDoc(doc(db,"convoys",String(convoy.id)), {members: updatedMembers});
+    } catch(_) {}
+  };
   const isMe = (m) => {
     if(!authUser) return false;
     if(m.isOwner && convoy.ownerUid === authUser.uid) return true;
@@ -1837,16 +1849,34 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             const st = memberStatuses[m.id];
             const stInfo = STATUS_OPTS.find(o=>o.key===st);
             return (
-            <div key={m.id} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:"11px 14px",display:"flex",alignItems:"center",gap:11}}>
-              <Avatar name={m.name} color={m.color} size={38}/>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}{isMe(m)&&<span style={{fontSize:12,fontWeight:500,color:T.muted}}> (you)</span>}</span>
-                  {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
-                </div>
+            <div key={m.id} style={{background:T.card,border:`1px solid ${editingNameId===m.id?T.accent:T.border}`,borderRadius:14,padding:"11px 14px",display:"flex",alignItems:"center",gap:11,transition:"border-color .15s"}}>
+              <Avatar name={editingNameId===m.id?editingNameVal||m.name:m.name} color={m.color} size={38}/>
+              <div style={{flex:1,minWidth:0}}>
+                {editingNameId===m.id?(
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <input autoFocus value={editingNameVal} onChange={e=>setEditingNameVal(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter")saveMemberName();if(e.key==="Escape")setEditingNameId(null);}}
+                      style={{flex:1,background:T.surface,border:`1.5px solid ${T.accent}`,borderRadius:8,padding:"5px 9px",fontSize:13,fontWeight:700,color:T.text,outline:"none",fontFamily:"inherit",minWidth:0}}/>
+                    <button onClick={saveMemberName} style={{width:28,height:28,borderRadius:8,background:T.accent,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <Ic d={ICONS.check} size={12} color="#fff" sw={2.5}/>
+                    </button>
+                    <button onClick={()=>setEditingNameId(null)} style={{width:28,height:28,borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <Ic d={ICONS.close} size={12} color={T.muted}/>
+                    </button>
+                  </div>
+                ):(
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:13,fontWeight:700,color:T.text}}>{m.name}{isMe(m)&&<span style={{fontSize:12,fontWeight:500,color:T.muted}}> (you)</span>}</span>
+                    {m.role==="admin"&&<span style={{background:T.accentLo,color:T.accent,fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:10}}>ADMIN</span>}
+                    {isMe(m)&&<button onClick={()=>{setEditingNameId(m.id);setEditingNameVal(m.name);}}
+                      style={{width:22,height:22,borderRadius:6,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginLeft:2}}>
+                      <Ic d={ICONS.edit} size={11} color={T.muted}/>
+                    </button>}
+                  </div>
+                )}
                 <div style={{fontSize:11,color:T.muted,marginTop:2}}>{m.car}</div>
               </div>
-              {isUpcoming&&stInfo&&(
+              {!editingNameId&&isUpcoming&&stInfo&&(
                 <span style={{fontSize:10,fontWeight:700,color:stInfo.color,background:stInfo.color+"22",border:`1px solid ${stInfo.color}44`,borderRadius:20,padding:"3px 9px",flexShrink:0}}>{stInfo.label}</span>
               )}
             </div>
