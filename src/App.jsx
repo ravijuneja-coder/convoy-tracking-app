@@ -1902,6 +1902,26 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
   const [showExisting,setShowExisting]=useState(false);
   const [exSearch,setExSearch]=useState("");
   const [showAddForm,setShowAddForm]=useState(false);
+  const [memberAppStatus,setMemberAppStatus]=useState({}); // phone → true/false (is on app)
+
+  // Check which non-owner members are registered on the app
+  useEffect(()=>{
+    const nonOwners=form.members.filter(m=>!m.isOwner&&m.phone);
+    if(!nonOwners.length) return;
+    nonOwners.forEach(async m=>{
+      const last10=m.phone.replace(/\D/g,"").slice(-10);
+      if(!last10) return;
+      try{
+        const [s1,s2]=await Promise.all([
+          getDocs(query(collection(db,"users"),where("phone","==",last10))),
+          getDocs(query(collection(db,"users"),where("phone","==","91"+last10))),
+        ]);
+        const found=!s1.empty||!s2.empty;
+        setMemberAppStatus(prev=>({...prev,[last10]:found}));
+      }catch(_){}
+    });
+  },[form.members.map(m=>m.phone).join(",")]);
+
   const [showMapPicker,setShowMapPicker]=useState(false);
   const [showStartPicker,setShowStartPicker]=useState(false);
   const [pitStops, setPitStops] = useState(convoy?.pitStops||[]);
@@ -2133,6 +2153,39 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                       </button>}
                     </div>
                   )}
+                  {(()=>{
+                    if(m.isOwner||!m.phone) return null;
+                    const last10=m.phone.replace(/\D/g,"").slice(-10);
+                    if(!last10||memberAppStatus[last10]!==false) return null;
+                    const appLink="https://convoy.app/download";
+                    const msg=encodeURIComponent(`Hi ${m.name}! 👋 Join me on Convoy App so I can track you during our trip.\n\nDownload here: ${appLink} 🚗`);
+                    return(
+                      <div style={{marginTop:8,padding:"10px 12px",borderRadius:10,background:T.amber+"18",border:`1px solid ${T.amber}44`,display:"flex",flexDirection:"column",gap:8}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                          <span style={{fontSize:15,flexShrink:0}}>⚠️</span>
+                          <div>
+                            <div style={{fontSize:12,fontWeight:700,color:T.amber}}>Not on Convoy App</div>
+                            <div style={{fontSize:11,color:T.muted,marginTop:2,lineHeight:1.4}}>Invite {m.name} to download the app so they can join the convoy.</div>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>window.open(`https://wa.me/?text=${msg}`,"_blank")}
+                            style={{flex:1,padding:"7px 0",borderRadius:8,background:"#25D36614",border:"1px solid #25D36633",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                            <span style={{fontSize:13}}>💬</span>
+                            <span style={{fontSize:10,fontWeight:800,color:"#25D366"}}>WhatsApp</span>
+                          </button>
+                          <button onClick={()=>{
+                            const shareData={title:"Join Convoy App",text:`Hey ${m.name}, join Convoy App!`,url:appLink};
+                            if(navigator.share) navigator.share(shareData).catch(()=>{});
+                            else navigator.clipboard?.writeText(appLink).catch(()=>{});
+                          }} style={{flex:1,padding:"7px 0",borderRadius:8,background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                            <span style={{fontSize:13}}>🔗</span>
+                            <span style={{fontSize:10,fontWeight:800,color:T.sub}}>Share Link</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
               {/* ── Profile Members (with checkboxes) ── */}
