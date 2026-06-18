@@ -1990,14 +1990,27 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
   const today=new Date().toISOString().split("T")[0];
   const valid=form.name.trim()&&form.destination.trim()&&form.date&&form.endDate;
   const canAdd=mName.trim()&&mPhone.trim().length>=10;
-  const addMember=()=>{
+  const addMember=async()=>{
     if(!mName.trim()) return;
     if(mPhone.trim().length<10){ setPhoneErr(true); return; }
     setPhoneErr(false);
     const initials=mName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    const newMember={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:mCar.trim()||"Vehicle TBD",color:MC[form.members.length%MC.length],role:"member"};
+    const last10=mPhone.trim().replace(/\D/g,"").slice(-10);
+    let carLabel=mCar.trim()||"";
+    if(!carLabel&&last10){
+      try{
+        const [s1,s2]=await Promise.all([
+          getDocs(query(collection(db,"users"),where("phone","==",last10))),
+          getDocs(query(collection(db,"users"),where("phone","==","91"+last10))),
+        ]);
+        const userDoc=(!s1.empty?s1:!s2.empty?s2:null)?.docs[0];
+        if(userDoc){const ud=userDoc.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
+      }catch(_){}
+    }
+    const newMember={id:Date.now(),name:mName.trim(),initials,phone:mPhone.trim(),car:carLabel||"Vehicle TBD",color:MC[form.members.length%MC.length],role:"member"};
     set("members",[...form.members,newMember]);
     setMName(""); setMCar(""); setMPhone(""); setPhoneErr(false);
+    setShowAddForm(false);
   };
   const sendWhatsAppInvite=(name,phone)=>{
     const msg=encodeURIComponent(`Hi ${name}! 👋 You've been invited to join the "${form.name||"Convoy"}" trip on Convoy App.\n\n📍 Destination: ${form.destination||"TBD"}\n📅 Start: ${form.date||"TBD"}${form.endDate?`  →  End: ${form.endDate}`:""}\n🕐 Departure: ${form.time||"TBD"}\n\nDownload the app & join: https://convoy.app/join/link\n\nSee you on the road! 🚗`);
@@ -2164,7 +2177,7 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                       style={{width:"100%",background:T.surface,border:`1.5px solid ${phoneErr?T.red:T.border}`,borderRadius:12,padding:"12px 14px 12px 60px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
                   </div>
                   {phoneErr&&<span style={{fontSize:10,color:T.red,fontWeight:700}}>⚠ Valid mobile number is required</span>}
-                  <button onClick={()=>{addMember();if(canAdd)setShowAddForm(false);}} disabled={!canAdd}
+                  <button onClick={addMember} disabled={!canAdd}
                     style={{width:"100%",padding:"13px",borderRadius:12,background:canAdd?T.accent:T.raised,border:`1.5px solid ${canAdd?T.accent:T.border}`,color:canAdd?("#FFFFFF"):T.muted,fontSize:13,fontWeight:800,cursor:canAdd?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .15s"}}>
                     + Add Member
                   </button>
