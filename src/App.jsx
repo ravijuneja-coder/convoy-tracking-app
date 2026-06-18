@@ -1898,11 +1898,11 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             </button>
           </div>
         ) : authUser && (
-          <div style={{display:"flex",alignItems:"center",gap:10,background:T.raised,border:`1px solid ${T.border}`,borderRadius:14,padding:"13px 16px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,background:T.raised,border:`1px solid ${T.border}`,borderRadius:14,padding:"13px 16px",textAlign:"left"}}>
             <Ic d={ICONS.shield} size={16} color={T.muted} sw={1.8}/>
-            <div>
-              <div style={{fontSize:12,fontWeight:700,color:T.text}}>Admin only</div>
-              <div style={{fontSize:11,color:T.muted,marginTop:1}}>Only the convoy admin can start, modify or delete this convoy.</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:700,color:T.text,textAlign:"left"}}>Admin only</div>
+              <div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>Only the convoy admin can start, modify or delete this convoy.</div>
             </div>
           </div>
         )}
