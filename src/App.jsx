@@ -2030,14 +2030,25 @@ const FormSheet = ({ convoy, onSave, onClose, allConvoys=[], authUser=null, prof
                   </button>
                 </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <Field label="Start Date" type="date" value={form.date}
-                  onChange={v=>{set("date",v); if(form.endDate&&form.endDate<v) set("endDate",v);}}
-                  min={today}/>
-                <Field label="End Date" type="date" value={form.endDate}
-                  onChange={v=>set("endDate",v)}
-                  min={form.date||today}/>
-              </div>
+              {(()=>{
+                const fmtDay=d=>{if(!d)return null;const dt=new Date(d+"T00:00:00");return isNaN(dt)?null:dt.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});};
+                return(
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                      <Field label="Start Date" type="date" value={form.date}
+                        onChange={v=>{set("date",v); if(form.endDate&&form.endDate<v) set("endDate",v);}}
+                        min={today}/>
+                      {fmtDay(form.date)&&<div style={{fontSize:11,fontWeight:600,color:T.accent,paddingLeft:2,textAlign:"left"}}>{fmtDay(form.date)}</div>}
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                      <Field label="End Date" type="date" value={form.endDate}
+                        onChange={v=>set("endDate",v)}
+                        min={form.date||today}/>
+                      {fmtDay(form.endDate)&&<div style={{fontSize:11,fontWeight:600,color:T.accent,paddingLeft:2,textAlign:"left"}}>{fmtDay(form.endDate)}</div>}
+                    </div>
+                  </div>
+                );
+              })()}
               <Field label="Departure Time" type="time" value={form.time} onChange={v=>set("time",v)}/>
               <div>
                 <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.9,textTransform:"uppercase",marginBottom:8,textAlign:"left"}}>Alert Distance</div>
