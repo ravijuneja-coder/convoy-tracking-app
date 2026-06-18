@@ -1010,6 +1010,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
   const T = useT();
   const [selId,    setSelId]    = useState(null);
   const [mapTab,   setMapTab]   = useState("map");
+  const [showGapStrip, setShowGapStrip] = useState(true);
   const [sosOpen,   setSosOpen]  = useState(false);
   const [sosSent,   setSosSent]  = useState(false);
   const [fullMap,   setFullMap]  = useState(() => localStorage.getItem(`convoy_fullmap_default_${convoy.id}`) === "1");
@@ -1227,56 +1228,61 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
         // alternate label above/below for overlapping dots
         const sides = members.map((_, i) => (i % 2 === 0 ? "above" : "below"));
         return (
-          <div style={{padding:"10px 16px 14px",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
-            <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.8,textTransform:"uppercase",marginBottom:10}}>Member Positions</div>
-            {/* Track */}
-            <div style={{position:"relative",height:64,marginBottom:2}}>
-              {/* centre line */}
-              <div style={{position:"absolute",top:"50%",left:0,right:0,height:3,background:T.raised,borderRadius:3,transform:"translateY(-50%)"}}/>
-              {/* left = ahead gradient tint */}
-              <div style={{position:"absolute",top:"50%",left:0,width:"50%",height:3,background:"linear-gradient(to right,#22c55e44,transparent)",borderRadius:"3px 0 0 3px",transform:"translateY(-50%)"}}/>
-              {/* right = behind gradient tint */}
-              <div style={{position:"absolute",top:"50%",right:0,width:"50%",height:3,background:"linear-gradient(to left,rgba(255,35,35,.35),transparent)",borderRadius:"0 3px 3px 0",transform:"translateY(-50%)"}}/>
+          <div style={{background:T.surface,borderBottom:`1px solid ${T.border}`}}>
+            {/* header row — always visible */}
+            <button onClick={()=>setShowGapStrip(v=>!v)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"none",border:"none",cursor:"pointer"}}>
+              <span style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.8,textTransform:"uppercase"}}>Member Positions</span>
+              <span style={{fontSize:10,color:T.muted,lineHeight:1,transform:showGapStrip?"rotate(0deg)":"rotate(180deg)",transition:"transform .2s",display:"inline-block"}}>▲</span>
+            </button>
 
-              {/* Member dots + labels */}
-              {members.map((m, i) => {
-                const isMe = i === myIdx;
-                const pct = positions[i];
-                const isAhead = dists[i] < -0.05;
-                const isBehind = dists[i] > 0.05;
-                const dotColor = isMe ? T.accent : isAhead ? "#22c55e" : isBehind ? T.red : T.muted;
-                const gapKm = Math.abs(dists[i]).toFixed(1);
-                const labelText = isMe ? "You" : isAhead ? `+${gapKm}km` : isBehind ? `-${gapKm}km` : "·";
-                const above = sides[i] === "above";
-                return (
-                  <div key={m.id} style={{position:"absolute",top:"50%",left:`${pct}%`,transform:"translate(-50%,-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:0,zIndex:isMe?3:2}}>
-                    {/* km label above */}
-                    {!isMe && above && (
-                      <div style={{fontSize:8,fontWeight:700,color:dotColor,marginBottom:2,whiteSpace:"nowrap",background:`${dotColor}18`,borderRadius:4,padding:"1px 4px",lineHeight:1.4}}>{labelText}</div>
-                    )}
-                    {/* spacer when label is below */}
-                    {!isMe && !above && <div style={{height:18}}/>}
-                    {/* dot */}
-                    <div style={{width:isMe?28:22,height:isMe?28:22,borderRadius:"50%",background:dotColor,border:`2.5px solid ${T.surface}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 ${isMe?10:6}px ${dotColor}77`,flexShrink:0}}>
-                      <span style={{fontSize:isMe?9:8,fontWeight:800,color:"#fff",lineHeight:1}}>{m.initials||m.name[0]}</span>
-                    </div>
-                    {/* name label */}
-                    <div style={{fontSize:8,fontWeight:700,color:isMe?T.accent:T.muted,marginTop:2,whiteSpace:"nowrap"}}>{isMe?"You":m.name.split(" ")[0]}</div>
-                    {/* km label below */}
-                    {!isMe && !above && (
-                      <div style={{fontSize:8,fontWeight:700,color:dotColor,marginTop:1,whiteSpace:"nowrap",background:`${dotColor}18`,borderRadius:4,padding:"1px 4px",lineHeight:1.4}}>{labelText}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            {/* collapsible body */}
+            {showGapStrip && (
+              <div style={{padding:"0 16px 14px"}}>
+                {/* Track */}
+                <div style={{position:"relative",height:64,marginBottom:2}}>
+                  {/* centre line */}
+                  <div style={{position:"absolute",top:"50%",left:0,right:0,height:3,background:T.raised,borderRadius:3,transform:"translateY(-50%)"}}/>
+                  {/* left = ahead gradient tint */}
+                  <div style={{position:"absolute",top:"50%",left:0,width:"50%",height:3,background:"linear-gradient(to right,#22c55e44,transparent)",borderRadius:"3px 0 0 3px",transform:"translateY(-50%)"}}/>
+                  {/* right = behind gradient tint */}
+                  <div style={{position:"absolute",top:"50%",right:0,width:"50%",height:3,background:"linear-gradient(to left,rgba(255,35,35,.35),transparent)",borderRadius:"0 3px 3px 0",transform:"translateY(-50%)"}}/>
 
-            {/* direction hint row */}
-            <div style={{display:"flex",justifyContent:"space-between",marginTop:6,paddingTop:6,borderTop:`1px solid ${T.border}`}}>
-              <span style={{fontSize:9,fontWeight:700,color:"#22c55e"}}>← Ahead of you</span>
-              <span style={{fontSize:9,fontWeight:700,color:T.accent}}>You</span>
-              <span style={{fontSize:9,fontWeight:700,color:T.red}}>Behind you →</span>
-            </div>
+                  {/* Member dots + labels */}
+                  {members.map((m, i) => {
+                    const isMe = i === myIdx;
+                    const pct = positions[i];
+                    const isAhead = dists[i] < -0.05;
+                    const isBehind = dists[i] > 0.05;
+                    const dotColor = isMe ? T.accent : isAhead ? "#22c55e" : isBehind ? T.red : T.muted;
+                    const gapKm = Math.abs(dists[i]).toFixed(1);
+                    const labelText = isMe ? "You" : isAhead ? `+${gapKm}km` : isBehind ? `-${gapKm}km` : "·";
+                    const above = sides[i] === "above";
+                    return (
+                      <div key={m.id} style={{position:"absolute",top:"50%",left:`${pct}%`,transform:"translate(-50%,-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:0,zIndex:isMe?3:2}}>
+                        {!isMe && above && (
+                          <div style={{fontSize:8,fontWeight:700,color:dotColor,marginBottom:2,whiteSpace:"nowrap",background:`${dotColor}18`,borderRadius:4,padding:"1px 4px",lineHeight:1.4}}>{labelText}</div>
+                        )}
+                        {!isMe && !above && <div style={{height:18}}/>}
+                        <div style={{width:isMe?28:22,height:isMe?28:22,borderRadius:"50%",background:dotColor,border:`2.5px solid ${T.surface}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 ${isMe?10:6}px ${dotColor}77`,flexShrink:0}}>
+                          <span style={{fontSize:isMe?9:8,fontWeight:800,color:"#fff",lineHeight:1}}>{m.initials||m.name[0]}</span>
+                        </div>
+                        <div style={{fontSize:8,fontWeight:700,color:isMe?T.accent:T.muted,marginTop:2,whiteSpace:"nowrap"}}>{isMe?"You":m.name.split(" ")[0]}</div>
+                        {!isMe && !above && (
+                          <div style={{fontSize:8,fontWeight:700,color:dotColor,marginTop:1,whiteSpace:"nowrap",background:`${dotColor}18`,borderRadius:4,padding:"1px 4px",lineHeight:1.4}}>{labelText}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* direction hint row */}
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:6,paddingTop:6,borderTop:`1px solid ${T.border}`}}>
+                  <span style={{fontSize:9,fontWeight:700,color:"#22c55e"}}>← Ahead of you</span>
+                  <span style={{fontSize:9,fontWeight:700,color:T.accent}}>You</span>
+                  <span style={{fontSize:9,fontWeight:700,color:T.red}}>Behind you →</span>
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
