@@ -1018,6 +1018,7 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
   const [endConfirm,setEndConfirm]=useState(false);
   const [announcements, setAnnouncements] = useState([]);
   const [announcementInput, setAnnouncementInput] = useState("");
+  const [copiedCode, setCopiedCode] = useState(false);
   const [stopAlerts, setStopAlerts] = useState([]);
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const STOP_REASONS = ["⛽ Fuel Stop","🔧 Breakdown","☕ Rest Break","🚻 Nature Break"];
@@ -1477,9 +1478,9 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
                 <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:4}}>Invite Code</div>
                 <div style={{fontSize:22,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:3}}>{convoy.inviteCode}</div>
               </div>
-              <button onClick={()=>{ navigator.clipboard?.writeText(convoy.inviteCode); }}
-                style={{padding:"8px 14px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.accent,flexShrink:0}}>
-                Copy
+              <button onClick={()=>{ navigator.clipboard?.writeText(convoy.inviteCode); setCopiedCode(true); setTimeout(()=>setCopiedCode(false),2000); }}
+                style={{padding:"8px 14px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.accent,flexShrink:0,transition:"all .2s",minWidth:64,textAlign:"center"}}>
+                {copiedCode?"Copied ✓":"Copy"}
               </button>
             </div>
           )}
@@ -1602,6 +1603,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
   const [memberStatuses, setMemberStatuses] = useState({});
   const [editingNameId, setEditingNameId] = useState(null);
   const [editingNameVal, setEditingNameVal] = useState("");
+  const [copiedCode, setCopiedCode] = useState(false);
   const isUpcoming = convoy.status === "upcoming";
   const myMember = authUser ? convoy.members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase()) : null;
 
@@ -1819,9 +1821,9 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
               <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:4}}>Invite Code</div>
               <div style={{fontSize:22,fontWeight:800,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:3}}>{convoy.inviteCode}</div>
             </div>
-            <button onClick={()=>{ navigator.clipboard?.writeText(convoy.inviteCode); }}
-              style={{padding:"8px 14px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.accent,flexShrink:0}}>
-              Copy
+            <button onClick={()=>{ navigator.clipboard?.writeText(convoy.inviteCode); setCopiedCode(true); setTimeout(()=>setCopiedCode(false),2000); }}
+              style={{padding:"8px 14px",borderRadius:10,background:T.accentLo,border:`1px solid ${T.accent}44`,cursor:"pointer",fontSize:12,fontWeight:700,color:T.accent,flexShrink:0,transition:"all .2s",minWidth:64,textAlign:"center"}}>
+              {copiedCode?"Copied ✓":"Copy"}
             </button>
           </div>
         )}
