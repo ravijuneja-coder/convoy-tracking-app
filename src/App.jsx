@@ -1883,7 +1883,7 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             );
           })}
         </div>
-        {authUser && convoy.ownerUid === authUser.uid && (
+        {authUser && convoy.ownerUid === authUser.uid ? (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {isUpcoming&&onStartConvoy&&(
               <button onClick={()=>onStartConvoy(convoy)} style={{padding:"14px",borderRadius:14,background:T.accentLo,border:`1.5px solid ${T.accent}`,color:T.accent,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
@@ -1896,6 +1896,14 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             <button onClick={()=>onDelete(convoy)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               <Ic d={ICONS.trash} size={16} color={T.red} sw={2}/> Delete Convoy
             </button>
+          </div>
+        ) : authUser && (
+          <div style={{display:"flex",alignItems:"center",gap:10,background:T.raised,border:`1px solid ${T.border}`,borderRadius:14,padding:"13px 16px"}}>
+            <Ic d={ICONS.shield} size={16} color={T.muted} sw={1.8}/>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,color:T.text}}>Admin only</div>
+              <div style={{fontSize:11,color:T.muted,marginTop:1}}>Only the convoy admin can start, modify or delete this convoy.</div>
+            </div>
           </div>
         )}
       </div>
