@@ -1604,6 +1604,8 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
   const [editingNameId, setEditingNameId] = useState(null);
   const [editingNameVal, setEditingNameVal] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
+  const [leavePending, setLeavePending] = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
   const isUpcoming = convoy.status === "upcoming";
   const myMember = authUser ? convoy.members.find(m => m.name.toLowerCase() === authUser.name?.toLowerCase()) : null;
 
@@ -1622,6 +1624,49 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
     if(m.id === authUser.uid) return true;
     if(authUser.phone && m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone.replace(/\D/g,"").slice(-10)) return true;
     return m.name.toLowerCase() === authUser.name?.toLowerCase();
+  };
+
+  const isMemberOfConvoy = authUser && convoy.members.some(m => isMe(m));
+
+  const leaveConvoy = async () => {
+    if(!authUser || leavePending) return;
+    setLeavePending(true);
+    try {
+      const updatedMembers = convoy.members.filter(m => !isMe(m));
+      const updatedPhones = updatedMembers.map(m => m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean);
+      await updateDoc(doc(db,"convoys",String(convoy.id)), { members: updatedMembers, memberPhones: updatedPhones });
+
+      // Notify all remaining members
+      const leaverName = authUser.name || "A member";
+      const myPhone = authUser.phone?.replace(/\D/g,"").slice(-10);
+      for (const m of updatedMembers) {
+        const toPhone = m.phone?.replace(/\D/g,"").slice(-10);
+        if(!toPhone || toPhone === myPhone) continue;
+        let toUid = null;
+        try {
+          const phoneFull = m.phone?.replace(/\D/g,"") || toPhone;
+          const formats = [toPhone, phoneFull, `+91${toPhone}`, `91${toPhone}`];
+          for (const fmt of formats) {
+            const snap = await getDocs(query(collection(db,"users"),where("phone","==",fmt)));
+            if(!snap.empty){ toUid = snap.docs[0].id; break; }
+          }
+        } catch(_) {}
+        await addDoc(collection(db,"notifications"), {
+          toPhone,
+          ...(toUid ? { toUid } : {}),
+          type: "member_left",
+          title: `${leaverName} left the convoy`,
+          msg: `${leaverName} has left "${convoy.name}".`,
+          convoyName: convoy.name || "",
+          convoyId: convoy.id || null,
+          unread: true,
+          createdAt: serverTimestamp(),
+        }).catch(()=>{});
+      }
+      onBack();
+    } catch(_) {
+      setLeavePending(false);
+    }
   };
 
   const mapWrapRef = useRef(null);
@@ -1900,12 +1945,33 @@ const DetailScreen = ({ convoy, onBack, onEdit, onDelete, onStartConvoy, authUse
             </button>
           </div>
         ) : authUser && (
-          <div style={{display:"flex",alignItems:"center",gap:10,background:T.raised,border:`1px solid ${T.border}`,borderRadius:14,padding:"13px 16px",textAlign:"left"}}>
-            <Ic d={ICONS.shield} size={16} color={T.muted} sw={1.8}/>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:700,color:T.text,textAlign:"left"}}>Admin only</div>
-              <div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>Only the convoy admin can start, modify or delete this convoy.</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,background:T.raised,border:`1px solid ${T.border}`,borderRadius:14,padding:"13px 16px",textAlign:"left"}}>
+              <Ic d={ICONS.shield} size={16} color={T.muted} sw={1.8}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.text,textAlign:"left"}}>Admin only</div>
+                <div style={{fontSize:11,color:T.muted,marginTop:1,textAlign:"left"}}>Only the convoy admin can start, modify or delete this convoy.</div>
+              </div>
             </div>
+            {isMemberOfConvoy && !leaveConfirm && (
+              <button onClick={()=>setLeaveConfirm(true)} style={{padding:"14px",borderRadius:14,background:T.redLo,border:`1.5px solid ${T.red}`,color:T.red,fontSize:14,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Ic d={ICONS.close} size={16} color={T.red} sw={2.5}/> Leave Convoy
+              </button>
+            )}
+            {isMemberOfConvoy && leaveConfirm && (
+              <div style={{background:T.redLo,border:`1.5px solid ${T.red}`,borderRadius:14,padding:"14px 16px"}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.red,marginBottom:6,textAlign:"left"}}>Leave this convoy?</div>
+                <div style={{fontSize:12,color:T.muted,marginBottom:12,textAlign:"left"}}>All members will be notified. You won't be able to rejoin unless the admin re-invites you.</div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setLeaveConfirm(false)} style={{flex:1,padding:"10px",borderRadius:10,background:T.raised,border:`1px solid ${T.border}`,color:T.text,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                    Cancel
+                  </button>
+                  <button onClick={leaveConvoy} disabled={leavePending} style={{flex:1,padding:"10px",borderRadius:10,background:T.red,border:"none",color:"#fff",fontSize:13,fontWeight:700,cursor:leavePending?"not-allowed":"pointer",opacity:leavePending?.6:1}}>
+                    {leavePending ? "Leaving…" : "Yes, Leave"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
