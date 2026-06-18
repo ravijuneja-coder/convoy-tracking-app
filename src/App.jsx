@@ -3272,8 +3272,11 @@ const PROFILE_DEFAULT = {
   emergency:"", city:"",
   bio:"",
   avatar:null,
+  carEmoji:"🚗",
   shareLocation:true, alerts:true, lowBattery:true,
 };
+
+const CAR_EMOJIS = ["🚗","🚙","🚕","🏎️","🚐","🚌","🚑","🚒","🚓","🛻","🚜","🏍️","🛵","🚲"];
 
 const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, authUser=null, onProfileUpdate=null, profileMembers=[], onProfileMembersChange=null, isDark=false, onToggleDark=null, convoys=[], convoysRef=null, onConvoysChange=null }) => {
   const T = useT();
@@ -3330,6 +3333,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
           ...(d.bio       ?{bio:d.bio}:{}),
           ...(d.username  ?{username:d.username}:{}),
           ...(d.avatar    ?{avatar:d.avatar}:{}),
+          ...(d.carEmoji  ?{carEmoji:d.carEmoji}:{}),
           ...(d.shareLocation!==undefined?{shareLocation:d.shareLocation}:{}),
           ...(d.alerts!==undefined       ?{alerts:d.alerts}:{}),
           ...(d.lowBattery!==undefined   ?{lowBattery:d.lowBattery}:{}),
@@ -3733,7 +3737,7 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
         {section==="vehicle" && (
           <>
             <div style={{background:`linear-gradient(135deg,${T.accent}14,${T.accent}05)`,border:`1px solid ${T.accent}30`,borderRadius:20,padding:"20px",margin:"16px 0 18px",textAlign:"center"}}>
-              <div style={{fontSize:44,marginBottom:10}}>🚗</div>
+              <div style={{fontSize:44,marginBottom:10}}>{P.carEmoji||"🚗"}</div>
               <div style={{fontSize:18,fontWeight:800,color:T.text,marginBottom:6}}>{P.vehicle||"No vehicle set"}</div>
               <div style={{display:"inline-flex",background:T.isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)",borderRadius:10,padding:"6px 18px"}}>
                 <span style={{fontSize:15,fontWeight:900,color:T.accent,fontFamily:"'Space Mono',monospace",letterSpacing:2}}>{P.plate||"— — —"}</span>
@@ -3741,6 +3745,20 @@ const ProfileScreen = ({ onSignOut, onOpenSettings, onOpenPricing, isPremium, au
             </div>
             {renderRow(ICONS.car2, "Vehicle Model", "vehicle", "e.g. Swift Dzire")}
             {renderRow(ICONS.flag, "Number Plate",  "plate",   "e.g. DL 4C 1234")}
+            <div style={{marginTop:14,marginBottom:4}}>
+              <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Vehicle Icon</div>
+              <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4}}>
+                {CAR_EMOJIS.map(em=>(
+                  <button key={em} onClick={()=>{
+                    setProfile(p=>({...p,carEmoji:em}));
+                    persistProfile({carEmoji:em});
+                    setSaved(true); setTimeout(()=>setSaved(false),2200);
+                  }} style={{flexShrink:0,width:44,height:44,borderRadius:12,background:(P.carEmoji||"🚗")===em?T.accentLo:T.card,border:`1.5px solid ${(P.carEmoji||"🚗")===em?T.accent:T.border}`,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
+                    {em}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div style={{marginTop:16}}>
               <div style={{fontSize:10,fontWeight:700,color:T.muted,letterSpacing:.7,textTransform:"uppercase",marginBottom:10}}>Active Convoys</div>
               {[{name:"Delhi Road Trip",st:"live",c:T.accent},{name:"Goa Beach Weekend",st:"upcoming",c:T.blue}].map(cv=>(
