@@ -3222,15 +3222,15 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 if (uSnap.exists()) myPhone = uSnap.data().phone?.replace(/\D/g,"").slice(-10) || "";
                               }
                               console.log("[Accept] myPhone:", myPhone, "authUser.uid:", authUser.uid);
-                              const alreadyMember = myPhone && (convoyData.members||[]).some(m =>
+                              const alreadyMemberIdx = myPhone ? (convoyData.members||[]).findIndex(m =>
                                 m.phone?.replace(/\D/g,"").slice(-10) === myPhone
-                              );
-                              if (!alreadyMember) {
-                                let carLabel = "";
-                                try {
-                                  const uSnap2 = await getDoc(doc(db,"users",authUser.uid));
-                                  if(uSnap2.exists()){const ud=uSnap2.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
-                                } catch(_){}
+                              ) : -1;
+                              let carLabel = "";
+                              try {
+                                const uSnap2 = await getDoc(doc(db,"users",authUser.uid));
+                                if(uSnap2.exists()){const ud=uSnap2.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
+                              } catch(_){}
+                              if (alreadyMemberIdx === -1) {
                                 const newMember = {
                                   id: Date.now(),
                                   name: authUser.name,
@@ -3243,6 +3243,11 @@ const AlertsScreen = ({ onTapConvoy, convoys, alertUnread, onAlertUnreadChange, 
                                 const updatedMembers = [...(convoyData.members||[]), newMember];
                                 const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
                                 await updateDoc(doc(db,"convoys",snap.id), { members: updatedMembers, memberPhones: updatedPhones });
+                                convoyData.members = updatedMembers;
+                              } else if (carLabel && (!convoyData.members[alreadyMemberIdx].car || convoyData.members[alreadyMemberIdx].car === "Vehicle TBD")) {
+                                // Already a member but car was missing — patch it now
+                                const updatedMembers = (convoyData.members||[]).map((m,i) => i===alreadyMemberIdx ? {...m, car: carLabel} : m);
+                                await updateDoc(doc(db,"convoys",snap.id), { members: updatedMembers });
                                 convoyData.members = updatedMembers;
                               }
                               await updateDoc(doc(db,"notifications",String(a.id)),{status:"accepted",unread:false}).catch(()=>{});
@@ -4963,15 +4968,16 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                     const convoySnap = await getDoc(doc(db, "convoys", String(invite.id)));
                     if (!convoySnap.exists()) { onAccept?.(); return; }
                     const convoyData = convoySnap.data();
-                    const alreadyMember = (convoyData.members||[]).some(m =>
-                      m.phone?.replace(/\D/g,"").slice(-10) === authUser.phone?.replace(/\D/g,"").slice(-10)
-                    );
-                    if (!alreadyMember) {
-                      let carLabel = "";
-                      try {
-                        const uSnap = await getDoc(doc(db,"users",authUser.uid));
-                        if(uSnap.exists()){const ud=uSnap.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
-                      } catch(_){}
+                    const myPh = authUser.phone?.replace(/\D/g,"").slice(-10);
+                    const alreadyMemberIdx = myPh ? (convoyData.members||[]).findIndex(m =>
+                      m.phone?.replace(/\D/g,"").slice(-10) === myPh
+                    ) : -1;
+                    let carLabel = "";
+                    try {
+                      const uSnap = await getDoc(doc(db,"users",authUser.uid));
+                      if(uSnap.exists()){const ud=uSnap.data();carLabel=[ud.vehicle,ud.plate].filter(Boolean).join(" · ");}
+                    } catch(_){}
+                    if (alreadyMemberIdx === -1) {
                       const newMember = {
                         id: Date.now(),
                         name: authUser.name,
@@ -4984,6 +4990,11 @@ const JoinConvoyScreen = ({ invite=SAMPLE_INVITE, onAccept, onDecline, onBack, c
                       const updatedMembers = [...(convoyData.members||[]), newMember];
                       const updatedPhones = [...new Set(updatedMembers.map(m=>m.phone?.replace(/\D/g,"").slice(-10)).filter(Boolean))];
                       await updateDoc(doc(db, "convoys", String(invite.id)), { members: updatedMembers, memberPhones: updatedPhones });
+                      convoyData.members = updatedMembers;
+                    } else if (carLabel && (!convoyData.members[alreadyMemberIdx].car || convoyData.members[alreadyMemberIdx].car === "Vehicle TBD")) {
+                      // Was pre-added by host with no car — patch it now
+                      const updatedMembers = (convoyData.members||[]).map((m,i) => i===alreadyMemberIdx ? {...m, car: carLabel} : m);
+                      await updateDoc(doc(db, "convoys", String(invite.id)), { members: updatedMembers });
                       convoyData.members = updatedMembers;
                     }
                     const joinedConvoy = { ...convoyData, id: invite.id };
@@ -5072,19 +5083,28 @@ export default function App() {
           const carLabel = [userData.vehicle, userData.plate].filter(Boolean).join(" · ");
           if (carLabel) {
             const ph = userData.phone?.replace(/\D/g,"").slice(-10);
-            const backfillQ = ph ? query(collection(db,"convoys"), where("memberPhones","array-contains",ph)) : null;
-            if (backfillQ) {
-              getDocs(backfillQ).then(bSnap => {
-                bSnap.docs.forEach(async bDoc => {
+            const backfillQueries = ph ? [
+              getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains",ph))),
+              getDocs(query(collection(db,"convoys"), where("memberPhones","array-contains","91"+ph))),
+            ] : [];
+            if (backfillQueries.length) {
+              Promise.all(backfillQueries).then(([snap1, snap2]) => {
+                const seen = new Set();
+                [...(snap1?.docs||[]), ...(snap2?.docs||[])].forEach(async bDoc => {
+                  if (seen.has(bDoc.id)) return;
+                  seen.add(bDoc.id);
                   const bd = bDoc.data();
-                  const idx = (bd.members||[]).findIndex(m =>
-                    m.phone?.replace(/\D/g,"").slice(-10) === ph ||
-                    m.id === fbUser.uid || m.isOwner
-                  );
-                  if (idx !== -1 && !bd.members[idx].car) {
-                    const updated = bd.members.map((m,i) => i===idx ? {...m, car: carLabel} : m);
-                    updateDoc(bDoc.ref, {members: updated}).catch(()=>{});
-                  }
+                  const members = bd.members || [];
+                  // Find every slot that belongs to this user (by phone or uid) and is missing car
+                  let changed = false;
+                  const updated = members.map(m => {
+                    const mPhone = m.phone?.replace(/\D/g,"").slice(-10);
+                    const isMe = (ph && mPhone === ph) || m.id === fbUser.uid;
+                    const carMissing = !m.car || m.car === "Vehicle TBD";
+                    if (isMe && carMissing) { changed = true; return {...m, car: carLabel}; }
+                    return m;
+                  });
+                  if (changed) updateDoc(bDoc.ref, {members: updated}).catch(()=>{});
                 });
               }).catch(()=>{});
             }
