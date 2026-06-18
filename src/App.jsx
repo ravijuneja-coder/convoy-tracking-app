@@ -5357,9 +5357,12 @@ export default function App() {
               {authed&&<>
                 {/* Bell icon with unread badge */}
                 <button onClick={()=>{setNavTab("bell");setScreen("alerts");setActiveC(null);}}
-                  style={{width:28,height:28,borderRadius:"50%",background:T.raised,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",flexShrink:0}}>
-                  <Ic d={ICONS.bell} size={13} color={navTab==="bell"?T.accent:T.sub} sw={1.8}/>
-                  {alertUnread>0&&<span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>}
+                  style={{width:28,height:28,borderRadius:"50%",background:alertUnread>0?T.redLo:T.raised,border:`1px solid ${alertUnread>0?T.red:T.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",flexShrink:0,transition:"border-color .3s,background .3s",animation:alertUnread>0?"bellShake 4s ease infinite":undefined}}>
+                  <Ic d={ICONS.bell} size={13} color={alertUnread>0?T.red:navTab==="bell"?T.accent:T.sub} sw={1.8}/>
+                  {alertUnread>0&&<>
+                    <span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,border:`1.5px solid ${T.surface}`}}/>
+                    <span style={{position:"absolute",top:-1,right:-1,width:8,height:8,borderRadius:"50%",background:T.red,animation:"badgePing 1.4s ease-out infinite"}}/>
+                  </>}
                 </button>
                 <button onClick={()=>{setNavTab("profile");setScreen("profile");setActiveC(null);}}
                   style={{width:26,height:26,borderRadius:"50%",background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:"#FFFFFF",border:`2px solid ${T.surface}`,cursor:"pointer"}}>
@@ -5471,10 +5474,13 @@ export default function App() {
             {[{id:"home",icon:ICONS.home,label:"Convoys",scr:"home"},{id:"map",icon:ICONS.map,label:"Map",scr:"map"},{id:"bell",icon:ICONS.bell,label:"Alerts",scr:"alerts"},{id:"profile",icon:ICONS.person,label:"Profile",scr:"profile"}].map(n=>(
               <button key={n.id} onClick={()=>{setNavTab(n.id);if(n.scr){setScreen(n.scr);setActiveC(null);}}}
                 style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 4px"}}>
-                <div style={{width:40,height:30,borderRadius:10,background:navTab===n.id?T.accentLo:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s",position:"relative"}}>
-                  <Ic d={n.icon} size={17} color={navTab===n.id?T.accent:T.muted} sw={navTab===n.id?2:1.6}/>
+                <div style={{width:40,height:30,borderRadius:10,background:n.id==="bell"&&alertUnread>0?T.redLo:navTab===n.id?T.accentLo:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s",position:"relative",animation:n.id==="bell"&&alertUnread>0?"bellShake 4s ease infinite":undefined}}>
+                  <Ic d={n.icon} size={17} color={n.id==="bell"&&alertUnread>0?T.red:navTab===n.id?T.accent:T.muted} sw={navTab===n.id?2:1.6}/>
                   {n.id==="profile"&&<div style={{position:"absolute",top:2,right:6,width:7,height:7,borderRadius:"50%",background:T.accent,border:`2px solid ${T.surface}`}}/>}
-                  {n.id==="bell"&&alertUnread>0&&<div style={{position:"absolute",top:1,right:5,width:7,height:7,borderRadius:"50%",background:T.red,border:`2px solid ${T.surface}`}}/>}
+                  {n.id==="bell"&&alertUnread>0&&<>
+                    <div style={{position:"absolute",top:1,right:5,width:7,height:7,borderRadius:"50%",background:T.red,border:`2px solid ${T.surface}`}}/>
+                    <div style={{position:"absolute",top:1,right:5,width:7,height:7,borderRadius:"50%",background:T.red,animation:"badgePing 1.4s ease-out infinite"}}/>
+                  </>}
                 </div>
                 <span style={{fontSize:10,fontWeight:navTab===n.id?700:500,color:navTab===n.id?T.accent:T.muted}}>{n.label}</span>
               </button>
@@ -5496,6 +5502,8 @@ export default function App() {
 
         <style>{`
           @keyframes pulse    {0%,100%{opacity:1}50%{opacity:.3}}
+          @keyframes badgePing{0%{transform:scale(1);opacity:.8}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
+          @keyframes bellShake{0%,12%,100%{transform:rotate(0deg)}2%{transform:rotate(-18deg)}5%{transform:rotate(18deg)}8%{transform:rotate(-12deg)}10%{transform:rotate(8deg)}}
           @keyframes slideUp  {from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
           @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
           @keyframes sosPing  {0%{transform:scale(1);opacity:.5}100%{transform:scale(1.8);opacity:0}}
