@@ -1214,6 +1214,68 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
         );
       })()}
 
+      {/* ── Member gap strip ── */}
+      {(()=>{
+        const myIdx = myMemberId != null ? members.findIndex(m => m.id === myMemberId) : 0;
+        const myDist = liveStats[members[myIdx]?.id]?.dist ?? 0;
+        // Collect all distances relative to self: negative = ahead (closer to dest), positive = behind
+        const dists = members.map(m => {
+          const d = liveStats[m.id]?.dist ?? 0;
+          return d - myDist; // positive: this member is further behind than me; negative: ahead of me
+        });
+        const maxAbs = Math.max(...dists.map(Math.abs), 1);
+        // Map each member to a 0–100% position on the strip
+        // Self always at centre (50%). Ahead → left (<50%), behind → right (>50%)
+        const positions = dists.map(d => Math.max(4, Math.min(96, 50 + (d / maxAbs) * 46)));
+        return (
+          <div style={{padding:"10px 16px 12px",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
+            <div style={{fontSize:9,fontWeight:700,color:T.muted,letterSpacing:.8,textTransform:"uppercase",marginBottom:8}}>Member Positions</div>
+            {/* Track bar */}
+            <div style={{position:"relative",height:32}}>
+              {/* Base line */}
+              <div style={{position:"absolute",top:"50%",left:0,right:0,height:3,background:T.raised,borderRadius:3,transform:"translateY(-50%)"}}/>
+              {/* Direction labels */}
+              <div style={{position:"absolute",top:"50%",left:0,transform:"translateY(-50%)",fontSize:8,fontWeight:700,color:"#22c55e",background:"#22c55e18",padding:"1px 5px",borderRadius:4}}>AHEAD</div>
+              <div style={{position:"absolute",top:"50%",right:0,transform:"translateY(-50%)",fontSize:8,fontWeight:700,color:T.red,background:`${T.red}18`,padding:"1px 5px",borderRadius:4}}>BEHIND</div>
+              {/* Member dots */}
+              {members.map((m, i) => {
+                const isMe = i === myIdx;
+                const pct = positions[i];
+                const isAhead = dists[i] < -0.05;
+                const isBehind = dists[i] > 0.05;
+                const dotColor = isMe ? T.accent : isAhead ? "#22c55e" : isBehind ? T.red : T.muted;
+                const gapKm = Math.abs(dists[i]).toFixed(1);
+                return (
+                  <div key={m.id} style={{position:"absolute",top:"50%",left:`${pct}%`,transform:"translate(-50%,-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                    <div style={{width:isMe?26:22,height:isMe?26:22,borderRadius:"50%",background:dotColor,border:`2px solid ${T.surface}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 0 ${isMe?8:5}px ${dotColor}66`,flexShrink:0,zIndex:isMe?2:1}}>
+                      <span style={{fontSize:isMe?9:8,fontWeight:800,color:"#fff"}}>{m.initials||m.name[0]}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Legend row */}
+            <div style={{display:"flex",gap:6,marginTop:10,overflowX:"auto",scrollbarWidth:"none"}}>
+              {members.map((m, i) => {
+                const isMe = i === myIdx;
+                const isAhead = dists[i] < -0.05;
+                const isBehind = dists[i] > 0.05;
+                const gapKm = Math.abs(dists[i]).toFixed(1);
+                const col = isMe ? T.accent : isAhead ? "#22c55e" : isBehind ? T.red : T.muted;
+                const label = isMe ? "you" : isAhead ? `${gapKm}km ahead` : isBehind ? `${gapKm}km behind` : "same pos";
+                return (
+                  <div key={m.id} style={{display:"flex",alignItems:"center",gap:5,background:`${col}14`,border:`1px solid ${col}33`,borderRadius:8,padding:"4px 8px",flexShrink:0}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:col,flexShrink:0}}/>
+                    <span style={{fontSize:10,fontWeight:700,color:col}}>{m.name.split(" ")[0]}</span>
+                    <span style={{fontSize:9,color:T.muted}}>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* sub-tabs */}
       <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
         {[["map","🗺 Map"],["members","👥 Members"],["info","📋 Info"]].map(([id,lbl])=>(
