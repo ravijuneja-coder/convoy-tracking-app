@@ -1051,11 +1051,17 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
   const myMemberId = myMember?.id;
 
   // 1. Publish my real GPS position to Firestore
+  const [geoError, setGeoError] = useState(null);
   useEffect(() => {
-    if (!myMemberId || !convoy.id || !navigator.geolocation) return;
+    if (!myMemberId || !convoy.id) return;
+    if (!navigator.geolocation) {
+      setGeoError("Location isn't supported on this device/browser.");
+      return;
+    }
     const locRef = doc(db, "convoys", String(convoy.id), "locations", String(myMemberId));
     const watchId = navigator.geolocation.watchPosition(
       pos => {
+        setGeoError(null);
         const { latitude: lat, longitude: lng, speed } = pos.coords;
         setDoc(locRef, {
           lat, lng,
@@ -1064,8 +1070,15 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
           updatedAt: serverTimestamp(),
         }, { merge: true }).catch(() => {});
       },
-      () => {
-        // On error fall back to last known position silently
+      err => {
+        const message = err.code === err.PERMISSION_DENIED
+          ? "Location permission denied. Enable it in your browser/device settings to keep sharing your position."
+          : err.code === err.TIMEOUT
+          ? "Couldn't get a GPS fix — check you have a clear signal."
+          : "Location is unavailable right now.";
+        setGeoError(message);
+        // Let the group see accurate status instead of a stale/blank one.
+        setDoc(locRef, { memberStatus: "stopped", updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
     );
@@ -1176,6 +1189,13 @@ const LiveDetailScreen = ({ convoy, onBack, onEdit, onDelete, onEndConvoy, authU
           </button>
         </>}
       </div>
+
+      {geoError && (
+        <div role="alert" style={{display:"flex",alignItems:"center",gap:8,padding:"10px 16px",background:`${T.amber}1a`,borderBottom:`1px solid ${T.amber}`}}>
+          <span style={{fontSize:14}} aria-hidden="true">⚠️</span>
+          <span style={{fontSize:12,fontWeight:600,color:T.amber,lineHeight:1.4}}>{geoError}</span>
+        </div>
+      )}
 
       {/* progress */}
       {(()=>{
