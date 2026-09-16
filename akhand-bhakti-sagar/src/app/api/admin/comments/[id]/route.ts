@@ -1,56 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { CommentStatus } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
-const updateCommentSchema = z.object({
-  status: z.nativeEnum(CommentStatus),
-});
-
-type Params = { params: { id: string } };
-
-export async function PUT(req: NextRequest, { params }: Params) {
-  const authResult = await requireAuth();
-  if (authResult instanceof NextResponse) return authResult;
-
-  const comment = await prisma.comment.findUnique({ where: { id: params.id } });
-  if (!comment) {
-    return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
-  }
-
-  let body: unknown;
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
-    body = await req.json();
+    const { status } = await req.json();
+    const comment = await prisma.comment.update({
+      where: { id: params.id },
+      data: { status },
+    });
+    return NextResponse.json({ comment });
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
   }
-
-  const parsed = updateCommentSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
-      { status: 400 }
-    );
-  }
-
-  const updated = await prisma.comment.update({
-    where: { id: params.id },
-    data: { status: parsed.data.status },
-  });
-
-  return NextResponse.json({ comment: updated });
 }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const authResult = await requireAuth();
-  if (authResult instanceof NextResponse) return authResult;
-
-  const comment = await prisma.comment.findUnique({ where: { id: params.id } });
-  if (!comment) {
-    return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  try {
+    await prisma.comment.delete({ where: { id: params.id } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
-
-  await prisma.comment.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
 }

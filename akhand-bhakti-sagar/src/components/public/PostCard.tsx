@@ -1,17 +1,26 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { contentTypeLabels } from '@/lib/types';
+import { contentTypeLabels, contentTypeToUrl } from '@/lib/types';
+import { ContentType } from '@prisma/client';
+
+interface PostCardDeity {
+  id?: string;
+  name: string;
+  nameHindi?: string | null;
+  slug: string;
+  image?: string | null;
+}
 
 interface Post {
   id: string;
   title: string;
   slug: string;
-  excerpt?: string | null;
+  description?: string | null;
   featuredImage?: string | null;
-  contentType: string;
+  contentType: ContentType | string;
   publishedAt?: Date | string | null;
   createdAt?: Date | string;
-  deity?: { name: string; nameHindi: string; slug: string } | null;
+  deity?: PostCardDeity | null;
   author?: { name: string } | null;
 }
 
@@ -21,16 +30,20 @@ interface PostCardProps {
 
 function formatDate(date: Date | string | null | undefined): string {
   if (!date) return '';
-  return new Date(date).toLocaleDateString('hi-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  try {
+    return new Date(date).toLocaleDateString('hi-IN', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    });
+  } catch {
+    return '';
+  }
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const href = `/${post.contentType}/${post.slug}`;
-  const label = contentTypeLabels[post.contentType] || post.contentType;
+  // Map ContentType enum (BHAJAN) to URL slug (bhajan)
+  const ctUrl = contentTypeToUrl[post.contentType as ContentType] ?? post.contentType.toString().toLowerCase();
+  const href = `/${ctUrl}/${post.slug}`;
+  const label = contentTypeLabels[ctUrl] || post.contentType.toString();
   const dateStr = formatDate(post.publishedAt || post.createdAt);
 
   return (
@@ -49,11 +62,11 @@ export default function PostCard({ post }: PostCardProps) {
           <div
             className="w-full h-full flex items-center justify-center text-4xl"
             style={{ background: 'linear-gradient(135deg, #7B1B1B, #E85D04)' }}
+            aria-hidden="true"
           >
             🕉
           </div>
         )}
-        {/* Overlay gradient */}
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{ background: 'linear-gradient(180deg, transparent 50%, rgba(123,27,27,0.7) 100%)' }}
@@ -75,22 +88,22 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* Title */}
-        <Link href={href} className="group/title flex-1">
+        <Link href={href} className="flex-1">
           <h3
-            className="text-base font-bold leading-snug mb-2 transition-colors group-hover/title:text-orange-600"
+            className="text-base font-bold leading-snug mb-2 transition-colors hover:text-orange-600"
             style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--color-text-primary)', textWrap: 'balance' }}
           >
             {post.title}
           </h3>
         </Link>
 
-        {/* Excerpt */}
-        {post.excerpt && (
+        {/* Description */}
+        {post.description && (
           <p
             className="text-sm mb-3 line-clamp-2"
             style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}
           >
-            {post.excerpt}
+            {post.description}
           </p>
         )}
 

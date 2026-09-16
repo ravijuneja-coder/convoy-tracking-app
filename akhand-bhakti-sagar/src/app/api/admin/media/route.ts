@@ -9,6 +9,7 @@ export async function GET() {
     const media = await prisma.media.findMany({
       orderBy: { createdAt: 'desc' },
     });
+    // Normalize for frontend — map `author` to `authorName`, etc.
     return NextResponse.json({ media });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch media' }, { status: 500 });

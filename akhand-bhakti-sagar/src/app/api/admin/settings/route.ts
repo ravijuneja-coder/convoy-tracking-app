@@ -1,54 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
+import { readFile, writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
-const settingsSchema = z.record(z.string(), z.string());
+const SETTINGS_PATH = join(process.cwd(), 'data', 'settings.json');
 
-export async function GET(req: NextRequest) {
-  void req;
-  const authResult = await requireAuth();
-  if (authResult instanceof NextResponse) return authResult;
-
-  const rows = await prisma.setting.findMany();
-  const settings = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-
-  return NextResponse.json({ settings });
+async function readSettings() {
+  try {
+    const raw = await readFile(SETTINGS_PATH, 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
-export async function PUT(req: NextRequest) {
-  const authResult = await requireAuth();
-  if (authResult instanceof NextResponse) return authResult;
+async function writeSettings(data: object) {
+  const dir = join(process.cwd(), 'data');
+  if (!existsSync(dir)) await mkdir(dir, { recursive: true });
+  await writeFile(SETTINGS_PATH, JSON.stringify(data, null, 2));
+}
 
-  let body: unknown;
+export async function GET() {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  const settings = await readSettings();
+  return NextResponse.json(settings);
+}
+
+export async function POST(req: NextRequest) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   try {
-    body = await req.json();
+    const body = await req.json();
+    await writeSettings(body);
+    return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
   }
-
-  const parsed = settingsSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed — expected a flat key-value object of strings' },
-      { status: 400 }
-    );
-  }
-
-  const data = parsed.data;
-
-  await Promise.all(
-    Object.entries(data).map(([key, value]) =>
-      prisma.setting.upsert({
-        where: { key },
-        update: { value },
-        create: { key, value },
-      })
-    )
-  );
-
-  const rows = await prisma.setting.findMany();
-  const settings = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-
-  return NextResponse.json({ settings });
 }

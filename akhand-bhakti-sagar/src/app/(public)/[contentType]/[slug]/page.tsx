@@ -8,36 +8,38 @@ import VideoPlayer from '@/components/public/VideoPlayer';
 import ShareButtons from '@/components/public/ShareButtons';
 import PostCard from '@/components/public/PostCard';
 import { getPostBySlug, getRelatedPosts, getPrevNextPost } from '@/lib/queries';
-import { contentTypeLabels } from '@/lib/types';
+import { contentTypeLabels, contentTypeToUrl, urlToContentType } from '@/lib/types';
+import { ContentType } from '@prisma/client';
 
-const validContentTypes = ['bhajan', 'aarti', 'chalisa', 'mantra', 'stotra', 'article', 'festival'];
+const validContentTypeSlugs = ['bhajan', 'aarti', 'chalisa', 'mantra', 'stotra', 'article', 'festival', 'bhakti-geet', 'katha'];
 
 interface Props {
   params: { contentType: string; slug: string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { contentType, slug } = params;
-  if (!validContentTypes.includes(contentType)) return { title: 'Not Found' };
+  const { contentType: ctSlug, slug } = params;
+  if (!urlToContentType[ctSlug]) return { title: 'Not Found' };
 
-  const post = await getPostBySlug(contentType, slug);
+  const post = await getPostBySlug(ctSlug, slug);
   if (!post) return { title: 'Not Found' };
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://akhandbhaktisagar.com';
-  const url = `${siteUrl}/${contentType}/${slug}`;
-  const label = contentTypeLabels[contentType] || contentType;
+  const url = `${siteUrl}/${ctSlug}/${slug}`;
+  const label = contentTypeLabels[ctSlug] || ctSlug;
 
   return {
-    title: post.title,
-    description: post.excerpt || `${post.title} - ${label} | अखंड भक्ति सागर`,
-    alternates: { canonical: url },
+    title: post.seoTitle || post.title,
+    description: post.seoDescription || post.description || `${post.title} - ${label} | अखंड भक्ति सागर`,
+    keywords: post.seoKeywords || undefined,
+    alternates: { canonical: post.canonicalUrl || url },
     openGraph: {
       type: 'article',
-      title: post.title,
-      description: post.excerpt || `${post.title} - ${label}`,
+      title: post.seoTitle || post.title,
+      description: post.seoDescription || post.description || `${post.title} - ${label}`,
       url,
-      images: post.featuredImage
-        ? [{ url: post.featuredImage, width: 1200, height: 630, alt: post.title }]
+      images: (post.ogImage || post.featuredImage)
+        ? [{ url: post.ogImage || post.featuredImage!, width: 1200, height: 630, alt: post.title }]
         : undefined,
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
@@ -45,9 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.title,
-      description: post.excerpt || `${post.title} - ${label}`,
-      images: post.featuredImage ? [post.featuredImage] : undefined,
+      title: post.seoTitle || post.title,
+      description: post.seoDescription || post.description || `${post.title} - ${label}`,
+      images: (post.ogImage || post.featuredImage) ? [post.ogImage || post.featuredImage!] : undefined,
     },
   };
 }
@@ -55,34 +57,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export const revalidate = 3600;
 
 export default async function PostPage({ params }: Props) {
-  const { contentType, slug } = params;
-  if (!validContentTypes.includes(contentType)) notFound();
+  const { contentType: ctSlug, slug } = params;
+  if (!urlToContentType[ctSlug]) notFound();
 
-  const post = await getPostBySlug(contentType, slug);
+  const post = await getPostBySlug(ctSlug, slug);
   if (!post) notFound();
 
   const [related, { prev, next }] = await Promise.all([
-    getRelatedPosts(contentType, post.deity?.id, slug, 4),
-    getPrevNextPost(contentType, post.publishedAt || post.createdAt, slug),
+    getRelatedPosts(ctSlug, post.deity?.id, slug, 4),
+    getPrevNextPost(ctSlug, post.publishedAt || post.createdAt, slug),
   ]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://akhandbhaktisagar.com';
-  const postUrl = `${siteUrl}/${contentType}/${slug}`;
-  const label = contentTypeLabels[contentType] || contentType;
+  const postUrl = `${siteUrl}/${ctSlug}/${slug}`;
+  const label = contentTypeLabels[ctSlug] || ctSlug;
 
-  // JSON-LD Article schema
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.title,
-    description: post.excerpt,
+    description: post.description,
     image: post.featuredImage,
-    author: post.author ? { '@type': 'Person', name: post.author.name } : { '@type': 'Organization', name: 'अखंड भक्ति सागर' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'अखंड भक्ति सागर',
-      url: siteUrl,
-    },
+    author: { '@type': 'Person', name: post.author.name },
+    publisher: { '@type': 'Organization', name: 'अखंड भक्ति सागर', url: siteUrl },
     datePublished: post.publishedAt?.toISOString(),
     dateModified: post.updatedAt.toISOString(),
     url: postUrl,
@@ -93,6 +90,14 @@ export default async function PostPage({ params }: Props) {
   const formattedDate = (post.publishedAt || post.createdAt).toLocaleDateString('hi-IN', {
     day: 'numeric', month: 'long', year: 'numeric',
   });
+
+  // Map prev/next contentType enum to URL slug
+  const prevUrl = prev
+    ? `/${contentTypeToUrl[prev.contentType as ContentType] ?? prev.contentType.toLowerCase()}/${prev.slug}`
+    : null;
+  const nextUrl = next
+    ? `/${contentTypeToUrl[next.contentType as ContentType] ?? next.contentType.toLowerCase()}/${next.slug}`
+    : null;
 
   return (
     <>
@@ -106,7 +111,7 @@ export default async function PostPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <Breadcrumb
             items={[
-              { label, href: `/${contentType}` },
+              { label, href: `/${ctSlug}` },
               { label: post.title },
             ]}
           />
@@ -121,7 +126,7 @@ export default async function PostPage({ params }: Props) {
                 <div className="relative rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: '16/9' }}>
                   <Image
                     src={post.featuredImage}
-                    alt={post.title}
+                    alt={post.imageAlt || post.title}
                     fill
                     className="object-cover"
                     priority
@@ -155,11 +160,9 @@ export default async function PostPage({ params }: Props) {
                 className="flex flex-wrap items-center gap-4 text-sm mb-6 pb-6"
                 style={{ borderBottom: '1px solid var(--color-border)' }}
               >
-                {post.author && (
-                  <span style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-devanagari)' }}>
-                    ✍️ {post.author.name}
-                  </span>
-                )}
+                <span style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-devanagari)' }}>
+                  ✍️ {post.author.name}
+                </span>
                 <time
                   dateTime={post.publishedAt?.toISOString()}
                   style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-devanagari)' }}
@@ -168,8 +171,8 @@ export default async function PostPage({ params }: Props) {
                 </time>
               </div>
 
-              {/* Excerpt */}
-              {post.excerpt && (
+              {/* Description */}
+              {post.description && (
                 <p
                   className="text-base leading-relaxed mb-6 p-4 rounded-xl"
                   style={{
@@ -180,7 +183,7 @@ export default async function PostPage({ params }: Props) {
                     lineHeight: '1.9',
                   }}
                 >
-                  {post.excerpt}
+                  {post.description}
                 </p>
               )}
 
@@ -198,7 +201,7 @@ export default async function PostPage({ params }: Props) {
               )}
 
               {/* Video */}
-              {(post.videoUrl || post.videoEmbedCode) && (
+              {(post.videoUrl || post.embedCode) && post.videoType !== 'NONE' && (
                 <div className="mb-8">
                   <h2
                     className="text-xl font-bold mb-4"
@@ -209,7 +212,7 @@ export default async function PostPage({ params }: Props) {
                   <VideoPlayer
                     videoType={post.videoType}
                     videoUrl={post.videoUrl}
-                    embedCode={post.videoEmbedCode}
+                    embedCode={post.embedCode}
                     title={post.title}
                   />
                 </div>
@@ -218,7 +221,7 @@ export default async function PostPage({ params }: Props) {
               {/* Content body */}
               {post.content && (
                 <div
-                  className="mb-8 leading-loose"
+                  className="mb-8"
                   style={{
                     fontFamily: 'var(--font-devanagari)',
                     color: 'var(--color-text-primary)',
@@ -238,35 +241,37 @@ export default async function PostPage({ params }: Props) {
               </div>
 
               {/* Prev / Next */}
-              <nav
-                className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
-                aria-label="पिछला और अगला"
-              >
-                {prev && (
-                  <Link
-                    href={`/${prev.contentType}/${prev.slug}`}
-                    className="p-4 rounded-xl transition-all hover:shadow-md"
-                    style={{ background: 'white', border: '1px solid var(--color-border)' }}
-                  >
-                    <span className="text-xs block mb-1" style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-devanagari)' }}>← पिछला</span>
-                    <span className="text-sm font-medium line-clamp-2" style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--maroon)' }}>
-                      {prev.title}
-                    </span>
-                  </Link>
-                )}
-                {next && (
-                  <Link
-                    href={`/${next.contentType}/${next.slug}`}
-                    className="p-4 rounded-xl text-right transition-all hover:shadow-md"
-                    style={{ background: 'white', border: '1px solid var(--color-border)' }}
-                  >
-                    <span className="text-xs block mb-1" style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-devanagari)' }}>अगला →</span>
-                    <span className="text-sm font-medium line-clamp-2" style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--maroon)' }}>
-                      {next.title}
-                    </span>
-                  </Link>
-                )}
-              </nav>
+              {(prev || next) && (
+                <nav
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
+                  aria-label="पिछला और अगला"
+                >
+                  {prev && prevUrl && (
+                    <Link
+                      href={prevUrl}
+                      className="p-4 rounded-xl transition-all hover:shadow-md"
+                      style={{ background: 'white', border: '1px solid var(--color-border)' }}
+                    >
+                      <span className="text-xs block mb-1" style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-devanagari)' }}>← पिछला</span>
+                      <span className="text-sm font-medium line-clamp-2" style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--maroon)' }}>
+                        {prev.title}
+                      </span>
+                    </Link>
+                  )}
+                  {next && nextUrl && (
+                    <Link
+                      href={nextUrl}
+                      className="p-4 rounded-xl text-right transition-all hover:shadow-md"
+                      style={{ background: 'white', border: '1px solid var(--color-border)' }}
+                    >
+                      <span className="text-xs block mb-1" style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-devanagari)' }}>अगला →</span>
+                      <span className="text-sm font-medium line-clamp-2" style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--maroon)' }}>
+                        {next.title}
+                      </span>
+                    </Link>
+                  )}
+                </nav>
+              )}
             </article>
 
             {/* Sidebar */}
@@ -279,10 +284,11 @@ export default async function PostPage({ params }: Props) {
                     style={{ background: 'white', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)' }}
                   >
                     {post.deity.image && (
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 ring-2" style={{ ringColor: 'var(--gold)' }}>
+                      <div className="relative w-20 h-20 rounded-full overflow-hidden mx-auto mb-3" style={{ border: '2px solid #D4AF37' }}>
                         <Image src={post.deity.image} alt={post.deity.nameHindi || post.deity.name} fill className="object-cover" sizes="80px" />
                       </div>
                     )}
+                    {!post.deity.image && <div className="text-3xl mb-2">🕉</div>}
                     <h3
                       className="text-lg font-bold mb-1"
                       style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--maroon)' }}
@@ -309,28 +315,31 @@ export default async function PostPage({ params }: Props) {
                       संबंधित भजन
                     </h3>
                     <div className="space-y-3">
-                      {related.map((r) => (
-                        <Link
-                          key={r.id}
-                          href={`/${r.contentType}/${r.slug}`}
-                          className="flex gap-3 p-3 rounded-lg transition-colors hover:bg-orange-50 group"
-                          style={{ border: '1px solid var(--color-border)', background: 'white' }}
-                        >
-                          {r.featuredImage ? (
-                            <div className="relative w-16 h-12 rounded-md overflow-hidden flex-shrink-0">
-                              <Image src={r.featuredImage} alt={r.title} fill className="object-cover" sizes="64px" />
-                            </div>
-                          ) : (
-                            <div className="w-16 h-12 rounded-md flex-shrink-0 flex items-center justify-center text-2xl" style={{ background: 'linear-gradient(135deg, #FF6B00, #7B1B1B)' }}>🕉</div>
-                          )}
-                          <span
-                            className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-orange-600 transition-colors"
-                            style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--color-text-primary)' }}
+                      {related.map((r) => {
+                        const rSlug = contentTypeToUrl[r.contentType as ContentType] ?? r.contentType.toLowerCase();
+                        return (
+                          <Link
+                            key={r.id}
+                            href={`/${rSlug}/${r.slug}`}
+                            className="flex gap-3 p-3 rounded-lg transition-colors hover:bg-orange-50"
+                            style={{ border: '1px solid var(--color-border)', background: 'white' }}
                           >
-                            {r.title}
-                          </span>
-                        </Link>
-                      ))}
+                            {r.featuredImage ? (
+                              <div className="relative w-16 h-12 rounded-md overflow-hidden flex-shrink-0">
+                                <Image src={r.featuredImage} alt={r.title} fill className="object-cover" sizes="64px" />
+                              </div>
+                            ) : (
+                              <div className="w-16 h-12 rounded-md flex-shrink-0 flex items-center justify-center text-2xl" style={{ background: 'linear-gradient(135deg, #FF6B00, #7B1B1B)' }} aria-hidden="true">🕉</div>
+                            )}
+                            <span
+                              className="text-sm font-medium leading-snug line-clamp-2 hover:text-orange-600 transition-colors"
+                              style={{ fontFamily: 'var(--font-devanagari)', color: 'var(--color-text-primary)' }}
+                            >
+                              {r.title}
+                            </span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

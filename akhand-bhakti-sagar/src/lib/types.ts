@@ -1,68 +1,51 @@
-export interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt?: string | null;
-  content?: string | null;
-  lyrics?: string | null;
-  featuredImage?: string | null;
-  videoType?: string | null;
-  videoUrl?: string | null;
-  videoEmbedCode?: string | null;
-  contentType: string;
-  published: boolean;
-  publishedAt?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  deity?: Deity | null;
-  author?: Author | null;
-  tags?: Tag[];
-  viewCount?: number;
-}
+export type ContentTypeEnum =
+  | 'BHAJAN'
+  | 'AARTI'
+  | 'CHALISA'
+  | 'MANTRA'
+  | 'STOTRA'
+  | 'BHAKTI_GEET'
+  | 'ARTICLE'
+  | 'FESTIVAL'
+  | 'KATHA';
 
-export interface Deity {
-  id: string;
-  name: string;
-  nameHindi: string;
-  slug: string;
-  image?: string | null;
-  description?: string | null;
-  _count?: { posts: number };
-}
+/** Maps URL slug (lowercase) to Prisma ContentType enum */
+export const urlToContentType: Record<string, ContentTypeEnum> = {
+  bhajan: 'BHAJAN',
+  aarti: 'AARTI',
+  chalisa: 'CHALISA',
+  mantra: 'MANTRA',
+  stotra: 'STOTRA',
+  'bhakti-geet': 'BHAKTI_GEET',
+  article: 'ARTICLE',
+  festival: 'FESTIVAL',
+  katha: 'KATHA',
+};
 
-export interface Category {
-  id: string;
-  name: string;
-  nameHindi: string;
-  slug: string;
-  description?: string | null;
-  icon?: string | null;
-  image?: string | null;
-  _count?: { posts: number };
-}
+/** Maps Prisma ContentType enum to URL slug */
+export const contentTypeToUrl: Record<ContentTypeEnum, string> = {
+  BHAJAN: 'bhajan',
+  AARTI: 'aarti',
+  CHALISA: 'chalisa',
+  MANTRA: 'mantra',
+  STOTRA: 'stotra',
+  BHAKTI_GEET: 'bhakti-geet',
+  ARTICLE: 'article',
+  FESTIVAL: 'festival',
+  KATHA: 'katha',
+};
 
-export interface Author {
-  id: string;
-  name: string;
-  image?: string | null;
-}
-
-export interface Tag {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export type ContentType = 'bhajan' | 'aarti' | 'chalisa' | 'mantra' | 'stotra' | 'article' | 'festival';
-
+/** Human-readable Hindi labels for URL slugs */
 export const contentTypeLabels: Record<string, string> = {
   bhajan: 'भजन',
   aarti: 'आरती',
   chalisa: 'चालीसा',
   mantra: 'मंत्र',
   stotra: 'स्तोत्र',
+  'bhakti-geet': 'भक्ति गीत',
   article: 'भक्ति लेख',
   festival: 'त्योहार',
+  katha: 'कथा',
 };
 
 export const contentTypeDescriptions: Record<string, string> = {
@@ -71,6 +54,19 @@ export const contentTypeDescriptions: Record<string, string> = {
   chalisa: 'चालीस चौपाइयों में रचित स्तुतियाँ',
   mantra: 'वेदों और शास्त्रों के पवित्र मंत्र',
   stotra: 'देवी-देवताओं की स्तुति में रचित स्तोत्र',
+  'bhakti-geet': 'भक्ति और भजन के गीत',
   article: 'भक्ति और आध्यात्म पर लेख',
   festival: 'हिंदू त्योहारों की जानकारी',
+  katha: 'धार्मिक कथाएँ और कहानियाँ',
 };
+
+/** The valid URL slugs for content types shown in nav */
+export const validContentTypeSlugs = [
+  'bhajan',
+  'aarti',
+  'chalisa',
+  'mantra',
+  'stotra',
+  'article',
+  'festival',
+];
