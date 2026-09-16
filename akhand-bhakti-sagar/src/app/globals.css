@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand Colors */
+  --saffron: #FF6B00;
+  --deep-orange: #E85D04;
+  --maroon: #7B1B1B;
+  --cream: #FDF6EC;
+  --gold: #D4AF37;
+
+  /* Semantic tokens */
+  --color-bg-primary: #FDF6EC;
+  --color-bg-secondary: #FEFAF5;
+  --color-bg-accent: #FF6B00;
+  --color-text-primary: #1A0A00;
+  --color-text-secondary: #5C3317;
+  --color-text-muted: #8B6A4A;
+  --color-text-on-accent: #FFFFFF;
+  --color-border: #E8D5BB;
+  --color-border-strong: #D4AF37;
+  --color-surface-card: #FFFFFF;
+  --color-surface-overlay: rgba(123, 27, 27, 0.85);
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, #7B1B1B 0%, #E85D04 50%, #FF6B00 100%);
+  --gradient-header: linear-gradient(90deg, #7B1B1B 0%, #4A0F0F 100%);
+  --gradient-card-hover: linear-gradient(180deg, transparent 60%, rgba(123, 27, 27, 0.8) 100%);
+
+  /* Shadows */
+  --shadow-card: 0 2px 16px rgba(123, 27, 27, 0.08);
+  --shadow-card-hover: 0 8px 32px rgba(232, 93, 4, 0.18);
+  --shadow-header: 0 2px 20px rgba(123, 27, 27, 0.15);
+
+  /* Typography */
+  --font-devanagari: 'Noto Sans Devanagari', 'Mangal', 'Arial Unicode MS', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Base ─── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Devanagari Text ─── */
+.font-devanagari,
+[lang="hi"],
+.devanagari {
+  font-family: var(--font-devanagari);
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+/* ─── Custom Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--deep-orange);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--maroon);
+}
+
+/* ─── Prose / Lyrics Styles ─── */
+.prose-lyrics {
+  font-family: var(--font-devanagari);
+  font-size: 1.2rem;
+  line-height: 2.0;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.prose-lyrics p {
+  margin-bottom: 1.25em;
+}
+
+.prose-lyrics .chorus {
+  padding: 1rem 1.5rem;
+  border-left: 4px solid var(--gold);
+  background: rgba(212, 175, 55, 0.06);
+  border-radius: 0 8px 8px 0;
+  margin: 1.5em 0;
+}
+
+/* ─── Focus Styles ─── */
+:focus-visible {
+  outline: 2px solid var(--saffron);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background-color: rgba(255, 107, 0, 0.2);
+  color: var(--color-text-primary);
+}
+
+/* ─── Utility Classes ─── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200;
+    background: var(--gradient-hero);
+    box-shadow: 0 4px 16px rgba(232, 93, 4, 0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(232, 93, 4, 0.4);
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    border: 2px solid var(--saffron);
+    color: var(--saffron);
+    background: transparent;
+  }
+  .btn-outline:hover {
+    background: var(--saffron);
+    color: white;
+  }
+
+  .card-spiritual {
+    background: var(--color-surface-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .card-spiritual:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+  }
+
+  .section-title {
+    font-family: var(--font-devanagari);
+    color: var(--maroon);
+    font-weight: 700;
+    position: relative;
+  }
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 3rem;
+    height: 3px;
+    background: var(--gradient-hero);
+    border-radius: 2px;
+    margin-top: 0.5rem;
+  }
+
+  .badge-category {
+    @apply inline-block px-3 py-1 text-xs font-semibold rounded-full;
+    background: rgba(255, 107, 0, 0.1);
+    color: var(--deep-orange);
+    border: 1px solid rgba(255, 107, 0, 0.2);
+  }
+
+  .badge-deity {
+    @apply inline-block px-3 py-1 text-xs font-semibold rounded-full;
+    background: rgba(212, 175, 55, 0.12);
+    color: #8B6A00;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+  }
+
+  .om-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--gold);
+    font-family: var(--font-devanagari);
+    font-size: 1.25rem;
+  }
+  .om-divider::before,
+  .om-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+}
+
+/* ─── Page Transitions ─── */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

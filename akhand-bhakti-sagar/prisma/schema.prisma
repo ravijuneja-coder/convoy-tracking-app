@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  name      String
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+model Post {
+  id               String      @id @default(cuid())
+  title            String
+  slug             String      @unique
+  contentType      ContentType
+  description      String?     @db.Text
+  lyrics           String?     @db.Text
+  content          String?     @db.Text
+  featuredImage    String?
+  imageAlt         String?
+  videoType        VideoType   @default(NONE)
+  videoUrl         String?
+  embedCode        String?
+  uploadedVideoUrl String?
+  status           PostStatus  @default(DRAFT)
+  publishedAt      DateTime?
+  viewCount        Int         @default(0)
+  seoTitle         String?
+  seoDescription   String?     @db.Text
+  seoKeywords      String?
+  canonicalUrl     String?
+  ogImage          String?
+  authorId         String
+  categoryId       String
+  deityId          String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  author           User        @relation(fields: [authorId], references: [id])
+  category         Category    @relation(fields: [categoryId], references: [id])
+  deity            Deity?      @relation(fields: [deityId], references: [id])
+  comments         Comment[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([deityId])
+  @@index([contentType])
+}
+
+enum ContentType {
+  BHAJAN
+  AARTI
+  CHALISA
+  MANTRA
+  STOTRA
+  BHAKTI_GEET
+  ARTICLE
+  FESTIVAL
+  KATHA
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+enum VideoType {
+  NONE
+  YOUTUBE_URL
+  YOUTUBE_EMBED
+  UPLOADED
+}
+
+model Category {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  slug           String   @unique
+  description    String?  @db.Text
+  image          String?
+  seoTitle       String?
+  seoDescription String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  posts          Post[]
+}
+
+model Deity {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  nameHindi      String?
+  slug           String   @unique
+  description    String?  @db.Text
+  image          String?
+  seoTitle       String?
+  seoDescription String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  posts          Post[]
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  filename  String
+  url       String
+  type      MediaType
+  mimeType  String
+  size      Int
+  altText   String?
+  caption   String?
+  createdAt DateTime  @default(now())
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  content   String        @db.Text
+  author    String
+  email     String?
+  status    CommentStatus @default(PENDING)
+  postId    String
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
